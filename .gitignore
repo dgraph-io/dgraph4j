@@ -1,0 +1,6 @@
+build/
+.idea/
+.gradle/
+dgraph4j.iml
+dgraph4j.ipr
+dgraph4j.iws
