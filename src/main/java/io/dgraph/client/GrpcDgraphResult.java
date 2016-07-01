@@ -41,7 +41,7 @@ public class GrpcDgraphResult extends DgraphResult<Graphresponse.Response> {
         final Graphresponse.Node rootNode = getResponse().getN();
         JsonObject rootJson = null;
 
-        nodes.add(rootNode);
+        nodes.push(rootNode);
         while (!nodes.isEmpty()) {
             final Graphresponse.Node aNode = nodes.pop();
             final JsonObject jsonNode = nodeToJson(aNode);
