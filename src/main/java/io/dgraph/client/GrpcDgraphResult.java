@@ -37,32 +37,25 @@ public class GrpcDgraphResult extends DgraphResult<Graphresponse.Response> {
     @Override
     public JsonObject toJsonObject() {
         final Stack<Graphresponse.Node> nodes = new Stack<>();
-        final Stack<JsonObject> jsonNodes = new Stack<>();
 
         final Graphresponse.Node rootNode = getResponse().getN();
-        final JsonObject rootJson = nodeToJson(rootNode);
+        JsonObject rootJson = null;
 
         nodes.add(rootNode);
-        jsonNodes.push(rootJson);
         while (!nodes.isEmpty()) {
             final Graphresponse.Node aNode = nodes.pop();
-            final JsonObject jsonNode = jsonNodes.pop();
+            final JsonObject jsonNode = nodeToJson(aNode);
+            rootJson = (rootJson == null) ? jsonNode : rootJson;  // keep track of the root
 
-            if (!aNode.getChildrenList().isEmpty()) {
-                for (Graphresponse.Node child : aNode.getChildrenList()) {
-                    final JsonObject childJson = nodeToJson(child);
-                    nodes.push(child);
-                    jsonNodes.push(childJson);
+            for (Graphresponse.Node child : aNode.getChildrenList()) {
+                final JsonObject childJson = nodeToJson(child);
+                nodes.push(child);
 
-                    if (!jsonNode.has(child.getAttribute())) {
-                        jsonNode.add(child.getAttribute(), new JsonArray());
-                    }
-                    jsonNode.getAsJsonArray(child.getAttribute())
-                            .add(childJson);
+                if (!jsonNode.has(child.getAttribute())) {
+                    jsonNode.add(child.getAttribute(), new JsonArray());
                 }
-            }
-            else {
-                jsonNode.remove(aNode.getAttribute());
+                jsonNode.getAsJsonArray(child.getAttribute())
+                        .add(childJson);
             }
         }
 
@@ -91,9 +84,11 @@ public class GrpcDgraphResult extends DgraphResult<Graphresponse.Response> {
         for (Graphresponse.Property aProp : theNode.getPropertiesList()) {
             // TODO: this requires a way to figure out dynamically the decoder
             // TODO: using String for now
-            jsonNode.addProperty(aProp.getProp(),
-                                  ValueDecoders.STRING_UTF8.decode(aProp.getVal()
-                                                                        .toByteArray()));
+            if (!aProp.getVal().isEmpty()) {
+                jsonNode.addProperty(aProp.getProp(),
+                                     ValueDecoders.STRING_UTF8.decode(aProp.getVal()
+                                                                           .toByteArray()));
+            }
         }
         return jsonNode;
     }
