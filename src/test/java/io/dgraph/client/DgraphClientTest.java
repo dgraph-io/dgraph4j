@@ -16,7 +16,12 @@
 
 package io.dgraph.client;
 
+import java.util.Collections;
+import java.util.List;
+
+import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -26,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for Dgraph client.
@@ -78,11 +84,19 @@ public class DgraphClientTest {
         final JsonObject resNode = jsonResult.getAsJsonArray("_root_").get(0)
                                               .getAsJsonObject();
 
-        assertEquals("0x8c84811dffd0a905", resNode.get("_uid_").getAsString());
+        assertTrue(resNode.has("_uid_"));
+        assertNotNull(resNode.get("_uid_"));
 
         final JsonArray childrenNodes = resNode.get("follows").getAsJsonArray();
-        assertEquals("Bob", childrenNodes.get(0).getAsJsonObject().get("name").getAsString());
-        assertEquals("Greg", childrenNodes.get(1).getAsJsonObject().get("name").getAsString());
+        assertEquals(2, childrenNodes.size());
+        final List<String> names = Lists.newArrayListWithCapacity(2);
+        for (final JsonElement child : childrenNodes) {
+            names.add(child.getAsJsonObject().get("name").getAsString());
+        }
+        Collections.sort(names);
+
+        assertEquals("Bob", names.get(0));
+        assertEquals("Greg", names.get(1));
     }
 
     @Test
