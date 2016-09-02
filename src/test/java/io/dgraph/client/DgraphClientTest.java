@@ -70,7 +70,7 @@ public class DgraphClientTest {
                                                  "    }\n" +
                                                  "}\n" +
                                                  "query {\n" +
-                                                 "    me(_xid_: alice) {\n" +
+                                                 "    debug(_xid_: alice) {\n" +
                                                  "        follows { \n" +
                                                  "            name _xid_  \n" +
                                                  "        }\n" +
@@ -79,9 +79,9 @@ public class DgraphClientTest {
         assertNotNull(result);
         final JsonObject jsonResult = result.toJsonObject();
         logger.info(jsonResult.toString());
-        assertEquals(1, jsonResult.getAsJsonArray("_root_").size());
+        assertEquals(1, jsonResult.getAsJsonArray("debug").size());
 
-        final JsonObject resNode = jsonResult.getAsJsonArray("_root_").get(0)
+        final JsonObject resNode = jsonResult.getAsJsonArray("debug").get(0)
                                               .getAsJsonObject();
 
         assertTrue(resNode.has("_uid_"));
@@ -109,7 +109,7 @@ public class DgraphClientTest {
                                                        "    } \n" +
                                                        "} \n" +
                                                        "query { \n" +
-                                                       "    me(_xid_: alice) { \n" +
+                                                       "    debug(_xid_: alice) { \n" +
                                                        "        name _xid_ follows { \n" +
                                                        "            name _xid_ follows { \n" +
                                                        "                name _xid_ \n" +
@@ -120,9 +120,9 @@ public class DgraphClientTest {
         assertNotNull(result);
         final JsonObject jsonResult = result.toJsonObject();
         logger.info(jsonResult.toString());
-        assertEquals(1, jsonResult.getAsJsonArray("_root_").size());
+        assertEquals(1, jsonResult.getAsJsonArray("debug").size());
 
-        final JsonObject gregNode = jsonResult.getAsJsonArray("_root_").get(0)
+        final JsonObject gregNode = jsonResult.getAsJsonArray("debug").get(0)
                                               .getAsJsonObject();
         assertEquals("alice", gregNode.getAsJsonPrimitive("_xid_")
                                      .getAsString());
