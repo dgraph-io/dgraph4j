@@ -1,6 +1,6 @@
 # Development
 
-For updates to the service, drop the [graphrespose.proto] (https://github.com/dgraph-io/dgraph/blob/master/protos/graphp/graphresponse.proto) and [facets.proto](https://github.com/dgraph-io/dgraph/blob/master/protos/facetsp/facets.proto)file here and add:
+For updates to the service, drop the [graphrespose.proto](https://github.com/dgraph-io/dgraph/blob/master/protos/graphp/graphresponse.proto) and [facets.proto](https://github.com/dgraph-io/dgraph/blob/master/protos/facetsp/facets.proto) file here and add:
 
 * graphresponse.proto
 ```
