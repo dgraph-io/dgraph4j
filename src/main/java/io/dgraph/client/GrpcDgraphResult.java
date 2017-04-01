@@ -16,11 +16,16 @@
 
 package io.dgraph.client;
 
-import java.util.Stack;
-
 import com.google.common.base.Strings;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+
+import io.dgraph.proto.Node;
+import io.dgraph.proto.Property;
+import io.dgraph.proto.Response;
+import io.dgraph.proto.Value;
 
 /**
  * Implementation of DgraphResult using Grpcresponse.Response.
@@ -28,72 +33,96 @@ import com.google.gson.JsonObject;
  * @author Edgar Rodriguez-Diaz
  * @version 0.0.1
  */
-public class GrpcDgraphResult extends DgraphResult<Graphresponse.Response> {
+public class GrpcDgraphResult extends DgraphResult {
 
-    private GrpcDgraphResult(final Graphresponse.Response theRootResult) {
-        super(theRootResult);
-    }
+	private GrpcDgraphResult(final Response theRootResult) {
+		super(theRootResult);
+	}
 
-    @Override
-    public JsonObject toJsonObject() {
-        final Stack<Graphresponse.Node> nodes = new Stack<>();
+	@Override
+	public JsonObject toJsonObject() {
+		JsonObject results = new JsonObject();
 
-        final Graphresponse.Node rootNode = getResponse().getN();
-        JsonObject rootJson = null;
+		for (int i = 0; i < getResponse().getNCount(); i++) {
+			Node node = getResponse().getN(i);
+			childrenToJson(results, node);
+		}
 
-        nodes.push(rootNode);
-        while (!nodes.isEmpty()) {
-            final Graphresponse.Node aNode = nodes.pop();
-            final JsonObject jsonNode = nodeToJson(aNode);
-            rootJson = (rootJson == null) ? jsonNode : rootJson;  // keep track of the root
+		JsonObject jsonLatency = new JsonObject();
+		jsonLatency.addProperty("pb", getResponse().getL().getPb());
+		jsonLatency.addProperty("parsing", getResponse().getL().getParsing());
+		jsonLatency.addProperty("processing", getResponse().getL().getProcessing());
+		// TODO: add total
 
-            for (Graphresponse.Node child : aNode.getChildrenList()) {
-                final JsonObject childJson = nodeToJson(child);
-                nodes.push(child);
+		results.add("server_latency", jsonLatency);
 
-                if (!jsonNode.has(child.getAttribute())) {
-                    jsonNode.add(child.getAttribute(), new JsonArray());
-                }
-                jsonNode.getAsJsonArray(child.getAttribute())
-                        .add(childJson);
-            }
-        }
+		return results;
+	}
 
-        final JsonObject jsonQueryResults = new JsonObject();
-        final JsonArray jsonResultElements = new JsonArray();
-        jsonResultElements.add(rootJson);
-        jsonQueryResults.add(rootNode.getAttribute(), jsonResultElements);
+	private void childrenToJson(JsonObject json, Node node) {
+		String attr = null;
+		JsonArray list = new JsonArray();
+		for (Node child : node.getChildrenList()) {
+			if (attr == null) {
+				attr = child.getAttribute();
+			}
+			list.add(childToJson(child));
+		}
+		if (attr != null) {
+			json.add(attr, list);
+		}
+	}
 
-        final JsonObject jsonLatency = new JsonObject();
-        jsonLatency.addProperty("pb", getResponse().getL().getPb());
-        jsonLatency.addProperty("parsing", getResponse().getL().getParsing());
-        jsonLatency.addProperty("processing", getResponse().getL().getProcessing());
-        // TODO: add total
-        jsonQueryResults.add("server_latency", jsonLatency);
+	private JsonObject childToJson(Node node) {
+		JsonObject jsonNode = new JsonObject();
 
-        return jsonQueryResults;
-    }
+		if (node.getUid() != 0) {
+			jsonNode.addProperty("_uid_", "0x" + Long.toHexString(node.getUid()));
+		}
 
-    private JsonObject nodeToJson(Graphresponse.Node theNode) {
-        final JsonObject jsonNode = new JsonObject();
+		if (!Strings.isNullOrEmpty(node.getXid())) {
+			jsonNode.addProperty("_xid_", node.getXid());
+		}
+		if (node.getPropertiesCount() > 0) {
+			for (Property prop : node.getPropertiesList()) {
+				if (prop.getValue().isInitialized()) {
+					jsonNode.add(prop.getProp(), valueToJsonElem(prop.getValue()));
+				}
+			}
+		}
+		if (node.getChildrenCount() > 0) {
+			childrenToJson(jsonNode, node);
+		}
+		return jsonNode;
+	}
 
-        jsonNode.addProperty("_uid_", "0x" + Long.toHexString(theNode.getUid()));
-        if (!Strings.isNullOrEmpty(theNode.getXid())) {
-            jsonNode.addProperty("_xid_", theNode.getXid());
-        }
-        for (Graphresponse.Property aProp : theNode.getPropertiesList()) {
-            // TODO: this requires a way to figure out dynamically the decoder
-            // TODO: using String for now
-            if (!aProp.getVal().isEmpty()) {
-                jsonNode.addProperty(aProp.getProp(),
-                                     ValueDecoders.STRING_UTF8.decode(aProp.getVal()
-                                                                           .toByteArray()));
-            }
-        }
-        return jsonNode;
-    }
+	private JsonElement valueToJsonElem(Value value) {
+		switch (value.getValCase().getNumber()) {
+		case Value.BOOL_VAL_FIELD_NUMBER:
+			return new JsonPrimitive(value.getBoolVal());
+		case Value.BYTES_VAL_FIELD_NUMBER:
+			return new JsonPrimitive(value.getBytesVal().toString());
+		case Value.DATE_VAL_FIELD_NUMBER:
+			return new JsonPrimitive(value.getDateVal().toString());
+		case Value.DATETIME_VAL_FIELD_NUMBER:
+			return new JsonPrimitive(value.getDatetimeVal().toString());
+		case Value.DEFAULT_VAL_FIELD_NUMBER:
+			return new JsonPrimitive(value.getDefaultVal().toString());
+		case Value.DOUBLE_VAL_FIELD_NUMBER:
+			return new JsonPrimitive(value.getDoubleVal());
+		case Value.GEO_VAL_FIELD_NUMBER:
+			return new JsonPrimitive(value.getGeoVal().toString());
+		case Value.INT_VAL_FIELD_NUMBER:
+			return new JsonPrimitive(value.getIntVal());
+		case Value.PASSWORD_VAL_FIELD_NUMBER:
+			break;
+		case Value.STR_VAL_FIELD_NUMBER:
+			return new JsonPrimitive(value.getStrVal());
+		}
+		return null;
+	}
 
-    public static GrpcDgraphResult newInstance(final Graphresponse.Response theResponse) {
-        return new GrpcDgraphResult(theResponse);
-    }
+	public static GrpcDgraphResult newInstance(final Response theResponse) {
+		return new GrpcDgraphResult(theResponse);
+	}
 }

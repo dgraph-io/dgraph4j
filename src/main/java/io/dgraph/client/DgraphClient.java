@@ -24,17 +24,18 @@ package io.dgraph.client;
  */
 public interface DgraphClient {
 
-    /**
-     * Executes a query in Dgraph.
-     *
-     * @param theQueryString    the query string
-     * @return                  the results as string
-     */
-    <T> DgraphResult<T> query(String theQueryString);
+	/**
+	 * Executes a query in Dgraph.
+	 *
+	 * @param theQueryString
+	 *            the query string
+	 * @return the results as string
+	 */
+	DgraphResult query(String theQueryString);
 
-    /**
-     * Closes resources used by the client.
-     */
-    void close();
+	/**
+	 * Closes resources used by the client.
+	 */
+	void close();
 
 }
