@@ -1,6 +1,11 @@
-build/
 .idea/
 .gradle/
+.settings/
+.classpath
+.project
+build/
+bin/
+src/generated/
 dgraph4j.iml
 dgraph4j.ipr
 dgraph4j.iws

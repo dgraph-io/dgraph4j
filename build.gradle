@@ -20,12 +20,14 @@ apply plugin: 'com.google.protobuf'
 apply plugin: 'idea'
 
 group = 'io.dgraph'
-version = '0.0.1'
+version = '0.0.2-SNAPSHOT'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+def grpcVersion = '1.2.0'
+
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.14'
+    gradleVersion = '3.4.1'
 }
 
 buildscript {
@@ -35,7 +37,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath "gradle.plugin.com.google.protobuf:protobuf-gradle-plugin:0.7.7"
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.0'
     }
 }
 
@@ -44,11 +46,11 @@ protobuf {
         // The version of protoc must match protobuf-java. If you don't depend on
         // protobuf-java directly, you will be transitively depending on the
         // protobuf-java version that grpc depends on.
-        artifact = "com.google.protobuf:protoc:3.0.0-beta-2"
+        artifact = "com.google.protobuf:protoc:3.2.0"
     }
     plugins {
         grpc {
-            artifact = 'io.grpc:protoc-gen-grpc-java:0.14.0'
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
         }
     }
     generateProtoTasks {
@@ -67,11 +69,11 @@ repositories {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // The production code uses the SLF4J logging API at compile time
-    compile 'org.slf4j:slf4j-api:1.7.21'
-    compile 'org.slf4j:slf4j-simple:1.7.21'
-    compile 'io.grpc:grpc-netty:0.14.0'
-    compile 'io.grpc:grpc-protobuf:0.14.0'
-    compile 'io.grpc:grpc-stub:0.14.0'
+    compile "org.slf4j:slf4j-api:1.7.21"
+    compile "org.slf4j:slf4j-simple:1.7.21"
+    compile "io.grpc:grpc-netty:${grpcVersion}"
+	compile "io.grpc:grpc-protobuf:${grpcVersion}"
+	compile "io.grpc:grpc-stub:${grpcVersion}"
 
     // Declare the dependency for your favourite test framework you want to use in your tests.
     // TestNG is also supported by the Gradle Test task. Just change the
@@ -85,6 +87,10 @@ idea {
         sourceDirs += file("${projectDir}/src/generated/main/java");
         sourceDirs += file("${projectDir}/src/generated/main/grpc");
     }
+}
+
+test {
+    testLogging.showStandardStreams = true
 }
 
 //create a single Jar with all dependencies
