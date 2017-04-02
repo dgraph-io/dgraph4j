@@ -65,4 +65,4 @@ INFO: [ManagedChannelImpl@5d3411d] Created with target localhost:8081
 
 ## Word of caution
 
-API for this client is likely to change constantly given current development in Dgraph.
+**This client is being run and maintained not by Dgraph team, but by the larger Dgraph community.** As such it might lag behind the latest release. We readily welcome PRs for this client.
