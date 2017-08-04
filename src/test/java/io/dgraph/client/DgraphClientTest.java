@@ -42,8 +42,9 @@ public class DgraphClientTest {
 
 	private static DgraphClient dgraphClient;
 
-	private static final String TEST_HOSTNAME = "192.168.56.101";
-	private static final int TEST_PORT = 8080;
+	private static final String TEST_HOSTNAME = "localhost";
+	// This is gRPC port, which runs HTTP2, use "--grpc_port=nnn" to start dgraph
+	private static final int TEST_PORT = 8081;
 
 	@BeforeClass
 	public static void beforeClass() {
@@ -57,11 +58,10 @@ public class DgraphClientTest {
 
 	@Test
 	public void testMutationAndQuery() {
-		String schema = "mutation { schema { name: string @index . } }";
-		String mutation = "mutation { set {"
-				+ "    <alice> <name> \"Alice\" . <greg> <name> \"Greg\" . <alice> <follows> <greg> . " + "  }" + "}";
-		String query = "{ me(func: anyofterms(name, \"Alice Greg\"), orderasc: name) "
-				+ "{ _uid_ name follows { name }}" + " me2(func: anyofterms(name, \"Alice Greg\")) { _uid_ name } }";
+		String schema = "mutation { schema { name: string @index(term) . } }";
+		String mutation = "mutation { set { _:alice <name> \"Alice\" . \n _:greg <name> \"Greg\" . \n _:alice <follows> _:greg . } }";
+		String query = "{ me(func: anyofterms(name, \"Alice Greg\"), orderasc: name) { _uid_ name follows { name } }\n" +
+				"me2(func: anyofterms(name, \"Alice Greg\")) { _uid_ name } }\n";
 
 		dgraphClient.query(schema);
 		DgraphResult result = dgraphClient.query(mutation);
@@ -82,15 +82,14 @@ public class DgraphClientTest {
 		assertNotNull(resNode.get("_uid_"));
 
 		final JsonArray childrenNodes = resNode.get("follows").getAsJsonArray();
-		assertEquals(2, childrenNodes.size());
+		assertEquals(1, childrenNodes.size());
 		final List<String> names = Lists.newArrayListWithCapacity(2);
 		for (final JsonElement child : childrenNodes) {
 			names.add(child.getAsJsonObject().get("name").getAsString());
 		}
 		Collections.sort(names);
 
-		assertEquals("Bob", names.get(0));
-		assertEquals("Greg", names.get(1));
+		assertEquals("Greg", names.get(0));
 	}
 
 	// @Test

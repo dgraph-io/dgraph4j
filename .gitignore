@@ -9,3 +9,5 @@ src/generated/
 dgraph4j.iml
 dgraph4j.ipr
 dgraph4j.iws
+out/
+src/main/proto/*.proto

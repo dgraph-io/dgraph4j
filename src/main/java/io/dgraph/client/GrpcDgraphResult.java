@@ -76,13 +76,6 @@ public class GrpcDgraphResult extends DgraphResult {
 	private JsonObject childToJson(Node node) {
 		JsonObject jsonNode = new JsonObject();
 
-		if (node.getUid() != 0) {
-			jsonNode.addProperty("_uid_", "0x" + Long.toHexString(node.getUid()));
-		}
-
-		if (!Strings.isNullOrEmpty(node.getXid())) {
-			jsonNode.addProperty("_xid_", node.getXid());
-		}
 		if (node.getPropertiesCount() > 0) {
 			for (Property prop : node.getPropertiesList()) {
 				if (prop.getValue().isInitialized()) {

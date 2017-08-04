@@ -1,6 +1,8 @@
 # Development
 
-For updates to the service, drop the [graphrespose.proto](https://github.com/dgraph-io/dgraph/blob/master/protos/graphp/graphresponse.proto) and [facets.proto](https://github.com/dgraph-io/dgraph/blob/master/protos/facetsp/facets.proto) file here and add:
+For updates to the service, drop the [graphrespose.proto](https://raw.githubusercontent.com/dgraph-io/dgraph/master/protos/graphresponse.proto),
+ [facets.proto](https://raw.githubusercontent.com/dgraph-io/dgraph/master/protos/facets.proto),
+ and [schema.proto](https://raw.githubusercontent.com/dgraph-io/dgraph/master/protos/schema.proto) file here and add:
 
 * graphresponse.proto
 ```
@@ -9,7 +11,7 @@ syntax="proto3";
 // update facets proto file path
 import "facets.proto";
 
-package graphp;
+package protos;
 
 //java configurations
 option java_multiple_files = true;
@@ -27,7 +29,7 @@ service Dgraph {
 ...
 syntax = "proto3";
 
-package facetsp;
+package protos;
 
 option java_multiple_files = true;
 option java_package = "io.dgraph.proto.facets";
