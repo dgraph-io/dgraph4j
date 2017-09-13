@@ -14,22 +14,6 @@
  * limitations under the License.
  */
 
-// Apply the java plugin to add support for Java
-apply plugin: 'java'
-apply plugin: 'com.google.protobuf'
-apply plugin: 'idea'
-
-group = 'io.dgraph'
-version = '0.0.2-SNAPSHOT'
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-def grpcVersion = '1.2.0'
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '3.4.1'
-}
-
 buildscript {
     repositories {
         maven {
@@ -40,6 +24,82 @@ buildscript {
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.0'
     }
 }
+
+plugins {
+    id "com.jfrog.bintray" version "1.7"
+}
+// Apply the java plugin to add support for Java
+apply plugin: 'java'
+apply plugin: 'com.google.protobuf'
+apply plugin: 'idea'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+
+group = 'io.dgraph'
+version = '0.8.1'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+def grpcVersion = '1.2.0'
+def dgraph4jVersion = "$version"
+
+install {
+    repositories.mavenInstaller {
+        pom.project {
+            name 'Dgraph4J'
+            description 'Dgraph Java Client'
+            url 'https://github.com/windoze/dgraph4j'
+            inceptionYear '2017'
+
+            packaging 'jar'
+            groupId 'io.dgraph'
+            artifactId 'dgraph4j'
+            version "${dgraph4jVersion}"
+
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            scm {
+                connection 'https://github.com/windoze/dgraph4j.git'
+                url 'https://github.com/windoze/dgraph4j'
+
+            }
+            developers {
+                developer {
+                    name 'Dgraph Lab'
+                }
+            }
+        }
+    }
+}
+
+bintray {
+    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+    configurations = ['archives']
+    description = "Dgraph Java Client"
+    pkg {
+        repo = 'maven'
+        name = 'dgraph4j'
+        userOrg = user
+        licenses = ['Apache-2.0']
+        vcsUrl = 'https://github.com/windoze/dgraph4j.git'
+        version {
+            name = "${dgraph4jVersion}"
+            desc = "Dgraph Java Client ${dgraph4jVersion}"
+            vcsTag = "${dgraph4jVersion}"
+        }
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.4.1'
+}
+
 
 protobuf {
     protoc {
@@ -53,6 +113,7 @@ protobuf {
             artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
         }
     }
+
     generateProtoTasks {
         all()*.plugins {
             grpc {}
@@ -61,6 +122,7 @@ protobuf {
     generatedFilesBaseDir = "$projectDir/src/generated"
 }
 
+Credentials
 // In this section you declare where to find the dependencies of your project
 repositories {
     mavenCentral()
@@ -102,4 +164,29 @@ task fatJar(type: Jar) {
     baseName = project.name + '-all'
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourceJar {
+                classifier "sources"
+            }
+        }
+    }
+}
+publishing {
+    repositories {
+        maven {
+            url project.hasProperty('mavenUrl') ? project.property('mavenUrl') : System.getenv('MAVEN_URL')
+            credentials(PasswordCredentials) {
+                username project.hasProperty('mavenUser') ? project.property('mavenUser') : System.getenv('MAVEN_USER')
+                password project.hasProperty('mavenPass') ? project.property('mavenPass') : System.getenv('MAVEN_PASS')
+            }
+        }
+    }
 }
