@@ -23,6 +23,7 @@ buildscript {
     dependencies {
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.0'
     }
+    
 }
 
 plugins {
@@ -134,9 +135,13 @@ dependencies {
     compile "org.slf4j:slf4j-api:1.7.21"
     compile "org.slf4j:slf4j-simple:1.7.21"
     compile "io.grpc:grpc-netty:${grpcVersion}"
-	compile "io.grpc:grpc-protobuf:${grpcVersion}"
-	compile "io.grpc:grpc-stub:${grpcVersion}"
-
+    compile "io.grpc:grpc-protobuf:${grpcVersion}"
+    compile "io.grpc:grpc-stub:${grpcVersion}"
+    compile "org.apache.commons:commons-lang3:3.3.2"
+    compile "org.projectlombok:lombok:1.16.18"
+    compile group: 'mil.nga', name: 'wkb', version: '1.0.1'
+    compile group: 'de.grundid.opendatalab', name: 'geojson-jackson', version: '1.0'
+	
     // Declare the dependency for your favourite test framework you want to use in your tests.
     // TestNG is also supported by the Gradle Test task. Just change the
     // testCompile dependency to testCompile 'org.testng:testng:6.8.1' and add
