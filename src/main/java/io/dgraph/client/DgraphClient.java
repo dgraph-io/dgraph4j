@@ -16,6 +16,10 @@
 
 package io.dgraph.client;
 
+import io.dgraph.entity.DgraphRequest;
+import io.dgraph.entity.Node;
+import io.dgraph.proto.AssignedIds;
+
 /**
  * Interface of a Dgraph client.
  *
@@ -33,9 +37,17 @@ public interface DgraphClient {
 	 */
 	DgraphResult query(String theQueryString);
 
+	DgraphResult query(DgraphRequest request);
+	
 	/**
 	 * Closes resources used by the client.
 	 */
 	void close();
+
+    Node NodeBlank(String varName);
+
+    AssignedIds assignUid(long count);
+
+    Node NodeUidVar(String name);
 
 }

@@ -12,7 +12,7 @@ option java_multiple_files = true;
 option java_package = "io.dgraph.proto";
 option java_outer_classname = "GraphResponse";
 EOF
-tail +$LINE2 /tmp/graphresponse.proto >> src/main/proto/graphresponse.proto
+tail -n +$LINE2 /tmp/graphresponse.proto >> src/main/proto/graphresponse.proto
 
 
 echo "Downloading facets.proto..."
@@ -25,7 +25,7 @@ option java_multiple_files = true;
 option java_package = "io.dgraph.proto.facets";
 option java_outer_classname = "FacetsProto";
 EOF
-tail +$LINE2 /tmp/facets.proto >> src/main/proto/facets.proto
+tail -n +$LINE2 /tmp/facets.proto >> src/main/proto/facets.proto
 
 echo "Downloading schema.proto..."
 curl -s -o src/main/proto/schema.proto "https://raw.githubusercontent.com/dgraph-io/dgraph/master/protos/schema.proto"
