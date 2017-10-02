@@ -123,7 +123,7 @@ public class Conversions {
         return out.toByteArray();
     }
 
-    public static byte[] GetBytes(Object yourObject) throws IOException {
+    public static ByteString GetBytes(Object yourObject) {
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         ObjectOutput out = null;
@@ -132,11 +132,12 @@ public class Conversions {
             out.writeObject(yourObject);
             out.flush();
             byte[] yourBytes = bos.toByteArray();
-            return yourBytes;
-        } finally {
             bos.close();
-
+            return ByteString.copyFrom(yourBytes);
+        } catch (IOException e) {
+            
         }
+        return null;
     }
 
 }

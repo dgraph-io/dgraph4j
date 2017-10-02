@@ -2,10 +2,8 @@ package io.dgraph.entity;
 
 import java.io.IOException;
 import java.nio.ByteOrder;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Base64;
-import java.util.Date;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -72,7 +70,7 @@ public class Edge {
         validateStr(val);
         Value v = Conversions.ObjectValue(TypeID.StringID, val);
 
-        nq = nq.toBuilder().setObjectValue(v).setObjectType(TypeID.StringID.getTypeVal()).build();
+        nq = nq.toBuilder().setObjectValue(v).build();
     }
 
     public void setValueStringWithLang(String val, String lang) {
@@ -80,7 +78,7 @@ public class Edge {
         validateStr(val);
         Value v = Conversions.ObjectValue(TypeID.StringID, val);
 
-        nq = nq.toBuilder().setObjectValue(v).setObjectType(TypeID.StringID.getTypeVal()).setLang(lang).build();
+        nq = nq.toBuilder().setObjectValue(v).setLang(lang).build();
     }
 
     private void checkConnections() {
@@ -91,7 +89,7 @@ public class Edge {
 
     private void setData(Object obj, TypeID type) {
         Value v = Conversions.ObjectValue(type, obj);
-        nq = nq.toBuilder().setObjectValue(v).setObjectType(type.getTypeVal()).build();
+        nq = nq.toBuilder().setObjectValue(v).build();
 
     }
 
@@ -119,7 +117,7 @@ public class Edge {
         checkConnections();
 
         Value v = Conversions.ObjectValue(TypeID.DefaultId, str);
-        nq = nq.toBuilder().setObjectValue(v).setObjectType(TypeID.StringID.getTypeVal()).build();
+        nq = nq.toBuilder().setObjectValue(v).build();
     }
 
     public void addFacet(String key, String value) {
@@ -164,7 +162,7 @@ public class Edge {
         ByteString bs = ByteString.copyFrom(bytes);
 
         Value v = Value.newBuilder().setGeoVal(bs).build();
-        nq = nq.toBuilder().setObjectValue(v).setObjectType(TypeID.GeoID.getTypeVal()).build();
+        nq = nq.toBuilder().setObjectValue(v).build();
 
     }
     
@@ -173,7 +171,7 @@ public class Edge {
         byte[] dst = Base64.getEncoder().encode(byteArr);
         Value v = Conversions.ObjectValue(TypeID.BinaryID, dst);
         
-        nq = nq.toBuilder().setObjectValue(v).setObjectType(TypeID.BinaryID.getTypeVal()).build();
+        nq = nq.toBuilder().setObjectValue(v).build();
     }
     
     
@@ -186,10 +184,6 @@ public class Edge {
     
     
     public void connectTo(Node conn) {
-
-        if (nq.getObjectType() > 0) {
-            throw new DGraphException("ErrConnected");
-        }
 
         if (StringUtils.isNotBlank(conn.getVarName())) {
             nq = nq.toBuilder().setObjectVar(conn.String()).build();
