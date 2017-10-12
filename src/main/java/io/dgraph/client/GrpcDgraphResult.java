@@ -22,6 +22,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
+import io.dgraph.proto.NQuad;
 import io.dgraph.proto.Node;
 import io.dgraph.proto.Property;
 import io.dgraph.proto.Response;
@@ -47,7 +48,7 @@ public class GrpcDgraphResult extends DgraphResult {
 			Node node = getResponse().getN(i);
 			childrenToJson(results, node);
 		}
-
+		
 		JsonObject jsonLatency = new JsonObject();
 		jsonLatency.addProperty("pb", getResponse().getL().getPb());
 		jsonLatency.addProperty("parsing", getResponse().getL().getParsing());
