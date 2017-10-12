@@ -20,16 +20,16 @@ public class DgraphMain {
         DgraphRequest req = new DgraphRequest();
         Map<String,Object> obj = Maps.newHashMap()   ;    
         
-        obj.put("_uid_", 6007);
-        
         obj.put("key1",4.2);
-        obj.put("key2",3.1);
+        obj.put("key2",8.9);
         
-        req.deleteObject(obj);
+        req.setObject(obj);
         
         DgraphResult resp = dgraphClient.query(req);
 
+        System.out.println( resp.getResponse().getAssignedUidsMap());
         System.out.println("Response  "+gson.toJson(resp));
+        long uid = (long)  resp.getResponse().getAssignedUidsMap().values().toArray()[0];
         
         final DgraphResult result2 = dgraphClient.query("{me(func:uid(6007)) { uid,key1,key2}}");
 

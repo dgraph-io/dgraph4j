@@ -78,7 +78,6 @@ public class DgraphRequest {
 
         String objJson = gson.toJson(obj);
 
-        System.out.println("Got json" + objJson);
         if (StringUtils.isBlank(objJson)) {
             throw new DGraphException("Unable to marshall to json");
         }
@@ -95,7 +94,6 @@ public class DgraphRequest {
 
         String objJson = gson.toJson(obj);
 
-        System.out.println("Got json" + objJson);
         if (StringUtils.isBlank(objJson)) {
             throw new DGraphException("Unable to marshall to json");
         }
