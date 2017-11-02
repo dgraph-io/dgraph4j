@@ -145,6 +145,10 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
+googleJavaFormat {
+    toolVersion = '1.5'
+}
+
 idea {
     module {
         sourceDirs += file("${projectDir}/src/generated/main/java");
