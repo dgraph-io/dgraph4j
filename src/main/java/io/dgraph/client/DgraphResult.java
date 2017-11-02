@@ -17,27 +17,26 @@
 package io.dgraph.client;
 
 import com.google.gson.JsonObject;
-
 import io.dgraph.proto.Response;
 
 /**
- * This abstract class wraps the actual response from Dgraph. An abstract method
- * for converting the response to a JsonObject is defined.
+ * This abstract class wraps the actual response from Dgraph. An abstract method for converting the
+ * response to a JsonObject is defined.
  *
  * @author Edgar Rodriguez-Diaz
  * @version 0.0.1
  */
 public abstract class DgraphResult {
 
-	private Response root;
+  private Response root;
 
-	protected DgraphResult(final Response theRootResult) {
-		root = theRootResult;
-	}
+  protected DgraphResult(final Response theRootResult) {
+    root = theRootResult;
+  }
 
-	public Response getResponse() {
-		return root;
-	}
+  public Response getResponse() {
+    return root;
+  }
 
-	public abstract JsonObject toJsonObject();
+  public abstract JsonObject toJsonObject();
 }

@@ -24,6 +24,5 @@ package io.dgraph.client;
  */
 public interface ValueDecoder<T> {
 
-    T decode(byte[] theBytes);
-
+  T decode(byte[] theBytes);
 }

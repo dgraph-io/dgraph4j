@@ -27,18 +27,20 @@ import java.nio.charset.Charset;
  */
 public final class ValueDecoders {
 
-    public static ValueDecoder<String> STRING_UTF8 = theBytes -> new String(theBytes, Charset.forName("utf-8"));
+  public static ValueDecoder<String> STRING_UTF8 =
+      theBytes -> new String(theBytes, Charset.forName("utf-8"));
 
-    public static ValueDecoder<Integer> INTEGER = theBytes -> {
+  public static ValueDecoder<Integer> INTEGER =
+      theBytes -> {
         final ByteBuffer wrapped = ByteBuffer.wrap(theBytes);
         return wrapped.getInt();
-    };
+      };
 
-    public static ValueDecoder<Short> SHORT = theBytes -> ByteBuffer.wrap(theBytes).getShort();
+  public static ValueDecoder<Short> SHORT = theBytes -> ByteBuffer.wrap(theBytes).getShort();
 
-    public static ValueDecoder<Long> LONG = theBytes -> ByteBuffer.wrap(theBytes).getLong();
+  public static ValueDecoder<Long> LONG = theBytes -> ByteBuffer.wrap(theBytes).getLong();
 
-    public static ValueDecoder<Float> FLOAT = theBytes -> ByteBuffer.wrap(theBytes).getFloat();
+  public static ValueDecoder<Float> FLOAT = theBytes -> ByteBuffer.wrap(theBytes).getFloat();
 
-    public static ValueDecoder<Double> DOUBLE = theBytes -> ByteBuffer.wrap(theBytes).getDouble();
+  public static ValueDecoder<Double> DOUBLE = theBytes -> ByteBuffer.wrap(theBytes).getDouble();
 }

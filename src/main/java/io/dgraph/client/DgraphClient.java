@@ -20,22 +20,19 @@ package io.dgraph.client;
  * Interface of a Dgraph client.
  *
  * @author Edgar Rodriguez-Diaz
+ * @author Deepak Jois
  * @version 0.0.1
  */
 public interface DgraphClient {
 
-	/**
-	 * Executes a query in Dgraph.
-	 *
-	 * @param theQueryString
-	 *            the query string
-	 * @return the results as string
-	 */
-	DgraphResult query(String theQueryString);
+  /**
+   * Executes a query in Dgraph.
+   *
+   * @param theQueryString the query string
+   * @return the results as string
+   */
+  DgraphResult query(String theQueryString);
 
-	/**
-	 * Closes resources used by the client.
-	 */
-	void close();
-
+  /** Closes resources used by the client. */
+  void close();
 }
