@@ -33,6 +33,7 @@ plugins {
 apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'idea'
+apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
