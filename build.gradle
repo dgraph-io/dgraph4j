@@ -50,7 +50,7 @@ install {
         pom.project {
             name 'Dgraph4J'
             description 'Dgraph Java Client'
-            url 'https://github.com/windoze/dgraph4j'
+            url 'https://github.com/dgraph-io/dgraph4j'
             inceptionYear '2017'
 
             packaging 'jar'
@@ -66,13 +66,13 @@ install {
                 }
             }
             scm {
-                connection 'https://github.com/windoze/dgraph4j.git'
-                url 'https://github.com/windoze/dgraph4j'
+                connection 'https://github.com/dgraph-io/dgraph4j.git'
+                url 'https://github.com/dgraph-io/dgraph4j'
 
             }
             developers {
                 developer {
-                    name 'Dgraph Lab'
+                    name 'Dgraph Labs'
                 }
             }
         }
@@ -89,7 +89,7 @@ bintray {
         name = 'dgraph4j'
         userOrg = user
         licenses = ['Apache-2.0']
-        vcsUrl = 'https://github.com/windoze/dgraph4j.git'
+        vcsUrl = 'https://github.com/dgraph-io/dgraph4j.git'
         version {
             name = "${dgraph4jVersion}"
             desc = "Dgraph Java Client ${dgraph4jVersion}"
