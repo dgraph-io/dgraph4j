@@ -27,11 +27,13 @@ buildscript {
 
 plugins {
     id "com.jfrog.bintray" version "1.7"
+    id 'com.github.sherter.google-java-format' version '0.6'
 }
 // Apply the java plugin to add support for Java
 apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'idea'
+apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
@@ -48,7 +50,7 @@ install {
         pom.project {
             name 'Dgraph4J'
             description 'Dgraph Java Client'
-            url 'https://github.com/windoze/dgraph4j'
+            url 'https://github.com/dgraph-io/dgraph4j'
             inceptionYear '2017'
 
             packaging 'jar'
@@ -64,13 +66,13 @@ install {
                 }
             }
             scm {
-                connection 'https://github.com/windoze/dgraph4j.git'
-                url 'https://github.com/windoze/dgraph4j'
+                connection 'https://github.com/dgraph-io/dgraph4j.git'
+                url 'https://github.com/dgraph-io/dgraph4j'
 
             }
             developers {
                 developer {
-                    name 'Dgraph Lab'
+                    name 'Dgraph Labs'
                 }
             }
         }
@@ -87,7 +89,7 @@ bintray {
         name = 'dgraph4j'
         userOrg = user
         licenses = ['Apache-2.0']
-        vcsUrl = 'https://github.com/windoze/dgraph4j.git'
+        vcsUrl = 'https://github.com/dgraph-io/dgraph4j.git'
         version {
             name = "${dgraph4jVersion}"
             desc = "Dgraph Java Client ${dgraph4jVersion}"
@@ -97,7 +99,7 @@ bintray {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.4.1'
+    gradleVersion = '4.3'
 }
 
 
@@ -142,6 +144,10 @@ dependencies {
     // testCompile dependency to testCompile 'org.testng:testng:6.8.1' and add
     // 'test.useTestNG()' to your build script.
     testCompile 'junit:junit:4.12'
+}
+
+googleJavaFormat {
+    toolVersion = '1.5'
 }
 
 idea {

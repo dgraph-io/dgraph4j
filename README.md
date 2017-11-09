@@ -36,8 +36,8 @@ example of how to use it:
 
 * Write `DgraphMain.java` (assuming Dgraph contains the data required for the query):
 ```java
-import io.dgraph.client.DgraphClient;
-import io.dgraph.client.GrpcDgraphClient;
+import DgraphClient;
+import DgraphClient;
 import io.dgraph.client.DgraphResult;
 
 public class DgraphMain {
