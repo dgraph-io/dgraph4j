@@ -95,8 +95,6 @@ public class DgraphClient {
     }
   }
 
-  public static class
-
   public class Transaction {
     TxnContext context;
     boolean finished;
