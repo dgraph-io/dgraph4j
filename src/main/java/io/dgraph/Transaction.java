@@ -1,5 +1,6 @@
 package io.dgraph;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,11 +155,13 @@ public class Transaction {
     return stubSupplier.get();
   }
 
-  private DgraphProto.LinRead mergeLinReads(DgraphProto.LinRead dst, DgraphProto.LinRead src) {
+  @VisibleForTesting
+  DgraphProto.LinRead mergeLinReads(DgraphProto.LinRead dst, DgraphProto.LinRead src) {
     DgraphProto.LinRead.Builder result = DgraphProto.LinRead.newBuilder(dst);
     for (Map.Entry<Integer, Long> entry : src.getIdsMap().entrySet()) {
+      // Update dst values to the max of the 2 corresponding values:
       if (dst.containsIds(entry.getKey())
-        && dst.getIdsOrThrow(entry.getKey()) >= entry.getValue()) {
+          && dst.getIdsOrThrow(entry.getKey()) < entry.getValue()) {
         result.putIds(entry.getKey(), entry.getValue());
       }
     }
