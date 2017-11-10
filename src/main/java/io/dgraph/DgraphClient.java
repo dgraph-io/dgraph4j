@@ -17,11 +17,12 @@
 package io.dgraph;
 
 import io.dgraph.DgraphProto.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of a DgraphClient using grpc.
@@ -76,6 +77,26 @@ public class DgraphClient {
     return result.build();
   }
 
+  public static class TxnFinishedException extends Exception {
+    TxnFinishedException() {
+      super("Transaction has already been committed or discarded");
+    }
+  }
+
+  public static class TxnConflictException extends Exception {
+    TxnConflictException() {
+      super("Transaction has been aborted due to conflict");
+    }
+  }
+
+  public static class MismatchedTimestampException extends Exception {
+    MismatchedTimestampException() {
+      super("startTs Mismatch");
+    }
+  }
+
+  public static class
+
   public class Transaction {
     TxnContext context;
     boolean finished;
@@ -85,7 +106,7 @@ public class DgraphClient {
       context = TxnContext.newBuilder().setLinRead(DgraphClient.this.getLinRead()).build();
     }
 
-    public Response query(final String query, final Map<String, String> vars) throws Exception {
+    public Response query(final String query, final Map<String, String> vars) throws MismatchedTimestampException {
       logger.debug("Starting query...");
       final Request request =
           Request.newBuilder()
@@ -104,8 +125,7 @@ public class DgraphClient {
 
     public Assigned mutate(Mutation mutation) throws Exception {
       if (finished) {
-        // TODO throw a custom exception
-        throw new Exception("Transaction has already been committed or discarded");
+        throw new TxnFinishedException();
       }
 
       Mutation request = Mutation.newBuilder(mutation).setStartTs(context.getStartTs()).build();
@@ -123,10 +143,9 @@ public class DgraphClient {
       return ag;
     }
 
-    public void commit() throws Exception {
+    public void commit() throws TxnFinishedException, TxnConflictException {
       if (finished) {
-        // TODO throw a custom exception
-        throw new Exception("Transaction has already been committed or discarded");
+        throw new TxnFinishedException();
       }
 
       finished = true;
@@ -138,8 +157,7 @@ public class DgraphClient {
       final DgraphGrpc.DgraphBlockingStub client = anyClient();
       final TxnContext ctx = client.commitOrAbort(context);
       if (ctx.getAborted()) {
-        // TODO throw a custom exception
-        throw new Exception("Transaction has been aborted due to conflict");
+        throw new TxnConflictException();
       }
     }
 
@@ -159,7 +177,7 @@ public class DgraphClient {
       client.commitOrAbort(context);
     }
 
-    private void mergeContext(final TxnContext src) throws Exception {
+    private void mergeContext(final TxnContext src) throws MismatchedTimestampException {
       TxnContext.Builder result = TxnContext.newBuilder(context);
 
       LinRead lr = mergeLinReads(this.context.getLinRead(), src.getLinRead());
@@ -171,8 +189,7 @@ public class DgraphClient {
       if (context.getStartTs() == 0) {
         result.setStartTs(src.getStartTs());
       } else if (context.getStartTs() != src.getStartTs()) {
-        // TODO throw a custom exception
-        throw new Exception("startTs Mismatch");
+        throw new MismatchedTimestampException();
       }
 
       result.addAllKeys(src.getKeysList());
