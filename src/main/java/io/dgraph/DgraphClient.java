@@ -77,24 +77,6 @@ public class DgraphClient {
     return result.build();
   }
 
-  public static class TxnFinishedException extends Exception {
-    TxnFinishedException() {
-      super("Transaction has already been committed or discarded");
-    }
-  }
-
-  public static class TxnConflictException extends Exception {
-    TxnConflictException() {
-      super("Transaction has been aborted due to conflict");
-    }
-  }
-
-  public static class MismatchedTimestampException extends Exception {
-    MismatchedTimestampException() {
-      super("startTs Mismatch");
-    }
-  }
-
   public class Transaction {
     TxnContext context;
     boolean finished;
@@ -104,7 +86,7 @@ public class DgraphClient {
       context = TxnContext.newBuilder().setLinRead(DgraphClient.this.getLinRead()).build();
     }
 
-    public Response query(final String query, final Map<String, String> vars) throws MismatchedTimestampException {
+    public Response query(final String query, final Map<String, String> vars) {
       logger.debug("Starting query...");
       final Request request =
           Request.newBuilder()
@@ -121,7 +103,7 @@ public class DgraphClient {
       return response;
     }
 
-    public Assigned mutate(Mutation mutation) throws Exception {
+    public Assigned mutate(Mutation mutation) {
       if (finished) {
         throw new TxnFinishedException();
       }
@@ -135,13 +117,13 @@ public class DgraphClient {
       mergeContext(ag.getContext());
 
       if (!ag.getError().equals("")) {
-        throw new Exception(ag.getError());
+        throw new DgraphException(ag.getError());
       }
 
       return ag;
     }
 
-    public void commit() throws TxnFinishedException, TxnConflictException {
+    public void commit() {
       if (finished) {
         throw new TxnFinishedException();
       }
@@ -175,7 +157,7 @@ public class DgraphClient {
       client.commitOrAbort(context);
     }
 
-    private void mergeContext(final TxnContext src) throws MismatchedTimestampException {
+    private void mergeContext(final TxnContext src) {
       TxnContext.Builder result = TxnContext.newBuilder(context);
 
       LinRead lr = mergeLinReads(this.context.getLinRead(), src.getLinRead());
@@ -187,7 +169,7 @@ public class DgraphClient {
       if (context.getStartTs() == 0) {
         result.setStartTs(src.getStartTs());
       } else if (context.getStartTs() != src.getStartTs()) {
-        throw new MismatchedTimestampException();
+        throw new DgraphException("startTs mismatch");
       }
 
       result.addAllKeys(src.getKeysList());
