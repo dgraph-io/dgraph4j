@@ -53,6 +53,9 @@ import java.util.concurrent.TimeUnit;
 
 public class DgraphMain {
 
+  private static final String TEST_HOSTNAME = "localhost";
+  private static final int TEST_PORT = 9080;
+
   public static void main(final String[] args) {
     ManagedChannel channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
     DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
