@@ -17,11 +17,12 @@
 package io.dgraph;
 
 import io.dgraph.DgraphProto.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of a DgraphClient using grpc.
@@ -70,7 +71,7 @@ public class DgraphClient {
     for (Map.Entry<Integer, Long> entry : src.getIdsMap().entrySet()) {
       if (dst.containsIds(entry.getKey())
           && dst.getIdsOrThrow(entry.getKey()) >= entry.getValue()) {
-        result.putIds(entry.getKey(), dst.getIdsOrThrow(entry.getKey()));
+        // Do nothing
       } else {
         result.putIds(entry.getKey(), entry.getValue());
       }
