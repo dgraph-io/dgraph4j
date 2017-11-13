@@ -1,14 +1,89 @@
 # Dgraph Client for Java
 
-This is a very basic implementation for a Dgraph client in Java using Grpc.
+A minimal, basic implementation for a Dgraph client in Java using [grpc].
 
-To test the client code, you need a running instance of Dgraph in the following location:
-* host: `localhost`
-* port: `8081`
+[grpc]: https://grpc.io/
 
-To run the tests simply execute:
+This client following the [Dgraph Go client][goclient] closely.
+
+[goclient]: https://github.com/dgraph-io/dgraph/tree/master/client
+
+## Quickstart
+
+### Run latest Dgraph server
+We will be releasing Dgraph v0.9 soon. Till then, the code in this repo will
+work only with [Dgraph master][dgraph]. You will need Go installed and ensure
+that `$GOPATH/bin` is added to your `$PATH`.
+
+Execute the following commands in two different directories:
+
+```
+rm -r zw; go install github.com/dgraph-io/dgraph/dgraph && dgraph zero
+```
+
+```
+rm -r p w; go install github.com/dgraph-io/dgraph/dgraph && dgraph server --memory_mb=1024
+```
+
+To test the client against the server, run:
+
 ```shell
 $ ./gradlew test
+```
+
+### Using the client.
+
+_More detailed instructions are coming soon_
+
+Here is a snippet of code using the Dgraph client library
+
+```java
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.protobuf.ByteString;
+import io.dgraph.DgraphGrpc.DgraphBlockingStub;
+import io.dgraph.DgraphProto.Mutation;
+import io.dgraph.DgraphProto.Operation;
+import io.dgraph.DgraphProto.Response;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+public class DgraphMain {
+
+  public static void main(final String[] args) {
+    ManagedChannel channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
+    DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
+    DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(blockingStub));
+
+    // Set schema
+    Operation op = Operation.newBuilder().setSchema("name: string @index(exact) .").build();
+    dgraphClient.alter(op);
+
+    // Add data
+    JsonObject json = new JsonObject();
+    json.addProperty("name", "Alice");
+
+    Mutation mu =
+      Mutation.newBuilder()
+      .setCommitImmediately(true)
+      .setSetJson(ByteString.copyFromUtf8(json.toString()))
+      .build();
+    dgraphClient.newTransaction().mutate(mu);
+
+    // Query
+    String query = "{\n" + "me(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
+    Map<String, String> vars = Collections.singletonMap("$a", "Alice");
+    Response res = dgraphClient.newTransaction().query(query, vars);
+
+    // Verify data as expected
+    JsonParser parser = new JsonParser();
+    json = parser.parse(res.getJson().toStringUtf8()).getAsJsonObject();
+    String name = json.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
+  }
+}
 ```
 
 ## Distribution
@@ -26,43 +101,3 @@ $ ls dgraph4j/build/libs
 dgraph4j-all-0.0.1.jar
 ```
 
-**NOTE**: there's no discussion yet on how to (or if) distribute this package in any of the JAR
-  repositories publicly available, e.g. Maven Central.
-
-## How to use it?
-
-You just need to include the fatJar into the classpath, the following is a simple
-example of how to use it:
-
-* Write `DgraphMain.java` (assuming Dgraph contains the data required for the query):
-```java
-import DgraphClient;
-import DgraphClient;
-import io.dgraph.client.DgraphResult;
-
-public class DgraphMain {
-
-    public static void main(final String[] args) {
-        final DgraphClient dgraphClient = GrpcDgraphClient.newInstance("localhost", 8081);
-        final DgraphResult result = dgraphClient.query("{me(_xid_: alice) { name _xid_ follows { name _xid_ follows {name _xid_ } } }}");
-        System.out.println(result.toJsonObject().toString());
-    }
-}
-```
-
-* Compile:
-```shell
-$ javac -cp dgraph4j-all-0.0.1.jar DgraphMain.java
-```
-
-* Run:
-```shell
-$ java -cp dgraph4j-all-0.0.1.jar:. DgraphMain
-Jun 29, 2016 12:28:03 AM io.grpc.internal.ManagedChannelImpl <init>
-INFO: [ManagedChannelImpl@5d3411d] Created with target localhost:8081
-{"_root_":[{"_uid_":"0x8c84811dffd0a905","_xid_":"alice","name":"Alice","follows":[{"_uid_":"0xdd77c65008e3c71","_xid_":"bob","name":"Bob"},{"_uid_":"0x5991e7d8205041b3","_xid_":"greg","name":"Greg"}]}],"server_latency":{"pb":"11.487µs","parsing":"85.504µs","processing":"270.597µs"}}
-```
-
-## Word of caution
-
-**This client is being run and maintained not by Dgraph team, but by the larger Dgraph community.** As such it might lag behind the latest release. We readily welcome PRs for this client.
