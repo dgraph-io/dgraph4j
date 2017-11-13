@@ -71,6 +71,8 @@ public class DgraphClient {
     for (Map.Entry<Integer, Long> entry : src.getIdsMap().entrySet()) {
       if (dst.containsIds(entry.getKey())
           && dst.getIdsOrThrow(entry.getKey()) >= entry.getValue()) {
+        result.putIds(entry.getKey(), dst.getIdsOrThrow(entry.getKey()));
+      } else {
         result.putIds(entry.getKey(), entry.getValue());
       }
     }
