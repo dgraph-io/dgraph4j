@@ -42,7 +42,7 @@ version = '0.8.1'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-def grpcVersion = '1.2.0'
+def grpcVersion = '1.7.0'
 def dgraph4jVersion = "$version"
 
 install {
