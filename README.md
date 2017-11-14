@@ -11,18 +11,19 @@ This client following the [Dgraph Go client][goclient] closely.
 ## Quickstart
 
 ### Run latest Dgraph server
-We will be releasing Dgraph v0.9 soon. Till then, the code in this repo will
-work only with [Dgraph master][dgraph]. You will need Go installed and ensure
-that `$GOPATH/bin` is added to your `$PATH`.
+You will need to install [Dgraph v0.9][v0.9] run the Dgraph server. After installing
+the server, running the following commands in separate directories to start
+Dgraph.
 
-Execute the following commands in two different directories:
+[v0.9]: https://github.com/dgraph-io/dgraph/releases
 
-```
-rm -r zw; go install github.com/dgraph-io/dgraph/dgraph && dgraph zero
-```
 
 ```
-rm -r p w; go install github.com/dgraph-io/dgraph/dgraph && dgraph server --memory_mb=1024
+rm -r zw; dgraph zero
+```
+
+```
+rm -r p w; dgraph server --memory_mb=1024
 ```
 
 To test the client against the server, run:
