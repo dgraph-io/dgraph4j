@@ -16,24 +16,27 @@
 
 package io.dgraph;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import io.dgraph.DgraphGrpc.DgraphBlockingStub;
+import io.dgraph.DgraphProto.LinRead;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Edgar Rodriguez-Diaz
@@ -54,7 +57,30 @@ public class DgraphClientTest {
   }
 
   @Test
-  public void textTxnQueryVariables() throws Exception {
+  public void testMergeContext() throws Exception {
+    LinRead dst = LinRead.newBuilder().putAllIds(new HashMap<Integer, Long>(){{
+      put(1, 10L);
+      put(2, 15L);
+      put(3, 10L);
+    }}).build();
+
+    LinRead src = LinRead.newBuilder().putAllIds(new HashMap<Integer, Long>(){{
+      put(2, 10L);
+      put(3, 15L);
+      put(4, 10L);
+    }}).build();
+
+    LinRead result = dgraphClient.mergeLinReads(dst, src);
+
+    assertEquals(4, result.getIdsCount());
+    assertEquals(10L, result.getIdsOrThrow(1));
+    assertEquals(15L, result.getIdsOrThrow(2));
+    assertEquals(15L, result.getIdsOrThrow(3));
+    assertEquals(10L, result.getIdsOrThrow(4));
+  }
+
+  @Test
+  public void testTxnQueryVariables() throws Exception {
     // Set schema
     Operation op = Operation.newBuilder().setSchema("name: string @index(exact) .").build();
     dgraphClient.alter(op);
