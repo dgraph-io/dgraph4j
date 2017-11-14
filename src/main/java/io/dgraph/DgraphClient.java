@@ -17,12 +17,11 @@
 package io.dgraph;
 
 import io.dgraph.DgraphProto.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of a DgraphClient using grpc.
