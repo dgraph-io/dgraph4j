@@ -177,6 +177,15 @@ BUILD SUCCESSFUL in 1s
 
 If you see `Alice` in the output, you have a running client.
 
+## Client API
+_TODO_
+### alter()
+### newTransaction()
+### Transaction::query()
+### Transaction::mutate()
+### Transaction::commit()
+### Transaction::discard()
+
 ## Development
 
 ### Building the source
