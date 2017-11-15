@@ -1,4 +1,4 @@
-## Publishing artifacts to Maven Central
+## Publishing artefacts to Maven Central
 
 Dgraph owns the `io.dgraph` namespace on Maven Central. See [JIRA ticket][jira] for details.
 This document contains instructions to publish dgraph4j build artefacts to Maven central
@@ -32,5 +32,5 @@ ossrhPassword=<…password…>
 
 ### References
 * [Deploying to OSSRH with Gradle - Introduction](http://central.sonatype.org/pages/gradle.html)
-* [StackOverflow thread on issues during signing artifacts](https://stackoverflow.com/questions/27936119/gradle-uploadarchives-task-unable-to-read-secret-key)
+* [StackOverflow thread on issues during signing artefacts](https://stackoverflow.com/questions/27936119/gradle-uploadarchives-task-unable-to-read-secret-key)
 * [Releasing the Deployment](http://central.sonatype.org/pages/releasing-the-deployment.html)
