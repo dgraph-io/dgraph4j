@@ -10,27 +10,80 @@ This client following the [Dgraph Go client][goclient] closely.
 
 ## Quickstart
 
-### Run latest Dgraph server
-You will need to install [Dgraph v0.9][v0.9] run the Dgraph server. After installing
-the server, running the following commands in separate directories to start
-Dgraph.
+### Start Dgraph Server
+You will need to install [Dgraph v0.9][releases] and run it. After installing
+the server, running the following commands:
 
-[v0.9]: https://github.com/dgraph-io/dgraph/releases
+[releases]: https://github.com/dgraph-io/dgraph/releases
 
+First, create two separate directories for `dgraph zero` and `dgraph server`.
 
 ```
+mkdir -p dgraphdata/zero dgraphdata/data
+```
+
+Then start `dgraph zero`:
+
+```
+cd dgraphdata/zero
 rm -r zw; dgraph zero
 ```
 
+Finally, start the `dgraph server`:
+
 ```
+cd dgraphdata/data
 rm -r p w; dgraph server --memory_mb=1024
 ```
 
-To test the client against the server, run:
+For more configuration options, and other details, refer to [docs.dgraph.io](https://docs.dgraph.io)
 
-```shell
-$ ./gradlew test
+### Using the Java client
+This section will guide you in creating a Java project from scratch, and using the Dgraph Java
+client to communicate with the  server. We will be using [gradle] as our build tool, so make
+you have it installed.
+
+[gradle]: https://gradle.org/
+
+First initialize a new `java-application` project using gradle.
+
 ```
+mkdir DgraphJavaSample
+cd DgraphJavaSample
+gradle init --type java-application
+```
+
+Modify the `build.gradle` file to change the `repositories` and `dependencies`:
+
+```groovy
+
+// Apply the java plugin to add support for Java
+apply plugin: 'java'
+
+// Apply the maven plugin to add support for Maven
+apply plugin: 'maven'
+
+// Apply the application plugin to add support for building an application
+apply plugin: 'application'
+
+// In this section you declare where to find the dependencies of your project
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+ 	// Use Dgraph Java client
+ 	compile 'io.dgraph:dgraph4j:0.9.1'
+
+    // Use JUnit test framework
+    testCompile 'junit:junit:4.12'
+}
+
+// Define the main class for the application
+mainClassName = 'App'
+```
+
+Modify the class
 
 ### Using the client.
 
@@ -90,18 +143,14 @@ public class DgraphMain {
 }
 ```
 
-## Distribution
+## Development
 
-Currently, given that this is the first version, the distribution is done via a fatJar
-built locally. The procedure to build it is:
+### Building the source
+
+### Testing the source
+To test the client in this repo against the server, run:
 
 ```shell
-$ ./gradlew fatJar
-```
-
-This will generate the client library (and it's dependencies) in a single jar at:
-```shell
-$ ls dgraph4j/build/libs
-dgraph4j-all-0.0.1.jar
+$ ./gradlew test
 ```
 
