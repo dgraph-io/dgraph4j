@@ -9,9 +9,10 @@ This document contains instructions to publish dgraph4j build artefacts to Maven
 
 * Get access to credentials for `dgraph` JIRA account on Maven Central
 
-* Generate GPG credentials. Make sure you set a passphrase
+* Generate GPG credentials. Make sure you set a passphrase.
   - Note down the short version of the Key ID: `gpg --list-keys --keyid-format short`
   - Generate a secret key ring file if not present: `gpg --export-secret-keys -o /path/to/.gnupg/secring.gpg`
+  - Publish the keys to the MIT server: `gpg --send-keys <key-id>` (Maven Central will check for keys here)
 
 * Create `~/.gradle/gradle.properties` and populate it with all the credentials:
 ```
