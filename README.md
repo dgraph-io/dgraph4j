@@ -44,7 +44,9 @@ rm -r p w; dgraph server --memory_mb=1024
 For more configuration options, and other details, refer to [docs.dgraph.io]
 
 ### Using the Java client
-Checkout the [dgraph-io/DgraphJavaSample] project. 
+Checkout the [dgraph-io/DgraphJavaSample] project.
+
+[dgraph-io/DgraphJavaSample]: https://github.com/dgraph-io/DgraphJavaSample
 
 ```
 $ git clone https://github.com/dgraph-io/DgraphJavaSample
