@@ -8,7 +8,7 @@ This client follows the [Dgraph Go client][goclient] closely.
 
 [goclient]: https://github.com/dgraph-io/dgraph/tree/master/client
 
-Before using this client, it is highly recommended that you go through [docs.dgraph.io],
+Before using this client, we highly recommended that you go through [docs.dgraph.io],
 and make sure you understand what Dgraph is all about, and how to run it.
 
 [docs.dgraph.io]:https://docs.dgraph.io
