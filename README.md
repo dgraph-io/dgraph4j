@@ -13,6 +13,23 @@ and make sure you understand what Dgraph is all about, and how to run it.
 
 [docs.dgraph.io]:https://docs.dgraph.io
 
+## Download
+
+_TODO add a link to jar file_
+
+grab via Maven:
+```xml
+<dependency>
+  <groupId>io.dgraph</groupId>
+  <artifactId>dgraph4j</artifactId>
+  <version>0.9.1</version>
+</dependency>
+```
+or Gradle:
+```groovy
+compile 'io.dgraph:dgraph4j:0.9.1'
+```
+
 ## Quickstart
 
 ### Start Dgraph Server
