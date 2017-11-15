@@ -83,7 +83,7 @@ Checkout the [dgraph-io/DgraphJavaSample] project.
 
 ```
 $ git clone https://github.com/dgraph-io/DgraphJavaSample
-$ cd Dgraph
+$ cd DgraphJavaSample
 $ ./gradlew run
 
 > Task :run 
