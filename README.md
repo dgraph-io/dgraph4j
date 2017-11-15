@@ -13,8 +13,24 @@ and make sure you understand what Dgraph is all about, and how to run it.
 
 [docs.dgraph.io]:https://docs.dgraph.io
 
+## Table of Contents
+- [Download](#download)
+- [Quickstart](#quickstart)
+  * [Start Dgraph Server](#start-dgraph-server)
+  * [Using the Java client](#using-the-java-client)
+- [Client API](#client-api)
+  * [alter()](#alter)
+  * [newTransaction()](#newtransaction)
+  * [Transaction::query()](#transactionquery)
+  * [Transaction::mutate()](#transactionmutate)
+  * [Transaction::commit()](#transactioncommit)
+  * [Transaction::discard()](#transactiondiscard)
+- [Development](#development)
+  * [Building the source](#building-the-source)
+  * [Code Style](#code-style)
+  * [Running unit tests](#running-unit-tests)
+  
 ## Download
-
 _TODO add a link to jar file_
 
 grab via Maven:
