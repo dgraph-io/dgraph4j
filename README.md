@@ -21,10 +21,10 @@ and make sure you understand what Dgraph is all about, and how to run it.
 - [Client API](#client-api)
   * [alter()](#alter)
   * [newTransaction()](#newtransaction)
-  * [Transaction::query()](#transactionquery)
-  * [Transaction::mutate()](#transactionmutate)
-  * [Transaction::commit()](#transactioncommit)
-  * [Transaction::discard()](#transactiondiscard)
+  * [Transaction#query()](#transactionquery)
+  * [Transaction#mutate()](#transactionmutate)
+  * [Transaction#commit()](#transactioncommit)
+  * [Transaction#discard()](#transactiondiscard)
 - [Development](#development)
   * [Building the source](#building-the-source)
   * [Code Style](#code-style)
@@ -101,10 +101,10 @@ If you see `Alice` in the output, you have a working client. You can explore the
 _TODO_
 ### alter()
 ### newTransaction()
-### Transaction::query()
-### Transaction::mutate()
-### Transaction::commit()
-### Transaction::discard()
+### Transaction#query()
+### Transaction#mutate()
+### Transaction#commit()
+### Transaction#discard()
 
 ## Development
 
