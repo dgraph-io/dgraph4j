@@ -4,9 +4,14 @@ A minimal, basic implementation for a Dgraph client in Java using [grpc].
 
 [grpc]: https://grpc.io/
 
-This client following the [Dgraph Go client][goclient] closely.
+This client follows the [Dgraph Go client][goclient] closely.
 
 [goclient]: https://github.com/dgraph-io/dgraph/tree/master/client
+
+Before using this client, it is highly recommended that you go through [docs.dgraph.io],
+and make sure you understand what Dgraph is all about, and how to run it.
+
+[docs.dgraph.io]:https://docs.dgraph.io
 
 ## Quickstart
 
@@ -36,14 +41,18 @@ cd dgraphdata/data
 rm -r p w; dgraph server --memory_mb=1024
 ```
 
-For more configuration options, and other details, refer to [docs.dgraph.io](https://docs.dgraph.io)
+For more configuration options, and other details, refer to [docs.dgraph.io]
 
 ### Using the Java client
 This section will guide you in creating a Java project from scratch, and using the Dgraph Java
 client to communicate with the  server. We will be using [gradle] as our build tool, so make
-you have it installed.
+sure you have it installed, if you want to follow along.
 
+[dgraph-io/DgraphJavaSample]:https://github.com/dgraph-io/DgraphJavaSample
 [gradle]: https://gradle.org/
+
+_For your convenience, all the files created and modified below can be found in the
+[dgraph-io/DgraphJavaSample] repo._
 
 First initialize a new `java-application` project using gradle.
 
@@ -56,7 +65,6 @@ gradle init --type java-application
 Modify the `build.gradle` file to change the `repositories` and `dependencies`:
 
 ```groovy
-
 // Apply the java plugin to add support for Java
 apply plugin: 'java'
 
@@ -66,47 +74,43 @@ apply plugin: 'maven'
 // Apply the application plugin to add support for building an application
 apply plugin: 'application'
 
-// In this section you declare where to find the dependencies of your project
+// Use maven to pull down dependencies
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 
 dependencies {
- 	// Use Dgraph Java client
- 	compile 'io.dgraph:dgraph4j:0.9.1'
+  // Use Dgraph Java client
+  compile 'io.dgraph:dgraph4j:0.9.1'
 
-    // Use JUnit test framework
-    testCompile 'junit:junit:4.12'
+  // Use JUnit test framework
+  testCompile 'junit:junit:4.12'
 }
 
 // Define the main class for the application
 mainClassName = 'App'
 ```
 
-Modify the class
-
-### Using the client.
-
-_More detailed instructions are coming soon_
-
-Here is a snippet of code using the Dgraph client library
+Modify `src/main/java/App.java`, as follows. The program below makes a simple mutation, issues a query and
+parses the JSON result returned by the server.
 
 ```java
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
+import io.dgraph.DgraphGrpc;
 import io.dgraph.DgraphGrpc.DgraphBlockingStub;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
+import io.dgraph.DgraphClient;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-public class DgraphMain {
-
+public class App {
   private static final String TEST_HOSTNAME = "localhost";
   private static final int TEST_PORT = 9080;
 
@@ -139,9 +143,39 @@ public class DgraphMain {
     JsonParser parser = new JsonParser();
     json = parser.parse(res.getJson().toStringUtf8()).getAsJsonObject();
     String name = json.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
+    System.out.println(name);
   }
 }
 ```
+
+Modify `src/test/java/AppTest.java` as follows:
+
+```java
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+public class AppTest {
+    @Test public void testAppExists() {
+        App classUnderTest = new App();
+    }
+}
+```
+
+Finally, run the program:
+
+```shell
+$ ./gradlew run
+
+> Task :run 
+Alice
+
+
+BUILD SUCCESSFUL in 1s
+2 actionable tasks: 1 executed, 1 up-to-date
+
+```
+
+If you see `Alice` in the output, you have a running client.
 
 ## Development
 
