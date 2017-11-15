@@ -26,7 +26,6 @@ buildscript {
 }
 
 plugins {
-    id "com.jfrog.bintray" version "1.7"
     id 'com.github.sherter.google-java-format' version '0.6'
 }
 // Apply the java plugin to add support for Java
@@ -35,73 +34,21 @@ apply plugin: 'com.google.protobuf'
 apply plugin: 'idea'
 apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'maven'
-apply plugin: 'maven-publish'
+apply plugin: 'signing'
 
 group = 'io.dgraph'
-version = '0.8.1'
+archivesBaseName = 'dgraph4j'
+version = '0.9.1'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def grpcVersion = '1.7.0'
 def dgraph4jVersion = "$version"
 
-install {
-    repositories.mavenInstaller {
-        pom.project {
-            name 'Dgraph4J'
-            description 'Dgraph Java Client'
-            url 'https://github.com/dgraph-io/dgraph4j'
-            inceptionYear '2017'
-
-            packaging 'jar'
-            groupId 'io.dgraph'
-            artifactId 'dgraph4j'
-            version "${dgraph4jVersion}"
-
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
-                }
-            }
-            scm {
-                connection 'https://github.com/dgraph-io/dgraph4j.git'
-                url 'https://github.com/dgraph-io/dgraph4j'
-
-            }
-            developers {
-                developer {
-                    name 'Dgraph Labs'
-                }
-            }
-        }
-    }
-}
-
-bintray {
-    user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
-    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
-    configurations = ['archives']
-    description = "Dgraph Java Client"
-    pkg {
-        repo = 'maven'
-        name = 'dgraph4j'
-        userOrg = user
-        licenses = ['Apache-2.0']
-        vcsUrl = 'https://github.com/dgraph-io/dgraph4j.git'
-        version {
-            name = "${dgraph4jVersion}"
-            desc = "Dgraph Java Client ${dgraph4jVersion}"
-            vcsTag = "${dgraph4jVersion}"
-        }
-    }
-}
 
 task wrapper(type: Wrapper) {
     gradleVersion = '4.3'
 }
-
 
 protobuf {
     protoc {
@@ -124,8 +71,6 @@ protobuf {
     generatedFilesBaseDir = "$projectDir/src/generated"
 }
 
-Credentials
-// In this section you declare where to find the dependencies of your project
 repositories {
     mavenCentral()
 }
@@ -135,8 +80,8 @@ dependencies {
     // The production code uses the SLF4J logging API at compile time
     compile "org.slf4j:slf4j-api:1.7.21"
     compile "org.slf4j:slf4j-simple:1.7.21"
-    compile "io.grpc:grpc-netty:${grpcVersion}"
 	compile "io.grpc:grpc-protobuf:${grpcVersion}"
+  compile "io.grpc:grpc-netty:${grpcVersion}"
 	compile "io.grpc:grpc-stub:${grpcVersion}"
 
     // Declare the dependency for your favourite test framework you want to use in your tests.
@@ -148,6 +93,8 @@ dependencies {
 
 googleJavaFormat {
     toolVersion = '1.5'
+    source = sourceSets.main.allJava
+    exclude "src/generated/**/*.java"
 }
 
 idea {
@@ -172,27 +119,69 @@ task fatJar(type: Jar) {
     with jar
 }
 
+task buildJar(type: Jar)
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
 task sourceJar(type: Jar) {
+    classifier 'sources'
     from sourceSets.main.allJava
 }
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            from components.java
-            artifact sourceJar {
-                classifier "sources"
-            }
-        }
-    }
+
+artifacts {
+    archives buildJar, sourceJar, javadocJar
 }
-publishing {
+
+signing {
+    sign configurations.archives
+}
+
+uploadArchives {
     repositories {
-        maven {
-            url project.hasProperty('mavenUrl') ? project.property('mavenUrl') : System.getenv('MAVEN_URL')
-            credentials(PasswordCredentials) {
-                username project.hasProperty('mavenUser') ? project.property('mavenUser') : System.getenv('MAVEN_USER')
-                password project.hasProperty('mavenPass') ? project.property('mavenPass') : System.getenv('MAVEN_PASS')
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'dgraph4j'
+                packaging 'jar'
+                description 'Dgraph Java Client'
+                url 'https://github.com/dgraph-io/dgraph4j'
+                inceptionYear '2017'
+
+                groupId 'io.dgraph'
+                artifactId 'dgraph4j'
+                version "${dgraph4jVersion}"
+
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        distribution 'repo'
+                    }
+                }
+                scm {
+                    connection 'https://github.com/dgraph-io/dgraph4j.git'
+                    url 'https://github.com/dgraph-io/dgraph4j'
+
+                }
+                developers {
+                    developer {
+                        name 'Dgraph Labs'
+                    }
+                }
             }
         }
     }
 }
+
