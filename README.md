@@ -16,21 +16,18 @@ and understand how to run and work with Dgraph.
 ## Table of Contents
 - [Download](#download)
 - [Quickstart](#quickstart)
-- [Client API](#client-api)
-  * [alter()](#alter)
-  * [newTransaction()](#newtransaction)
-  * [Transaction#query()](#transactionquery)
-  * [Transaction#mutate()](#transactionmutate)
-  * [Transaction#commit()](#transactioncommit)
-  * [Transaction#discard()](#transactiondiscard)
+- [Using the Client](#using-the-client)
+  * [Create the client](#create-the-client)
+  * [Alter the database](#alter-the-database)
+  * [Create a transaction](#create-a-transaction)
+  * [Run a mutation and commit/discard it](#run-a-mutation-and-commit-discard-it)
+  * [Run a query](#run-a-query)
 - [Development](#development)
   * [Building the source](#building-the-source)
   * [Code Style](#code-style)
   * [Running unit tests](#running-unit-tests)
 
 ## Download
-_TODO add a link to jar file_
-
 grab via Maven:
 ```xml
 <dependency>
@@ -51,14 +48,154 @@ instructions in the README of that project.
 
 [DgraphJavaSample]: https://github.com/dgraph-io/dgraph4j/tree/master/samples/DgraphJavaSample
 
-## Client API
-_TODO_
-### alter()
-### newTransaction()
-### Transaction#query()
-### Transaction#mutate()
-### Transaction#commit()
-### Transaction#discard()
+## Using the Client
+
+### Create the client
+a `DgraphClient` object can be initialised by passing it a list of `DgraphBlockingStub`
+clients. Connecting to multiple Dgraph servers in the same cluster allows for better
+distribution of workload.
+
+The following code snippet shows just one connection.
+
+```java
+ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext(true).build();
+DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
+DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(blockingStub));
+```
+
+### Alter the database
+
+To set the schema, create an `Operation` object, set the schema and pass it to 
+`DgraphClient#alter` method.
+
+```java
+String schema = "name: string @index(exact) .";
+Operation op = Operation.newBuilder().setSchema(schema).build();
+dgraphClient.alter(op);
+```
+
+`Operation` contains other fields as well, including drop predicate and
+drop all. Drop all is useful if you wish to discard all the data, and start from
+a clean slate, without bringing the instance down.
+
+```java
+// Drop all data including schema from the dgraph instance. This is useful
+// for small examples such as this, since it puts dgraph into a clean
+// state.
+dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
+```
+
+### Create a transaction
+
+To create a transaction, call `DgraphClient#newTransaction()` method, which returns a 
+new `Transaction` object. This operation incurs no network overhead.
+
+It is good practise to call `Transaction#discard()` in a `finally` block after running
+the transaction. Calling `Transaction#discard()` after `Transaction#commit()` is a no-op
+and you can call `discard()` multiple times with no additional side-effects.
+
+```java
+Transaction txn = dgraphClient.newTransaction();
+  try {
+    // Do something here
+    // ...
+  } finally {
+    txn.discard();
+  }
+```
+
+### Run a mutation and commit/discard it
+`Transaction#mutate` runs a mutation. It takes in a `Mutation` object,
+which provides two main ways to set data: JSON and RDF N-Quad. You can choose
+whichever way is convenient.
+
+We're going to use JSON. First we define a `Person` class to represent a person.
+This data will be seralized into JSON.
+
+```java
+class Person {
+        String name
+        Person() {}
+}
+```
+
+Next, we initialise a `Person` object, serialize it and use it in `Mutation` object.
+
+```java
+Transaction txn = dgraphClient.newTransaction();
+try {
+    // Create data
+    Person p = new Person();
+    p.name = "Alice";
+    // Serialize it
+    Gson gson = new Gson();
+    String json = gson.toJson(p);
+    // Run mutation
+    Mutation mu =
+            Mutation.newBuilder()
+                    .setSetJson(ByteString.copyFromUtf8(json.toString()))
+                    .build();
+    txn.mutate(mu);
+    txn.commit();
+} finally {
+    txn.discard();
+}
+```
+
+Sometimes, you only want to commit mutation, without querying anything further.
+In such cases, you can use a `CommitNow` field in `Mutation` object to
+indicate that the mutation must be immediately committed.
+
+### Run a query
+You can run a query by calling `Transaction#query()`. You will need to pass in a GraphQL+-
+query string, and a map (optional, could be empty) of any variables that you might want to
+set in the query.
+
+The response would contain a `JSON` field, which has the JSON encoded result. You will need 
+to decode it before you can do anything useful with it.
+
+Let’s run the following query:
+
+```
+{
+  all(func: eq(name, $a))
+  {
+    name
+  }
+}
+
+```
+
+First we must create a `People` class that will help us deserialize the JSON result:
+
+```java
+class People {
+  List<Person> all;
+  People() {}
+}
+```
+
+Then we run the query, deserialize the result and print it out:
+
+```java
+// Query
+String query = "{\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
+Map<String, String> vars = Collections.singletonMap("$a", "Alice");
+Response res = dgraphClient.newTransaction().query(query, vars);
+
+// Deserialize
+People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
+
+// Print results
+System.out.printf("people found: %d\n", ppl.all.size());
+ppl.all.forEach(person -> System.out.println(person.name));
+```
+This should print:
+
+```
+people found: %d
+Alice
+```
 
 ## Development
 
