@@ -22,6 +22,7 @@ and understand how to run and work with Dgraph.
   * [Create a transaction](#create-a-transaction)
   * [Run a mutation](#run-a-mutation)
   * [Run a query](#run-a-query)
+  * [Commit a transaction](#commit-a-transaction)
 - [Development](#development)
   * [Building the source](#building-the-source)
   * [Code Style](#code-style)
@@ -159,7 +160,6 @@ Let’s run the following query:
     name
   }
 }
-
 ```
 
 First we must create a `People` class that will help us deserialize the JSON result:
@@ -197,6 +197,32 @@ This should print:
 ```
 people found: 1
 Alice
+```
+
+### Commit a transaction
+A transaction can be committed using the `Transaction#commit()` method. If your transaction
+consisted solely of calls to `Transaction#query()`, and no calls to `Transaction#mutate()`,
+then calling `Transaction#commit()` is not necessary.
+
+An error will be returned if other transactions running concurrently modify the same data that was
+modified in this transaction. It is up to the user to retry transactions when they fail.
+
+```java
+Transaction txn = dgraphClient.newTransaction();
+
+try {
+  // …
+  // Perform any number of queries and mutations
+  //…
+  // and finally…
+  txn.commit()
+} catch (TxnConflictException ex) {
+   // Retry or handle exception.
+} finally {
+   // Clean up. Calling this after txn.commit() is a no-op
+   // and hence safe.
+   txn.discard();
+}
 ```
 
 ## Development
