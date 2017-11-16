@@ -104,7 +104,7 @@ Transaction txn = dgraphClient.newTransaction();
   }
 ```
 
-### Run a mutation and commit/discard it
+### Run a mutation
 `Transaction#mutate` runs a mutation. It takes in a `Mutation` object,
 which provides two main ways to set data: JSON and RDF N-Quad. You can choose
 whichever way is convenient.
