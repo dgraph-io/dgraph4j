@@ -105,9 +105,12 @@ Transaction txn = dgraphClient.newTransaction();
 
 ### Run a query
 
-You can run a query by calling `Transaction#query()`. The response would contain a `JSON`
-field, which has the JSON encoded result. You will need to decode it before you can do
-anything useful with it.
+You can run a query by calling `Transaction#query()`. You will need to pass in a GraphQL+-
+query string, and a map (optional, could be empty) of any variables that you might want to
+set in the query.
+
+The response would contain a `JSON` field, which has the JSON encoded result. You will need 
+to decode it before you can do anything useful with it.
 
 ```java
 // Query the balance for Alice and Bob.
@@ -127,12 +130,11 @@ json = parser.parse(res.getJson().toStringUtf8()).getAsJsonObject();
 
 ### Run a mutation
 
-`txn.Mutate` would run the mutation. It takes in a `protos.Mutation` object,
+`Transaction#mutate` runs a mutation. It takes in a `Mutation` object,
 which provides two main ways to set data: JSON and RDF N-Quad. You can choose
 whichever way is convenient.
 
-We're going to continue using JSON. You could modify the Go structs parsed from
-the query, and marshal them back into JSON.
+We're going to continue using JSON.
 
 ```go
 	// Move $5 between the two accounts.
