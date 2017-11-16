@@ -32,7 +32,7 @@ public class App {
 
     Mutation mu =
       Mutation.newBuilder()
-      .setCommitImmediately(true)
+      .setCommitNow(true)
       .setSetJson(ByteString.copyFromUtf8(json.toString()))
       .build();
     dgraphClient.newTransaction().mutate(mu);
