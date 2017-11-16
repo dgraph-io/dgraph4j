@@ -62,7 +62,7 @@ DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(blockingS
 
 ### Alter the database
 
-To set the schema, create an `Operation` object, and pass it to 
+To set the schema, create an `Operation` object, set the schema and pass it to 
 `DgraphClient#alter` method.
 
 ```java
@@ -101,7 +101,7 @@ Transaction txn = dgraphClient.newTransaction();
   }
 ```
 
-### Run a mutation
+### Run a mutation and commit/discard it
 `Transaction#mutate` runs a mutation. It takes in a `Mutation` object,
 which provides two main ways to set data: JSON and RDF N-Quad. You can choose
 whichever way is convenient.
@@ -151,34 +151,47 @@ set in the query.
 The response would contain a `JSON` field, which has the JSON encoded result. You will need 
 to decode it before you can do anything useful with it.
 
-```java
-// Query the balance for Alice and Bob.
-String query = "{\n" +
-  "all(func: anyofterms(name, \"Alice Bob\")) {\n" +
-  "uid\n" +
-  "balance\n" +
-  "}\n" +
-  "}";
-Map<String, String> vars = Collections.emptyMap();
-Response res = dgraphClient.newTransaction().query(query, vars);
+Let’s run the following query:
 
-// After we get the balances, we have to decode them from JSON
-JsonParser parser = new JsonParser();
-json = parser.parse(res.getJson().toStringUtf8()).getAsJsonObject();    	
+```
+{
+  all(func: eq(name, $a))
+  {
+    name
+  }
+}
+
 ```
 
-### Commit the transaction
+First we must create a `People` class that will help us deserialize the JSON result:
 
-Once all the queries and mutations are done, you can commit the transaction. It
-returns an error in case the transaction could not be committed.
+```java
+class People {
+  List<Person> all;
+  People() {}
+}
+```
 
-```go
-	// Finally, we can commit the transactions. An error will be returned if
-	// other transactions running concurrently modify the same data that was
-	// modified in this transaction. It is up to the library user to retry
-	// transactions when they fail.
+Then we run the query, deserialize the result and print it out:
 
-	err := txn.Commit(ctx)
+```java
+// Query
+String query = "{\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
+Map<String, String> vars = Collections.singletonMap("$a", "Alice");
+Response res = dgraphClient.newTransaction().query(query, vars);
+
+// Deserialize
+People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
+
+// Print results
+System.out.printf("people found: %d\n", ppl.all.size());
+ppl.all.forEach(person -> System.out.println(person.name));
+```
+This should print:
+
+```
+people found: %d
+Alice
 ```
 
 ## Development
