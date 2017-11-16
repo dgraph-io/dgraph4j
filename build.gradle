@@ -96,6 +96,7 @@ googleJavaFormat {
     source = sourceSets.main.allJava
     exclude "src/generated/**/*.java"
 }
+compileJava.dependsOn 'googleJavaFormat'
 
 idea {
     module {
