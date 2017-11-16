@@ -105,36 +105,24 @@ Transaction txn = dgraphClient.newTransaction();
 
 ### Run a query
 
-You can run a query by calling `txn.Query`. The response would contain a `JSON`
-field, which has the JSON encoded result. You can unmarshal it into Go struct
-via `json.Unmarshal`.
+You can run a query by calling `Transaction#query()`. The response would contain a `JSON`
+field, which has the JSON encoded result. You will need to decode it before you can do
+anything useful with it.
 
-```go
-	// Query the balance for Alice and Bob.
-	const q = `
-		{
-			all(func: anyofterms(name, "Alice Bob")) {
-				uid
-				balance
-			}
-		}
-	`
-	resp, err := txn.Query(context.Background(), q)
-	if err != nil {
-		log.Fatal(err)
-	}
+```java
+// Query the balance for Alice and Bob.
+String query = "{\n" +
+  "all(func: anyofterms(name, \"Alice Bob\")) {\n" +
+  "uid\n" +
+  "balance\n" +
+  "}\n" +
+  "}";
+Map<String, String> vars = Collections.emptyMap();
+Response res = dgraphClient.newTransaction().query(query, vars);
 
-	// After we get the balances, we have to decode them into structs so that
-	// we can manipulate the data.
-	var decode struct {
-		All []struct {
-			Uid     string
-			Balance int
-		}
-	}
-	if err := json.Unmarshal(resp.GetJson(), &decode); err != nil {
-		log.Fatal(err)
-	}
+// After we get the balances, we have to decode them from JSON
+JsonParser parser = new JsonParser();
+json = parser.parse(res.getJson().toStringUtf8()).getAsJsonObject();    	
 ```
 
 ### Run a mutation
