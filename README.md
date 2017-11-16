@@ -1,6 +1,6 @@
 # Dgraph Client for Java
 
-A minimal, basic implementation for a Dgraph client in Java using [grpc].
+A minimal implementation for a Dgraph client in Java using [grpc].
 
 [grpc]: https://grpc.io/
 
@@ -8,8 +8,8 @@ This client follows the [Dgraph Go client][goclient] closely.
 
 [goclient]: https://github.com/dgraph-io/dgraph/tree/master/client
 
-Before using this client, we highly recommended that you go through [docs.dgraph.io],
-and make sure you understand what Dgraph is all about, and how to run it.
+Before using this client, we highly recommend that you go through [docs.dgraph.io],
+and understand how to run and work with Dgraph.
 
 [docs.dgraph.io]:https://docs.dgraph.io
 
