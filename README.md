@@ -66,9 +66,7 @@ To set the schema, create an `Operation` object, and pass it to
 `DgraphClient#alter` method.
 
 ```java
-String schema = "name: string @index(term) .\n" +
-                "balance: int .";
-
+String schema = "name: string @index(exact) .";
 Operation op = Operation.newBuilder().setSchema(schema).build();
 dgraphClient.alter(op);
 ```
@@ -103,8 +101,49 @@ Transaction txn = dgraphClient.newTransaction();
   }
 ```
 
-### Run a query
+### Run a mutation
+`Transaction#mutate` runs a mutation. It takes in a `Mutation` object,
+which provides two main ways to set data: JSON and RDF N-Quad. You can choose
+whichever way is convenient.
 
+We're going to use JSON. First we define a `Person` class to represent a person.
+This data will be seralized into JSON.
+
+```java
+class Person {
+        String name
+        Person() {}
+}
+```
+
+Next, we initialise a `Person` object, serialize it and use it in `Mutation` object.
+
+```java
+Transaction txn = dgraphClient.newTransaction();
+try {
+    // Create data
+    Person p = new Person();
+    p.name = "Alice";
+    // Serialize it
+    Gson gson = new Gson();
+    String json = gson.toJson(p);
+    // Run mutation
+    Mutation mu =
+            Mutation.newBuilder()
+                    .setSetJson(ByteString.copyFromUtf8(json.toString()))
+                    .build();
+    txn.mutate(mu);
+    txn.commit();
+} finally {
+    txn.discard();
+}
+```
+
+Sometimes, you only want to commit mutation, without querying anything further.
+In such cases, you can use a `CommitNow` field in `Mutation` object to
+indicate that the mutation must be immediately committed.
+
+### Run a query
 You can run a query by calling `Transaction#query()`. You will need to pass in a GraphQL+-
 query string, and a map (optional, could be empty) of any variables that you might want to
 set in the query.
@@ -127,31 +166,6 @@ Response res = dgraphClient.newTransaction().query(query, vars);
 JsonParser parser = new JsonParser();
 json = parser.parse(res.getJson().toStringUtf8()).getAsJsonObject();    	
 ```
-
-### Run a mutation
-
-`Transaction#mutate` runs a mutation. It takes in a `Mutation` object,
-which provides two main ways to set data: JSON and RDF N-Quad. You can choose
-whichever way is convenient.
-
-We're going to continue using JSON.
-
-```go
-	// Move $5 between the two accounts.
-	decode.All[0].Bal += 5
-	decode.All[1].Bal -= 5
-
-	out, err := json.Marshal(decode.All)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	_, err := txn.Mutate(ctx, &protos.Mutation{SetJSON: out})
-```
-
-Sometimes, you only want to commit mutation, without querying anything further.
-In such cases, you can use a `CommitNow` field in `protos.Mutation` to
-indicate that the mutation must be immediately committed.
 
 ### Commit the transaction
 
