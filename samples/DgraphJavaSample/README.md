@@ -36,7 +36,8 @@ For more configuration options, and other details, refer to [docs.dgraph.io]
 ```
 $ ./gradlew run
 
-> Task :run 
+> Task :run
+people found: 1
 Alice
 
 
