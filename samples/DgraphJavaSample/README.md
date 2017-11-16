@@ -3,11 +3,46 @@ for Dgraph.
 
 [dgraph4j]:https://github.com/dgraph-io/dgraph4
 
-### Running
-Make sure you install [gradle] and run:
+## Running
+### Start Dgraph Server
+You will need to install [Dgraph v0.9][releases] and run it. After installing
+the server, running the following commands:
+
+[releases]: https://github.com/dgraph-io/dgraph/releases
+
+First, create two separate directories for `dgraph zero` and `dgraph server`.
 
 ```
-./gradlew run
+mkdir -p dgraphdata/zero dgraphdata/data
 ```
 
-[gradle]: https://gradle.org
+Then start `dgraph zero`:
+
+```
+cd dgraphdata/zero
+rm -r zw; dgraph zero
+```
+
+Finally, start the `dgraph server`:
+
+```
+cd dgraphdata/data
+rm -r p w; dgraph server --memory_mb=1024
+```
+
+For more configuration options, and other details, refer to [docs.dgraph.io]
+
+## Run the sample code
+```
+$ ./gradlew run
+
+> Task :run 
+Alice
+
+
+BUILD SUCCESSFUL in 1s
+2 actionable tasks: 2 executed
+
+```
+
+If you see `Alice` in the output, everything is working fine. You can explore the source code in `src/main/java/App.java` file.
