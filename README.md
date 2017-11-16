@@ -62,30 +62,26 @@ DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(blockingS
 
 ### Alter the database
 
-To set the schema, set it on a `protos.Operation` object, and pass it down to
-the `Alter` method.
+To set the schema, create an `Operation` object, and pass it to 
+`DgraphClient#alter` method.
 
-```go
-func setup(c *client.Dgraph) {
-	// Install a schema into dgraph. Accounts have a `name` and a `balance`.
-	err := c.Alter(ctx, &protos.Operation{
-		Schema: `
-			name: string @index(term) .
-			balance: int .
-		`,
-	})
-}
+```java
+String schema = "name: string @index(term) .\n" +
+                "balance: int .";
+
+Operation op = Operation.newBuilder().setSchema(schema).build();
+dgraphClient.alter(op);
 ```
 
-`protos.Operation` contains other fields as well, including drop predicate and
+`Operation` contains other fields as well, including drop predicate and
 drop all. Drop all is useful if you wish to discard all the data, and start from
 a clean slate, without bringing the instance down.
 
-```go
-	// Drop all data including schema from the dgraph instance. This is useful
-	// for small examples such as this, since it puts dgraph into a clean
-	// state.
-	err := c.Alter(ctx, &protos.Operation{DropAll: true})
+```java
+// Drop all data including schema from the dgraph instance. This is useful
+// for small examples such as this, since it puts dgraph into a clean
+// state.
+dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
 ```
 
 ### Create a transaction
