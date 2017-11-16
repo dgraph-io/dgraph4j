@@ -16,8 +16,6 @@ and make sure you understand what Dgraph is all about, and how to run it.
 ## Table of Contents
 - [Download](#download)
 - [Quickstart](#quickstart)
-  * [Start Dgraph Server](#start-dgraph-server)
-  * [Using the Java client](#using-the-java-client)
 - [Client API](#client-api)
   * [alter()](#alter)
   * [newTransaction()](#newtransaction)
@@ -29,7 +27,7 @@ and make sure you understand what Dgraph is all about, and how to run it.
   * [Building the source](#building-the-source)
   * [Code Style](#code-style)
   * [Running unit tests](#running-unit-tests)
-  
+
 ## Download
 _TODO add a link to jar file_
 
@@ -47,55 +45,11 @@ compile 'io.dgraph:dgraph4j:0.9.1'
 ```
 
 ## Quickstart
+Build and run the [DgraphJavaSample] project in the `samples` folder, which
+contains an end-to-end example of using the Dgraph Java client. Follow the
+instructions in the README of that project.
 
-### Start Dgraph Server
-You will need to install [Dgraph v0.9][releases] and run it. After installing
-the server, running the following commands:
-
-[releases]: https://github.com/dgraph-io/dgraph/releases
-
-First, create two separate directories for `dgraph zero` and `dgraph server`.
-
-```
-mkdir -p dgraphdata/zero dgraphdata/data
-```
-
-Then start `dgraph zero`:
-
-```
-cd dgraphdata/zero
-rm -r zw; dgraph zero
-```
-
-Finally, start the `dgraph server`:
-
-```
-cd dgraphdata/data
-rm -r p w; dgraph server --memory_mb=1024
-```
-
-For more configuration options, and other details, refer to [docs.dgraph.io]
-
-### Using the Java client
-Checkout the [dgraph-io/DgraphJavaSample] project.
-
-[dgraph-io/DgraphJavaSample]: https://github.com/dgraph-io/DgraphJavaSample
-
-```
-$ git clone https://github.com/dgraph-io/DgraphJavaSample
-$ cd DgraphJavaSample
-$ ./gradlew run
-
-> Task :run 
-Alice
-
-
-BUILD SUCCESSFUL in 1s
-2 actionable tasks: 2 executed
-
-```
-
-If you see `Alice` in the output, you have a working client. You can explore the source code in `src/main/java/App.java` file.
+[DgraphJavaSample]: https://github.com/dgraph-io/dgraph4j/tree/master/samples/DgraphJavaSample
 
 ## Client API
 _TODO_
