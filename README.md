@@ -20,7 +20,7 @@ and understand how to run and work with Dgraph.
   * [Create the client](#create-the-client)
   * [Alter the database](#alter-the-database)
   * [Create a transaction](#create-a-transaction)
-  * [Run a mutation and commit/discard it](#run-a-mutation-and-commit-discard-it)
+  * [Run a mutation](#run-a-mutation)
   * [Run a query](#run-a-query)
 - [Development](#development)
   * [Building the source](#building-the-source)
