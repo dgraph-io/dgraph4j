@@ -26,9 +26,10 @@ import org.slf4j.LoggerFactory;
 /**
  * Implementation of a DgraphClient using grpc.
  *
+ * <p>Queries, mutations, and most other types of admin tasks can be run from the client.
+ *
  * @author Edgar Rodriguez-Diaz
  * @author Deepak Jois
- * @version 0.0.2
  */
 public class DgraphClient {
 
@@ -46,15 +47,51 @@ public class DgraphClient {
     this.linRead = linRead;
   }
 
+  /**
+   * Creates a new Dgraph for interacting with a Dgraph store.
+   *
+   * <p>A single client is thread safe.
+   *
+   * @param clients One or more synchronous grpc clients. Can contain connections to multiple
+   *     servers in a cluster.
+   */
   public DgraphClient(List<DgraphGrpc.DgraphBlockingStub> clients) {
     this.clients = clients;
     linRead = LinRead.getDefaultInstance();
   }
 
+  /**
+   * Creates a new Transaction object.
+   *
+   * <p>A transaction lifecycle is as follows:
+   *
+   * <p>- Created using Transaction#newTransaction()
+   *
+   * <p>- Various Transaction#query() and Transaction#mutate() calls made.
+   *
+   * <p>- Commit using Transacation#commit() or Discard using Transaction#discard(). If any
+   * mutations have been made, It's important that at least one of these methods is called to clean
+   * up resources. Discard is a no-op if Commit has already been called, so it's safe to call it
+   * after Commit.
+   *
+   * @return a new Transaction object.
+   */
   public Transaction newTransaction() {
     return new Transaction();
   }
 
+  /**
+   * Alter can be used to perform the following operations, by setting the right fields in the
+   * protocol buffer Operation object.
+   *
+   * <p>- Modify a schema.
+   *
+   * <p>- Drop predicate.
+   *
+   * <p>- Drop the database.
+   *
+   * @param op a protocol buffer Operation object representing the operation being performed.
+   */
   public void alter(Operation op) {
     final DgraphGrpc.DgraphBlockingStub client = anyClient();
     client.alter(op);
@@ -87,6 +124,15 @@ public class DgraphClient {
       context = TxnContext.newBuilder().setLinRead(DgraphClient.this.getLinRead()).build();
     }
 
+    /**
+     * sends a query to one of the connected dgraph instances. If no mutations need to be made in
+     * the same transaction, it's convenient to chain the method: <code>
+     * client.NewTransaction().query(...)</code>.
+     *
+     * @param query Query in GraphQL+-
+     * @param vars variables referred to in the query.
+     * @return a Response protocol buffer object.
+     */
     public Response query(final String query, final Map<String, String> vars) {
       logger.debug("Starting query...");
       final Request request =
@@ -104,6 +150,17 @@ public class DgraphClient {
       return response;
     }
 
+    /**
+     * Allows data stored on dgraph instances to be modified. The fields in Mutation come in pairs,
+     * set and delete. Mutations can either be encoded as JSON or as RDFs.
+     *
+     * <p>If the commitNow property on the Mutation object is set,
+     *
+     * @param mutation a Mutation protocol buffer object representing the mutation.
+     * @return an Assigned protocol buffer object. his call will result in the transaction being
+     *     committed. In this case, an explicit call to Transaction#commit doesn't need to
+     *     subsequently be made.
+     */
     public Assigned mutate(Mutation mutation) {
       if (finished) {
         throw new TxnFinishedException();
@@ -124,6 +181,14 @@ public class DgraphClient {
       return ag;
     }
 
+    /**
+     * Commits any mutations that have been made in the transaction. Once Commit has been called,
+     * the lifespan of the transaction is complete.
+     *
+     * <p>Errors could be thrown for various reasons. Notably, TxnConflictException could be thrown
+     * if transactions that modify the same data are being run concurrently. It's up to the user to
+     * decide if they wish to retry. In this case, the user should create a new transaction.
+     */
     public void commit() {
       if (finished) {
         throw new TxnFinishedException();
@@ -142,6 +207,14 @@ public class DgraphClient {
       }
     }
 
+    /**
+     * Cleans up the resources associated with an uncommitted transaction that contains mutations.
+     * It is a no-op on transactions that have already been committed or don't contain mutations.
+     * Therefore it is safe (and recommended) to call it in a finally block.
+     *
+     * <p>In some cases, the transaction can't be discarded, e.g. the grpc connection is
+     * unavailable. In these cases, the server will eventually do the transaction clean up.
+     */
     public void discard() {
       if (finished) {
         return;
