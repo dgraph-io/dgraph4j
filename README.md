@@ -122,24 +122,20 @@ class Person {
 Next, we initialise a `Person` object, serialize it and use it in `Mutation` object.
 
 ```java
-Transaction txn = dgraphClient.newTransaction();
-try {
-    // Create data
-    Person p = new Person();
-    p.name = "Alice";
-    // Serialize it
-    Gson gson = new Gson();
-    String json = gson.toJson(p);
-    // Run mutation
-    Mutation mu =
-            Mutation.newBuilder()
-                    .setSetJson(ByteString.copyFromUtf8(json.toString()))
-                    .build();
-    txn.mutate(mu);
-    txn.commit();
-} finally {
-    txn.discard();
-}
+// Create data
+Person p = new Person();
+p.name = "Alice";
+
+// Serialize it
+Gson gson = new Gson();
+String json = gson.toJson(p);
+// Run mutation
+Mutation mu =
+  Mutation.newBuilder()
+  .setSetJson(ByteString.copyFromUtf8(json.toString()))
+  .build();
+
+txn.mutate(mu);
 ```
 
 Sometimes, you only want to commit mutation, without querying anything further.
@@ -179,11 +175,12 @@ Then we run the query, deserialize the result and print it out:
 
 ```java
 // Query
-String query = "{\n" + 
-"all(func: eq(name, $a)) {\n" + 
+String query = 
+"{\n" + 
+"  all(func: eq(name, $a)) {\n" + 
 "    name\n" + 
 "  }\n" + 
-"}";
+"}\n";
 
 Map<String, String> vars = Collections.singletonMap("$a", "Alice");
 Response res = dgraphClient.newTransaction().query(query, vars);
