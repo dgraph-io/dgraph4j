@@ -1,6 +1,6 @@
 # Dgraph Client for Java
 
-A minimal implementation for a Dgraph client in Java using [grpc].
+A minimal implementation for a Dgraph client for Java 1.8 and above, using [grpc].
 
 [grpc]: https://grpc.io/
 
@@ -179,7 +179,12 @@ Then we run the query, deserialize the result and print it out:
 
 ```java
 // Query
-String query = "{\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
+String query = "{\n" + 
+"all(func: eq(name, $a)) {\n" + 
+"    name\n" + 
+"  }\n" + 
+"}";
+
 Map<String, String> vars = Collections.singletonMap("$a", "Alice");
 Response res = dgraphClient.newTransaction().query(query, vars);
 
