@@ -17,14 +17,17 @@ and understand how to run and work with Dgraph.
 - [Download](#download)
 - [Quickstart](#quickstart)
 - [Using the Client](#using-the-client)
+  * [Create the client](#create-the-client)
+  * [Alter the database](#alter-the-database)
+  * [Create a transaction](#create-a-transaction)
+  * [Run a mutation and commit/discard it](#run-a-mutation-and-commit-discard-it)
+  * [Run a query](#run-a-query)
 - [Development](#development)
   * [Building the source](#building-the-source)
   * [Code Style](#code-style)
   * [Running unit tests](#running-unit-tests)
 
 ## Download
-_TODO add a link to jar file_
-
 grab via Maven:
 ```xml
 <dependency>
