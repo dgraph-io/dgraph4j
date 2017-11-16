@@ -193,7 +193,7 @@ ppl.all.forEach(person -> System.out.println(person.name));
 This should print:
 
 ```
-people found: %d
+people found: 1
 Alice
 ```
 
