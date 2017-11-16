@@ -48,23 +48,16 @@ instructions in the README of that project.
 ## Using the Client
 
 ### Create the client
+a `DgraphClient` object can be initialised by passing it a list of `DgraphBlockingStub`
+clients. Connecting to multiple Dgraph servers in the same cluster allows for better
+distribution of workload.
 
-To create a client, dial a connection to Dgraph's external Grpc port (typically
-9080). The following code snippet shows just one connection. You can connect to multiple Dgraph servers to distribute the workload evenly.
+The following code snippet shows just one connection.
 
-```go
-func newClient() *client.Dgraph {
-	// Dial a gRPC connection. The address to dial to can be configured when
-	// setting up the dgraph cluster.
-	d, err := grpc.Dial("localhost:9080", grpc.WithInsecure())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return client.NewDgraphClient(
-		protos.NewDgraphClient(d),
-	)
-}
+```java
+ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext(true).build();
+DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
+DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(blockingStub));
 ```
 
 ### Alter the database
