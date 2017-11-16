@@ -86,18 +86,21 @@ dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
 
 ### Create a transaction
 
-Dgraph v0.9 supports running distributed ACID transactions. To create a
-transaction, just call `c.NewTxn()`. This operation incurs no network call.
-Typically, you'd also want to call a `defer txn.Discard()` to let it
-automatically rollback in case of errors. Calling `Discard` after `Commit` would
-be a no-op.
+To create a transaction, call `DgraphClient#newTransaction()` method, which returns a 
+new `Transaction` object. This operation incurs no network overhead.
 
-```go
-func runTxn(c *client.Dgraph) {
-	txn := c.NewTxn()
-	defer txn.Discard()
-	...
-}
+It is good practise to call `Transaction#discard()` in a `finally` block after running
+the transaction. Calling `Transaction#discard()` after `Transaction#commit()` is a no-op
+and you can call `discard()` multiple times with no additional side-effects.
+
+```java
+Transaction txn = dgraphClient.newTransaction();
+  try {
+    // Do something here
+    // ...
+  } finally {
+    txn.discard();
+  }
 ```
 
 ### Run a query
