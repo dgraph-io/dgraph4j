@@ -133,7 +133,7 @@ public class DgraphClientTest {
         Mutation mu =
             Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(json.toString())).build();
         txn = dgraphClient.newTransaction();
-        Assigned ag = txn.mutate(mu);
+        txn.mutate(mu);
       }
       txn.commit();
     } finally {
