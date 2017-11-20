@@ -5,7 +5,7 @@ for Dgraph.
 
 ## Running
 ### Start Dgraph Server
-You will need to install [Dgraph v0.9][releases] and run it. After installing
+You will need to install [Dgraph v0.9.2 or above][releases] and run it. After installing
 the server, running the following commands:
 
 [releases]: https://github.com/dgraph-io/dgraph/releases
