@@ -22,11 +22,9 @@ import static org.junit.Assert.assertTrue;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
+import io.dgraph.DgraphClient.Transaction;
 import io.dgraph.DgraphGrpc.DgraphBlockingStub;
-import io.dgraph.DgraphProto.LinRead;
-import io.dgraph.DgraphProto.Mutation;
-import io.dgraph.DgraphProto.Operation;
-import io.dgraph.DgraphProto.Response;
+import io.dgraph.DgraphProto.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Collections;
@@ -118,6 +116,29 @@ public class DgraphClientTest {
     assertTrue(json.has("me"));
     String name = json.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
     assertEquals("Alice", name);
+  }
+
+  @Test
+  public void testInvalidUtf8() throws Exception {
+    // Initialize
+    dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
+
+    Transaction txn = dgraphClient.newTransaction();
+    try {
+      for (int i = 0; i < 1000; i++) {
+        JsonObject json = new JsonObject();
+        json.addProperty("id", i);
+        json.addProperty("name", "abcdefgh" + i);
+
+        Mutation mu =
+            Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(json.toString())).build();
+        txn = dgraphClient.newTransaction();
+        Assigned ag = txn.mutate(mu);
+      }
+      txn.commit();
+    } finally {
+      txn.discard();
+    }
   }
 
   @AfterClass
