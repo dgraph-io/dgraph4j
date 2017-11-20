@@ -20,6 +20,7 @@ import io.dgraph.DgraphProto.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,12 +40,13 @@ public class DgraphClient {
 
   private LinRead linRead;
 
-  synchronized LinRead getLinRead() {
-    return linRead;
-  }
+  final ReentrantLock lrLck = new ReentrantLock();
 
-  synchronized void setLinRead(LinRead linRead) {
-    this.linRead = linRead;
+  LinRead getLinRead() {
+    lrLck.lock();
+    LinRead lr = LinRead.newBuilder(linRead).build();
+    lrLck.unlock();
+    return lr;
   }
 
   /**
@@ -201,10 +203,7 @@ public class DgraphClient {
       }
 
       final DgraphGrpc.DgraphBlockingStub client = anyClient();
-      final TxnContext ctx = client.commitOrAbort(context);
-      if (ctx.getAborted()) {
-        throw new TxnConflictException();
-      }
+      client.commitOrAbort(context);
     }
 
     /**
@@ -237,8 +236,10 @@ public class DgraphClient {
       LinRead lr = mergeLinReads(this.context.getLinRead(), src.getLinRead());
       result.setLinRead(lr);
 
-      lr = mergeLinReads(DgraphClient.this.getLinRead(), lr);
-      DgraphClient.this.setLinRead(lr);
+      lrLck.lock();
+      lr = mergeLinReads(DgraphClient.this.linRead, lr);
+      DgraphClient.this.linRead = lr;
+      lrLck.unlock();
 
       if (context.getStartTs() == 0) {
         result.setStartTs(src.getStartTs());
