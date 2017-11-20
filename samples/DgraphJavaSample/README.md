@@ -20,14 +20,14 @@ Then start `dgraph zero`:
 
 ```
 cd dgraphdata/zero
-rm -r zw; dgraph zero
+rm -r zw; dgraph zero --port_offset -2000
 ```
 
 Finally, start the `dgraph server`:
 
 ```
 cd dgraphdata/data
-rm -r p w; dgraph server --memory_mb=1024
+rm -r p w; dgraph server --memory_mb=1024 --zero localhost:5080
 ```
 
 For more configuration options, and other details, refer to [docs.dgraph.io]
