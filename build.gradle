@@ -93,7 +93,6 @@ dependencies {
 
 googleJavaFormat {
     toolVersion = '1.5'
-    source = sourceSets.main.allJava
     exclude "src/generated/**/*.java"
 }
 compileJava.dependsOn 'googleJavaFormat'
