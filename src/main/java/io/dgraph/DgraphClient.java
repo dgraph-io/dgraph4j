@@ -20,6 +20,7 @@ import io.dgraph.DgraphProto.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,12 +40,13 @@ public class DgraphClient {
 
   private LinRead linRead;
 
-  synchronized LinRead getLinRead() {
-    return linRead;
-  }
+  final ReentrantLock lrLck = new ReentrantLock();
 
-  synchronized void setLinRead(LinRead linRead) {
-    this.linRead = linRead;
+  LinRead getLinRead() {
+    lrLck.lock();
+    LinRead lr = LinRead.newBuilder(linRead).build();
+    lrLck.unlock();
+    return lr;
   }
 
   /**
@@ -185,9 +187,9 @@ public class DgraphClient {
      * Commits any mutations that have been made in the transaction. Once Commit has been called,
      * the lifespan of the transaction is complete.
      *
-     * <p>Errors could be thrown for various reasons. Notably, a StatusRuntimeException could be thrown
-     * if transactions that modify the same data are being run concurrently. It's up to the user to
-     * decide if they wish to retry. In this case, the user should create a new transaction.
+     * <p>Errors could be thrown for various reasons. Notably, a StatusRuntimeException could be
+     * thrown if transactions that modify the same data are being run concurrently. It's up to the
+     * user to decide if they wish to retry. In this case, the user should create a new transaction.
      */
     public void commit() {
       if (finished) {
@@ -234,8 +236,10 @@ public class DgraphClient {
       LinRead lr = mergeLinReads(this.context.getLinRead(), src.getLinRead());
       result.setLinRead(lr);
 
-      lr = mergeLinReads(DgraphClient.this.getLinRead(), lr);
-      DgraphClient.this.setLinRead(lr);
+      lrLck.lock();
+      lr = mergeLinReads(DgraphClient.this.linRead, lr);
+      DgraphClient.this.linRead = lr;
+      lrLck.unlock();
 
       if (context.getStartTs() == 0) {
         result.setStartTs(src.getStartTs());
