@@ -216,7 +216,7 @@ try {
   //…
   // and finally…
   txn.commit()
-} catch (TxnConflictException ex) {
+} catch (RuntimeException ex) {
    // Retry or handle exception.
 } finally {
    // Clean up. Calling this after txn.commit() is a no-op
