@@ -23,35 +23,20 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import io.dgraph.DgraphClient.Transaction;
-import io.dgraph.DgraphGrpc.DgraphBlockingStub;
-import io.dgraph.DgraphProto.*;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
+import io.dgraph.DgraphProto.LinRead;
+import io.dgraph.DgraphProto.Mutation;
+import io.dgraph.DgraphProto.Operation;
+import io.dgraph.DgraphProto.Response;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
  * @author Edgar Rodriguez-Diaz
  * @author Deepak Jois
  */
-public class DgraphClientTest {
-  private static ManagedChannel channel;
-  private static DgraphClient dgraphClient;
-
-  private static final String TEST_HOSTNAME = "localhost";
-  private static final int TEST_PORT = 9080;
-
-  @BeforeClass
-  public static void beforeClass() {
-    channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
-    DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
-    dgraphClient = new DgraphClient(Collections.singletonList(blockingStub));
-  }
+public class DgraphClientTest extends DgraphIntegrationTest {
 
   @Test
   public void testMergeContext() throws Exception {
@@ -139,10 +124,5 @@ public class DgraphClientTest {
     } finally {
       txn.discard();
     }
-  }
-
-  @AfterClass
-  public static void afterClass() throws InterruptedException {
-    channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
   }
 }
