@@ -185,7 +185,7 @@ public class DgraphClient {
      * Commits any mutations that have been made in the transaction. Once Commit has been called,
      * the lifespan of the transaction is complete.
      *
-     * <p>Errors could be thrown for various reasons. Notably, TxnConflictException could be thrown
+     * <p>Errors could be thrown for various reasons. Notably, a StatusRuntimeException could be thrown
      * if transactions that modify the same data are being run concurrently. It's up to the user to
      * decide if they wish to retry. In this case, the user should create a new transaction.
      */
@@ -201,10 +201,7 @@ public class DgraphClient {
       }
 
       final DgraphGrpc.DgraphBlockingStub client = anyClient();
-      final TxnContext ctx = client.commitOrAbort(context);
-      if (ctx.getAborted()) {
-        throw new TxnConflictException();
-      }
+      client.commitOrAbort(context);
     }
 
     /**
