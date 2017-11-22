@@ -204,8 +204,22 @@ public class DgraphClient {
       Mutation request = Mutation.newBuilder(mutation).setStartTs(context.getStartTs()).build();
 
       final DgraphGrpc.DgraphBlockingStub client = anyClient();
-      Assigned ag = client.mutate(request);
-      mutated = true;
+      Assigned ag;
+      try {
+        ag = client.mutate(request);
+        mutated = true;
+      } catch (RuntimeException ex) {
+        try {
+          // Since a mutation error occurred, the txn should no longer be used
+          // (some mutations could have applied but not others, but we don't know
+          // which ones).  Discarding the transaction enforces that the user
+          // cannot use the txn further.
+          discard();
+        } catch (RuntimeException ex1) {
+          // Ignore error - user should see the original error.
+        }
+        throw ex;
+      }
 
       mergeContext(ag.getContext());
 
