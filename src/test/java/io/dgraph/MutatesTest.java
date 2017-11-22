@@ -5,7 +5,6 @@ import static junit.framework.TestCase.assertTrue;
 
 import io.dgraph.DgraphClient.Transaction;
 import io.dgraph.DgraphProto.*;
-import java.util.Collections;
 import org.junit.Test;
 
 public class MutatesTest extends DgraphIntegrationTest {
@@ -41,7 +40,7 @@ public class MutatesTest extends DgraphIntegrationTest {
     Transaction txn = dgraphClient.newTransaction();
     String query = String.format("{ me(func: uid(%s)) { name }}", String.join(",", data));
     System.out.printf("Query: %s\n", query);
-    Response response = txn.query(query, Collections.emptyMap());
+    Response response = txn.query(query);
     String res = response.getJson().toStringUtf8();
     System.out.printf("Response JSON: %s\n", res);
 

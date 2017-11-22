@@ -93,7 +93,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     // Query
     String query = "{\n" + "me(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
     Map<String, String> vars = Collections.singletonMap("$a", "Alice");
-    Response res = dgraphClient.newTransaction().query(query, vars);
+    Response res = dgraphClient.newTransaction().queryWithVars(query, vars);
 
     // Verify data as expected
     JsonParser parser = new JsonParser();

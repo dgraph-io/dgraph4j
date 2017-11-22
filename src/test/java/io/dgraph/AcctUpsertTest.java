@@ -63,7 +63,7 @@ public class AcctUpsertTest extends DgraphIntegrationTest {
             + "  }\n";
     query = String.format(query, account.first, account.last, account.age);
     try {
-      Response resp = txn.query(query, Collections.emptyMap());
+      Response resp = txn.query(query);
       Gson gson = new Gson();
       Decode1 decode1 = gson.fromJson(resp.getJson().toStringUtf8(), Decode1.class);
       assertTrue(decode1.get.size() <= 1);
@@ -132,7 +132,7 @@ public class AcctUpsertTest extends DgraphIntegrationTest {
             + "   }\n"
             + "}";
     q = String.format(q, String.join(" ", firsts));
-    Response resp = dgraphClient.newTransaction().query(q, Collections.emptyMap());
+    Response resp = dgraphClient.newTransaction().query(q);
     Gson gson = new Gson();
     Decode2 decode2 = gson.fromJson(resp.getJson().toStringUtf8(), Decode2.class);
     Set<String> accountSet = new HashSet<>();

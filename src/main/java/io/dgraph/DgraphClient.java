@@ -17,6 +17,7 @@
 package io.dgraph;
 
 import io.dgraph.DgraphProto.*;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -129,13 +130,13 @@ public class DgraphClient {
     /**
      * sends a query to one of the connected dgraph instances. If no mutations need to be made in
      * the same transaction, it's convenient to chain the method: <code>
-     * client.NewTransaction().query(...)</code>.
+     * client.NewTransaction().queryWithVars(...)</code>.
      *
      * @param query Query in GraphQL+-
-     * @param vars variables referred to in the query.
+     * @param vars variables referred to in the queryWithVars.
      * @return a Response protocol buffer object.
      */
-    public Response query(final String query, final Map<String, String> vars) {
+    public Response queryWithVars(final String query, final Map<String, String> vars) {
       logger.debug("Starting query...");
       final Request request =
           Request.newBuilder()
@@ -152,6 +153,15 @@ public class DgraphClient {
       return response;
     }
 
+    /**
+     * Calls {@code Transcation#queryWithVars} with an empty vars map.
+     *
+     * @param query Query in GraphQL+-
+     * @return a Response protocol buffer object
+     */
+    public Response query(final String query) {
+      return queryWithVars(query, Collections.emptyMap());
+    }
     /**
      * Allows data stored on dgraph instances to be modified. The fields in Mutation come in pairs,
      * set and delete. Mutations can either be encoded as JSON or as RDFs.

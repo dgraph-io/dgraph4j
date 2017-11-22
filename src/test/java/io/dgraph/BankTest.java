@@ -51,7 +51,7 @@ public class BankTest extends DgraphIntegrationTest {
             + "  }";
     q = String.format(q, String.join(",", uids));
     Transaction txn = dgraphClient.newTransaction();
-    Response resp = txn.query(q, Collections.emptyMap());
+    Response resp = txn.query(q);
     System.out.printf("\nresponse json: %s\n", resp.getJson().toStringUtf8());
     System.out.printf("Runs: %d. Aborts: %d\n", runs.get(), aborts.get());
   }
@@ -82,7 +82,7 @@ public class BankTest extends DgraphIntegrationTest {
     Transaction txn = dgraphClient.newTransaction();
     try {
       String fq = String.format("{both(func: uid(%s, %s)) { uid, bal }}", from, to);
-      Response resp = txn.query(fq, Collections.emptyMap());
+      Response resp = txn.query(fq);
       Accounts accounts = gson.fromJson(resp.getJson().toStringUtf8(), Accounts.class);
       if (accounts.both.size() != 2) {
         throw new RuntimeException("Unable to find both accounts");
