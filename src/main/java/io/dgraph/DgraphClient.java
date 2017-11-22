@@ -100,6 +100,29 @@ public class DgraphClient {
     client.alter(op);
   }
 
+  /**
+   * Sets the edges corresponding to predicates on the node with the given uid for deletion. This
+   * function returns a new Mutation object with the edges set. It is the caller's responsibility to
+   * run the mutation by calling {@code Transaction#mutate}.
+   *
+   * @param mu Mutation to add edges to
+   * @param uid uid of the node
+   * @param predicates
+   * @return a new Mutation object with the edges set
+   */
+  public static Mutation deleteEdges(Mutation mu, String uid, String... predicates) {
+    Mutation.Builder b = Mutation.newBuilder(mu);
+    for (String predicate : predicates) {
+      b.addDel(
+          NQuad.newBuilder()
+              .setSubject(uid)
+              .setPredicate(predicate)
+              .setObjectValue(Value.newBuilder().setDefaultVal("_STAR_ALL").build())
+              .build());
+    }
+    return b.build();
+  }
+
   private DgraphGrpc.DgraphBlockingStub anyClient() {
     Random rand = new Random();
     return clients.get(rand.nextInt(clients.size()));
