@@ -110,7 +110,7 @@ public class BankTest extends DgraphIntegrationTest {
         if (r > 1000) {
           return;
         }
-      } catch (RuntimeException e) {
+      } catch (TxnConflictException e) {
         // System.out.println(e.getMessage());
         aborts.addAndGet(1);
       }

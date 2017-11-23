@@ -17,6 +17,8 @@
 package io.dgraph;
 
 import io.dgraph.DgraphProto.*;
+import io.grpc.Status.Code;
+import io.grpc.StatusRuntimeException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -208,6 +210,11 @@ public class DgraphClient {
       try {
         ag = client.mutate(request);
         mutated = true;
+        mergeContext(ag.getContext());
+        if (!ag.getError().equals("")) {
+          throw new DgraphException(ag.getError());
+        }
+        return ag;
       } catch (RuntimeException ex) {
         try {
           // Since a mutation error occurred, the txn should no longer be used
@@ -218,16 +225,9 @@ public class DgraphClient {
         } catch (RuntimeException ex1) {
           // Ignore error - user should see the original error.
         }
-        throw ex;
+        checkAndThrowException(ex);
       }
-
-      mergeContext(ag.getContext());
-
-      if (!ag.getError().equals("")) {
-        throw new DgraphException(ag.getError());
-      }
-
-      return ag;
+      return null;
     }
 
     /**
@@ -250,7 +250,11 @@ public class DgraphClient {
       }
 
       final DgraphGrpc.DgraphBlockingStub client = anyClient();
-      client.commitOrAbort(context);
+      try {
+        client.commitOrAbort(context);
+      } catch (RuntimeException ex) {
+        checkAndThrowException(ex);
+      }
     }
 
     /**
@@ -297,6 +301,24 @@ public class DgraphClient {
       result.addAllKeys(src.getKeysList());
 
       this.context = result.build();
+    }
+
+    // Check if Txn has been aborted and throw a TxnConflictException,
+    // otherwise throw the original exception.
+    private void checkAndThrowException(RuntimeException ex) {
+      if (ex instanceof StatusRuntimeException) {
+        StatusRuntimeException ex1 = (StatusRuntimeException) ex;
+        Code code = ex1.getStatus().getCode();
+        String desc = ex1.getStatus().getDescription();
+        if (code.equals(Code.ABORTED)) {
+          throw new TxnConflictException(desc);
+        } else if (code.equals(Code.UNKNOWN)
+            && (desc.contains("aborted") || desc.contains("conflict"))) {
+          // TODO remove this hacky check. Server must return Code.ABORTED for all cases.
+          logger.warn("Abort detected, but with bad status code: UNKNOWN");
+          throw new TxnConflictException(desc);
+        }
+      }
     }
   }
 }
