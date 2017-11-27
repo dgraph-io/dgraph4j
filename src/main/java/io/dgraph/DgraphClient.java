@@ -307,15 +307,11 @@ public class DgraphClient {
         StatusRuntimeException ex1 = (StatusRuntimeException) ex;
         Code code = ex1.getStatus().getCode();
         String desc = ex1.getStatus().getDescription();
-        if (code.equals(Code.ABORTED)) {
-          throw new TxnConflictException(desc);
-        } else if (code.equals(Code.UNKNOWN)
-            && (desc.contains("aborted") || desc.contains("conflict"))) {
-          // TODO remove this hacky check. Server must return Code.ABORTED for all cases.
-          logger.warn("Abort detected, but with bad status code: UNKNOWN");
+        if (code.equals(Code.ABORTED) || code.equals(Code.FAILED_PRECONDITION)) {
           throw new TxnConflictException(desc);
         }
       }
+      throw ex;
     }
   }
 }
