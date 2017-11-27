@@ -3,4 +3,4 @@ sudo: required
 before_install:
   - scripts/install_dgraph_nightly.sh
 script:
-  - ./gradlew build -x test
+  - scripts/build.sh
