@@ -8,8 +8,7 @@ fi
 
 function quit {
   echo "Shutting down dgraph server and zero"
-  curl -s localhost:8081/admin/shutdown
-  curl -s localhost:8082/admin/shutdown
+  curl -s localhost:8080/admin/shutdown
   # Kill Dgraphzero
   kill -9 $(pgrep -f "dgraph zero") > /dev/null
 
@@ -28,7 +27,7 @@ function quit {
 
 function start {
   echo -e "Starting first server."
-  dgraph server -p build/p -w build/w --memory_mb 4096 -o 1 > build/server.log 2>&1 &
+  dgraph server -p build/p -w build/w --memory_mb 4096  > build/server.log 2>&1 &
   # Wait for membership sync to happen.
   sleep $sleepTime
   return 0
