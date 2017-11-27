@@ -95,7 +95,7 @@ public class AcctUpsertTest extends DgraphIntegrationTest {
     while (true) {
       long elapsed = new Date().getTime() - lastStatus;
       if (elapsed > 100) {
-        System.out.printf("Success: %d Retries:%d\n", successCount.get(), retryCount.get());
+        logger.debug("Success: {} Retries:{}\n", successCount.get(), retryCount.get());
         lastStatus = System.currentTimeMillis();
       }
 

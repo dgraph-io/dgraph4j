@@ -32,17 +32,17 @@ public class MutatesTest extends DgraphIntegrationTest {
     }
 
     txn.commit();
-    System.out.println("Commit Ok");
+    logger.debug("Commit Ok");
   }
 
   @Test
   public void testQuery3Quads() throws Exception {
     Transaction txn = dgraphClient.newTransaction();
     String query = String.format("{ me(func: uid(%s)) { name }}", String.join(",", data));
-    System.out.printf("Query: %s\n", query);
+    logger.debug("Query: {}\n", query);
     Response response = txn.query(query);
     String res = response.getJson().toStringUtf8();
-    System.out.printf("Response JSON: %s\n", res);
+    logger.debug("Response JSON: {}\n", res);
 
     String exp = "{\"me\":[{\"name\":\"ok 200\"},{\"name\":\"ok 300\"},{\"name\":\"ok 400\"}]}";
     assertEquals(exp, res);

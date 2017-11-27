@@ -106,6 +106,7 @@ idea {
 
 test {
     testLogging.showStandardStreams = true
+    systemProperties['org.slf4j.simpleLogger.log.io.dgraph.DgraphIntegrationTest'] = 'DEBUG'
 }
 
 //create a single Jar with all dependencies

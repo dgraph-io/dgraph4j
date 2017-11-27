@@ -7,7 +7,10 @@ import io.dgraph.DgraphProto.Assigned;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -15,6 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
 public class BankTest extends DgraphIntegrationTest {
+
   final ArrayList<String> uids = new ArrayList<>();
   final AtomicInteger runs = new AtomicInteger();
   final AtomicInteger aborts = new AtomicInteger();
@@ -29,7 +33,7 @@ public class BankTest extends DgraphIntegrationTest {
       accounts.add(acc);
     }
     Gson gson = new Gson();
-    System.out.println(gson.toJson(accounts));
+    logger.debug(gson.toJson(accounts));
     Transaction txn = dgraphClient.newTransaction();
     Mutation mu =
         Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(gson.toJson(accounts))).build();
@@ -52,8 +56,8 @@ public class BankTest extends DgraphIntegrationTest {
     q = String.format(q, String.join(",", uids));
     Transaction txn = dgraphClient.newTransaction();
     Response resp = txn.query(q);
-    System.out.printf("\nresponse json: %s\n", resp.getJson().toStringUtf8());
-    System.out.printf("Runs: %d. Aborts: %d\n", runs.get(), aborts.get());
+    logger.debug("\nresponse json: {}\n", resp.getJson().toStringUtf8());
+    logger.debug("Runs: {}. Aborts: {}\n", runs.get(), aborts.get());
   }
 
   private void runTotalInLoop() {
@@ -62,7 +66,7 @@ public class BankTest extends DgraphIntegrationTest {
       try {
         TimeUnit.SECONDS.sleep(1);
       } catch (InterruptedException e) {
-        // System.out.println(("runTotalInLoop interrupted"));
+        // logger.debug(("runTotalInLoop interrupted"));
       }
     }
   }
@@ -111,7 +115,7 @@ public class BankTest extends DgraphIntegrationTest {
           return;
         }
       } catch (TxnConflictException e) {
-        // System.out.println(e.getMessage());
+        // logger.debug(e.getMessage());
         aborts.addAndGet(1);
       }
     }
@@ -120,7 +124,7 @@ public class BankTest extends DgraphIntegrationTest {
   @Test
   public void testBank() throws Exception {
     createAccounts();
-    System.out.println(Arrays.toString(uids.toArray()));
+    logger.debug(Arrays.toString(uids.toArray()));
 
     ExecutorService totalEx = Executors.newSingleThreadExecutor();
     totalEx.execute(() -> runTotalInLoop());
@@ -133,7 +137,7 @@ public class BankTest extends DgraphIntegrationTest {
     txnEx.shutdown();
 
     if (!txnEx.awaitTermination(5, TimeUnit.MINUTES)) {
-      System.out.println("Timeout elapsed");
+      logger.debug("Timeout elapsed");
     }
     totalEx.awaitTermination(5, TimeUnit.SECONDS);
   }
