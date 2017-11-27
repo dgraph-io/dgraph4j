@@ -135,53 +135,56 @@ artifacts {
     archives buildJar, sourceJar, javadocJar
 }
 
-signing {
+
+if(project.hasProperty("ossrhUsername")) {
+  signing {
     sign configurations.archives
-}
+  }
 
-uploadArchives {
+  uploadArchives {
     repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+      mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            pom.project {
-                name 'dgraph4j'
-                packaging 'jar'
-                description 'Dgraph Java Client'
-                url 'https://github.com/dgraph-io/dgraph4j'
-                inceptionYear '2017'
-
-                groupId 'io.dgraph'
-                artifactId 'dgraph4j'
-                version "${dgraph4jVersion}"
-
-                licenses {
-                    license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        distribution 'repo'
-                    }
-                }
-                scm {
-                    connection 'https://github.com/dgraph-io/dgraph4j.git'
-                    url 'https://github.com/dgraph-io/dgraph4j'
-
-                }
-                developers {
-                    developer {
-                        name 'Dgraph Labs'
-                    }
-                }
-            }
+        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+          authentication(userName: ossrhUsername, password: ossrhPassword)
         }
+
+        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+          authentication(userName: ossrhUsername, password: ossrhPassword)
+        }
+
+        pom.project {
+          name 'dgraph4j'
+            packaging 'jar'
+            description 'Dgraph Java Client'
+            url 'https://github.com/dgraph-io/dgraph4j'
+            inceptionYear '2017'
+
+            groupId 'io.dgraph'
+            artifactId 'dgraph4j'
+            version "${dgraph4jVersion}"
+
+            licenses {
+              license {
+                name 'The Apache Software License, Version 2.0'
+                  url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                  distribution 'repo'
+              }
+            }
+          scm {
+            connection 'https://github.com/dgraph-io/dgraph4j.git'
+              url 'https://github.com/dgraph-io/dgraph4j'
+
+          }
+          developers {
+            developer {
+              name 'Dgraph Labs'
+            }
+          }
+        }
+      }
     }
+  }
 }
 
