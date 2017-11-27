@@ -1,5 +1,6 @@
 language: java
 sudo: required
+dist: trusty
 before_install:
   - scripts/install_dgraph_nightly.sh
 script:
