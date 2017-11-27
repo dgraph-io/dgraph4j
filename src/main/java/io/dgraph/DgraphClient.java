@@ -211,9 +211,6 @@ public class DgraphClient {
         ag = client.mutate(request);
         mutated = true;
         mergeContext(ag.getContext());
-        if (!ag.getError().equals("")) {
-          throw new DgraphException(ag.getError());
-        }
         return ag;
       } catch (RuntimeException ex) {
         try {
