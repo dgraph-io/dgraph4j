@@ -109,7 +109,7 @@ public class DgraphClient {
    *
    * @param mu Mutation to add edges to
    * @param uid uid of the node
-   * @param predicates
+   * @param predicates predicates of the edges to remove
    * @return a new Mutation object with the edges set
    */
   public static Mutation deleteEdges(Mutation mu, String uid, String... predicates) {
