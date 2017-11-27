@@ -28,7 +28,7 @@ function quit {
 
 function start {
   echo -e "Starting first server."
-  dgraph server -p $BUILD/p -w $BUILD/w --memory_mb 4096 -o 1 > $BUILD/server.log 2>&1 &
+  dgraph server -p build/p -w build/w --memory_mb 4096 -o 1 > build/server.log 2>&1 &
   # Wait for membership sync to happen.
   sleep $sleepTime
   return 0
@@ -36,7 +36,7 @@ function start {
 
 function startZero {
 	echo -e "Starting dgraph zero.\n"
-  dgraph zero -w $BUILD/wz > $BUILD/zero.log 2>&1 &
+  dgraph zero -w build/wz > build/zero.log 2>&1 &
   # To ensure dgraph doesn't start before dgraphzero.
 	# It takes time for zero to start on travis(mac).
 	sleep $sleepTime
