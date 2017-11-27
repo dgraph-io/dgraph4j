@@ -35,8 +35,6 @@ function start {
 }
 
 function startZero {
-  echo -e "\nBuilding Dgraph."
-  go build .
 	echo -e "Starting dgraph zero.\n"
   dgraph zero -w $BUILD/wz > $BUILD/zero.log 2>&1 &
   # To ensure dgraph doesn't start before dgraphzero.

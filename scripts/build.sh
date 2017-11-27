@@ -7,6 +7,6 @@ source scripts/functions.sh
 startZero
 start
 
-./gradlew build
+./gradlew check
 
 quit 0
