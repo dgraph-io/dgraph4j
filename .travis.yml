@@ -1,4 +1,7 @@
 language: java
+notifications:
+  email:
+    - dj@dgraph.io
 sudo: required
 dist: trusty
 before_install:
