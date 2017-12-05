@@ -30,7 +30,6 @@ import io.dgraph.DgraphProto.Response;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -74,7 +73,6 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     assertEquals(10L, result.getIdsOrThrow(4));
   }
 
-  @Ignore
   @Test
   public void testTxnQueryVariables() throws Exception {
     // Set schema
@@ -93,7 +91,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     dgraphClient.newTransaction().mutate(mu);
 
     // Query
-    String query = "{\n" + "me(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
+    String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
     Map<String, String> vars = Collections.singletonMap("$a", "Alice");
     Response res = dgraphClient.newTransaction().queryWithVars(query, vars);
 
