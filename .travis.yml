@@ -5,6 +5,6 @@ notifications:
 sudo: required
 dist: trusty
 before_install:
-  - scripts/install_dgraph_nightly.sh
+  - scripts/install_dgraph.sh
 script:
   - scripts/build.sh
