@@ -23,13 +23,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import io.dgraph.DgraphClient.Transaction;
-import io.dgraph.DgraphProto.LinRead;
-import io.dgraph.DgraphProto.Mutation;
-import io.dgraph.DgraphProto.Operation;
-import io.dgraph.DgraphProto.Response;
+import io.dgraph.DgraphProto.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -37,6 +35,11 @@ import org.junit.Test;
  * @author Deepak Jois
  */
 public class DgraphClientTest extends DgraphIntegrationTest {
+
+  @Before
+  public void beforeTest() {
+    dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
+  }
 
   @Test
   public void testMergeContext() throws Exception {
@@ -104,10 +107,37 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   }
 
   @Test
-  public void testInvalidUtf8() throws Exception {
-    // Initialize
-    dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
+  public void testDelete() throws Exception {
+    Transaction txn = dgraphClient.newTransaction();
 
+    Mutation mutation =
+        Mutation.newBuilder()
+            .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
+            .build();
+    Assigned ag = txn.mutate(mutation);
+    String bob = ag.getUidsOrThrow("bob");
+
+    JsonParser parser = new JsonParser();
+    String query = String.format("{ find_bob(func: uid(%s)) { name } }", bob);
+    Response resp = txn.query(query);
+    JsonObject json = parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
+    assertTrue(json.getAsJsonArray("find_bob").size() > 0);
+
+    mutation =
+        Mutation.newBuilder()
+            .setDelNquads(ByteString.copyFromUtf8(String.format("<%s> * * .", bob)))
+            .build();
+    txn.mutate(mutation);
+
+    resp = txn.query(query);
+    json = parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
+    assertTrue(json.getAsJsonArray("find_bob").size() == 0);
+
+    txn.commit();
+  }
+
+  @Test
+  public void testInvalidUtf8() throws Exception {
     Transaction txn = dgraphClient.newTransaction();
     try {
       for (int i = 0; i < 1000; i++) {
