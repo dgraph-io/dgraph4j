@@ -30,6 +30,7 @@ import io.dgraph.DgraphProto.Response;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -73,6 +74,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     assertEquals(10L, result.getIdsOrThrow(4));
   }
 
+  @Ignore
   @Test
   public void testTxnQueryVariables() throws Exception {
     // Set schema

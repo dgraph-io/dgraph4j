@@ -5,8 +5,10 @@ import static junit.framework.TestCase.assertTrue;
 
 import io.dgraph.DgraphClient.Transaction;
 import io.dgraph.DgraphProto.*;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class MutatesTest extends DgraphIntegrationTest {
 
   private static String[] data = new String[] {"200", "300", "400"};
