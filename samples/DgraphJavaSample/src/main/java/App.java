@@ -54,7 +54,7 @@ public class App {
     // Query
     String query = "{\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
     Map<String, String> vars = Collections.singletonMap("$a", "Alice");
-    Response res = dgraphClient.newTransaction().query(query, vars);
+    Response res = dgraphClient.newTransaction().queryWithVars(query, vars);
 
     // Deserialize
     People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
