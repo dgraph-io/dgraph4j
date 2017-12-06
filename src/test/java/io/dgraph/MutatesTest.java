@@ -5,13 +5,18 @@ import static junit.framework.TestCase.assertTrue;
 
 import io.dgraph.DgraphClient.Transaction;
 import io.dgraph.DgraphProto.*;
-import org.junit.Ignore;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.Test;
 
-@Ignore
 public class MutatesTest extends DgraphIntegrationTest {
 
   private static String[] data = new String[] {"200", "300", "400"};
+
+  private static Map<String, String> uidsMap;
 
   @Test
   public void testInsert3Quads() throws Exception {
@@ -20,17 +25,19 @@ public class MutatesTest extends DgraphIntegrationTest {
 
     Transaction txn = dgraphClient.newTransaction();
 
+    uidsMap = new HashMap<>();
     for (String datum : data) {
       NQuad quad =
           NQuad.newBuilder()
-              .setSubject(datum)
+              .setSubject(String.format("_:%s", datum))
               .setPredicate("name")
               .setObjectValue(Value.newBuilder().setStrVal(String.format("ok %s", datum)).build())
               .build();
 
       Mutation mu = Mutation.newBuilder().addSet(quad).build();
 
-      txn.mutate(mu);
+      Assigned ag = txn.mutate(mu);
+      uidsMap.put(datum, ag.getUidsOrThrow(datum));
     }
 
     txn.commit();
@@ -40,7 +47,12 @@ public class MutatesTest extends DgraphIntegrationTest {
   @Test
   public void testQuery3Quads() throws Exception {
     Transaction txn = dgraphClient.newTransaction();
-    String query = String.format("{ me(func: uid(%s)) { name }}", String.join(",", data));
+    List<String> uids =
+        Arrays.asList(data).stream().map(d -> uidsMap.get(d)).collect(Collectors.toList());
+    System.out.println(uids);
+
+    String query = String.format("{ me(func: uid(%s)) { name }}", String.join(",", uids));
+    System.out.println(query);
     logger.debug("Query: {}\n", query);
     Response response = txn.query(query);
     String res = response.getJson().toStringUtf8();
