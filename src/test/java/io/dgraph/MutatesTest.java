@@ -49,10 +49,8 @@ public class MutatesTest extends DgraphIntegrationTest {
     Transaction txn = dgraphClient.newTransaction();
     List<String> uids =
         Arrays.asList(data).stream().map(d -> uidsMap.get(d)).collect(Collectors.toList());
-    System.out.println(uids);
 
     String query = String.format("{ me(func: uid(%s)) { name }}", String.join(",", uids));
-    System.out.println(query);
     logger.debug("Query: {}\n", query);
     Response response = txn.query(query);
     String res = response.getJson().toStringUtf8();
