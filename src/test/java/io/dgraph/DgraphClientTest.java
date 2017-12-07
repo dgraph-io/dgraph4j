@@ -157,7 +157,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   }
 
   @Test(expected = TxnFinishedException.class)
-  public void testDiscard() {
+  public void testCommitAfterCommitNow() {
     Transaction txn = dgraphClient.newTransaction();
 
     Mutation mu =
@@ -167,7 +167,6 @@ public class DgraphClientTest extends DgraphIntegrationTest {
             .build();
     txn.mutate(mu);
     txn.commit();
-    txn.discard();
   }
 
   @Test
