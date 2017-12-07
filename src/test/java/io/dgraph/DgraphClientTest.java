@@ -169,4 +169,16 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     txn.commit();
     txn.discard();
   }
+
+  @Test
+  public void testDiscardAbort() {
+    Transaction txn = dgraphClient.newTransaction();
+    Mutation mu =
+        Mutation.newBuilder()
+            .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
+            .setCommitNow(true)
+            .build();
+    txn.mutate(mu);
+    txn.discard();
+  }
 }
