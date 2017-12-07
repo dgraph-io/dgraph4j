@@ -210,6 +210,9 @@ public class DgraphClient {
       try {
         ag = client.mutate(request);
         mutated = true;
+        if (mutation.getCommitNow()) {
+          finished = true;
+        }
         mergeContext(ag.getContext());
         return ag;
       } catch (RuntimeException ex) {
