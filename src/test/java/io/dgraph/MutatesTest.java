@@ -47,8 +47,7 @@ public class MutatesTest extends DgraphIntegrationTest {
   @Test
   public void testQuery3Quads() throws Exception {
     Transaction txn = dgraphClient.newTransaction();
-    List<String> uids =
-        Arrays.asList(data).stream().map(d -> uidsMap.get(d)).collect(Collectors.toList());
+    List<String> uids = Arrays.stream(data).map(d -> uidsMap.get(d)).collect(Collectors.toList());
 
     String query = String.format("{ me(func: uid(%s)) { name }}", String.join(",", uids));
     logger.debug("Query: {}\n", query);
