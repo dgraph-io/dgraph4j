@@ -295,6 +295,7 @@ public class DgraphClient {
       if (context.getStartTs() == 0) {
         result.setStartTs(src.getStartTs());
       } else if (context.getStartTs() != src.getStartTs()) {
+        this.context = result.build();
         throw new DgraphException("startTs mismatch");
       }
 
