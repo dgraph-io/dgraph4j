@@ -156,10 +156,9 @@ to decode it before you can do anything useful with it.
 Let’s run the following query:
 
 ```
-{
-  all(func: eq(name, $a))
-  {
-    name
+query all($a: string) {
+  all(func: eq(name, $a)) {
+            name
   }
 }
 ```
@@ -178,7 +177,7 @@ Then we run the query, deserialize the result and print it out:
 ```java
 // Query
 String query =
-"{\n" +
+"query all($a: string){\n" +
 "  all(func: eq(name, $a)) {\n" +
 "    name\n" +
 "  }\n" +
