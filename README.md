@@ -68,7 +68,7 @@ DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(blockingS
 
 ### Alter the database
 
-To set the schema, create an `Operation` object, set the schema and pass it to 
+To set the schema, create an `Operation` object, set the schema and pass it to
 `DgraphClient#alter` method.
 
 ```java
@@ -90,7 +90,7 @@ dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
 
 ### Create a transaction
 
-To create a transaction, call `DgraphClient#newTransaction()` method, which returns a 
+To create a transaction, call `DgraphClient#newTransaction()` method, which returns a
 new `Transaction` object. This operation incurs no network overhead.
 
 It is good practise to call `Transaction#discard()` in a `finally` block after running
@@ -150,7 +150,7 @@ You can run a query by calling `Transaction#query()`. You will need to pass in a
 query string, and a map (optional, could be empty) of any variables that you might want to
 set in the query.
 
-The response would contain a `JSON` field, which has the JSON encoded result. You will need 
+The response would contain a `JSON` field, which has the JSON encoded result. You will need
 to decode it before you can do anything useful with it.
 
 Let’s run the following query:
@@ -177,11 +177,11 @@ Then we run the query, deserialize the result and print it out:
 
 ```java
 // Query
-String query = 
-"{\n" + 
-"  all(func: eq(name, $a)) {\n" + 
-"    name\n" + 
-"  }\n" + 
+String query =
+"{\n" +
+"  all(func: eq(name, $a)) {\n" +
+"    name\n" +
+"  }\n" +
 "}\n";
 
 Map<String, String> vars = Collections.singletonMap("$a", "Alice");
