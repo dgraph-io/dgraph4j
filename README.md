@@ -36,7 +36,7 @@ grab via Maven:
 <dependency>
   <groupId>io.dgraph</groupId>
   <artifactId>dgraph4j</artifactId>
-  <version>0.9.3</version>
+  <version>1.0.0</version>
 </dependency>
 ```
 or Gradle:
