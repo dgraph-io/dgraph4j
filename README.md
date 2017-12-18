@@ -145,6 +145,11 @@ Sometimes, you only want to commit mutation, without querying anything further.
 In such cases, you can use a `CommitNow` field in `Mutation` object to
 indicate that the mutation must be immediately committed.
 
+The `IgnoreIndexConflict` flag can be set to `true` on the `Mutation` object
+to not run conflict detection over the index, which would decrease the number
+of transaction conflicts and aborts. However, this would come at the cost of
+potentially inconsistent upsert operations.
+
 ### Run a query
 You can run a query by calling `Transaction#query()`. You will need to pass in a GraphQL+-
 query string, and a map (optional, could be empty) of any variables that you might want to
