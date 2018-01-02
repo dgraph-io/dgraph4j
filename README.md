@@ -1,6 +1,7 @@
 # Dgraph Client for Java
 
 [![Build Status](https://travis-ci.org/dgraph-io/dgraph4j.svg?branch=dj%2Ftravis)](https://travis-ci.org/dgraph-io/dgraph4j)
+[![Coverage Status](https://coveralls.io/repos/github/dgraph-io/dgraph4j/badge.svg)](https://coveralls.io/github/dgraph-io/dgraph4j)
 
 A minimal implementation for a Dgraph client for Java 1.8 and above, using [grpc].
 

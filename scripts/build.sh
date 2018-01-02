@@ -7,6 +7,6 @@ source scripts/functions.sh
 startZero
 start
 
-./gradlew check
+./gradlew check jacocoTestReport coveralls
 
 quit 0

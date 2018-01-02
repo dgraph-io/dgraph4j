@@ -26,10 +26,13 @@ buildscript {
 }
 
 plugins {
+    id 'jacoco'
+    id 'com.github.kt3k.coveralls' version '2.8.2'
     id 'com.github.sherter.google-java-format' version '0.6'
 }
 // Apply the java plugin to add support for Java
 apply plugin: 'java'
+
 apply plugin: 'com.google.protobuf'
 apply plugin: 'idea'
 apply plugin: 'com.github.sherter.google-java-format'
@@ -136,6 +139,12 @@ artifacts {
     archives buildJar, sourceJar, javadocJar
 }
 
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        html.enabled false
+    }
+}
 
 if(project.hasProperty("ossrhUsername")) {
   signing {
