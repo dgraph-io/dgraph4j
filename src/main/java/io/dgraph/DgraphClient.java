@@ -143,7 +143,7 @@ public class DgraphClient {
     return result.build();
   }
 
-  public class Transaction {
+  public class Transaction implements AutoCloseable {
     TxnContext context;
     boolean finished;
     boolean mutated;
@@ -316,6 +316,11 @@ public class DgraphClient {
         }
       }
       throw ex;
+    }
+
+    @Override
+    public void close() {
+      discard();
     }
   }
 }

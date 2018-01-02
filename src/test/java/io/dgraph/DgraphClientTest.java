@@ -108,76 +108,58 @@ public class DgraphClientTest extends DgraphIntegrationTest {
 
   @Test
   public void testDelete() throws Exception {
-    Transaction txn = dgraphClient.newTransaction();
+    try (Transaction txn = dgraphClient.newTransaction()) {
 
-    Mutation mutation =
-        Mutation.newBuilder()
-            .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
-            .build();
-    Assigned ag = txn.mutate(mutation);
-    String bob = ag.getUidsOrThrow("bob");
+      Mutation mutation =
+          Mutation.newBuilder()
+              .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
+              .build();
+      Assigned ag = txn.mutate(mutation);
+      String bob = ag.getUidsOrThrow("bob");
 
-    JsonParser parser = new JsonParser();
-    String query = String.format("{ find_bob(func: uid(%s)) { name } }", bob);
-    Response resp = txn.query(query);
-    JsonObject json = parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
-    assertTrue(json.getAsJsonArray("find_bob").size() > 0);
+      JsonParser parser = new JsonParser();
+      String query = String.format("{ find_bob(func: uid(%s)) { name } }", bob);
+      Response resp = txn.query(query);
+      JsonObject json = parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
+      assertTrue(json.getAsJsonArray("find_bob").size() > 0);
 
-    mutation =
-        Mutation.newBuilder()
-            .setDelNquads(ByteString.copyFromUtf8(String.format("<%s> * * .", bob)))
-            .build();
-    txn.mutate(mutation);
+      mutation =
+          Mutation.newBuilder()
+              .setDelNquads(ByteString.copyFromUtf8(String.format("<%s> * * .", bob)))
+              .build();
+      txn.mutate(mutation);
 
-    resp = txn.query(query);
-    json = parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
-    assertTrue(json.getAsJsonArray("find_bob").size() == 0);
+      resp = txn.query(query);
+      json = parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
+      assertTrue(json.getAsJsonArray("find_bob").size() == 0);
 
-    txn.commit();
-  }
-
-  @Test
-  public void testInvalidUtf8() throws Exception {
-    Transaction txn = dgraphClient.newTransaction();
-    try {
-      for (int i = 0; i < 1000; i++) {
-        JsonObject json = new JsonObject();
-        json.addProperty("id", i);
-        json.addProperty("name", "abcdefgh" + i);
-
-        Mutation mu =
-            Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(json.toString())).build();
-        txn = dgraphClient.newTransaction();
-        txn.mutate(mu);
-      }
       txn.commit();
-    } finally {
-      txn.discard();
     }
   }
 
   @Test(expected = TxnFinishedException.class)
   public void testCommitAfterCommitNow() {
-    Transaction txn = dgraphClient.newTransaction();
+    try (Transaction txn = dgraphClient.newTransaction()) {
 
-    Mutation mu =
-        Mutation.newBuilder()
-            .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
-            .setCommitNow(true)
-            .build();
-    txn.mutate(mu);
-    txn.commit();
+      Mutation mu =
+          Mutation.newBuilder()
+              .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
+              .setCommitNow(true)
+              .build();
+      txn.mutate(mu);
+      txn.commit();
+    }
   }
 
   @Test
   public void testDiscardAbort() {
-    Transaction txn = dgraphClient.newTransaction();
-    Mutation mu =
-        Mutation.newBuilder()
-            .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
-            .setCommitNow(true)
-            .build();
-    txn.mutate(mu);
-    txn.discard();
+    try (Transaction txn = dgraphClient.newTransaction()) {
+      Mutation mu =
+          Mutation.newBuilder()
+              .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
+              .setCommitNow(true)
+              .build();
+      txn.mutate(mu);
+    }
   }
 }
