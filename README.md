@@ -42,7 +42,7 @@ grab via Maven:
 ```
 or Gradle:
 ```groovy
-compile 'io.dgraph:dgraph4j:0.9.2'
+compile 'io.dgraph:dgraph4j:1.0.0'
 ```
 
 ## Quickstart
