@@ -16,19 +16,23 @@
 
 package io.dgraph;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import io.dgraph.DgraphClient.Transaction;
 import io.dgraph.DgraphProto.*;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Before;
-import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Edgar Rodriguez-Diaz
@@ -160,6 +164,35 @@ public class DgraphClientTest extends DgraphIntegrationTest {
               .setCommitNow(true)
               .build();
       txn.mutate(mu);
+    }
+  }
+
+  @Test
+  public void testClientWithDeadline() throws Exception {
+    ManagedChannel channel =
+        ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
+    DgraphGrpc.DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
+    dgraphClient = new DgraphClient(Collections.singletonList(blockingStub), 1);
+
+    Operation op = Operation.newBuilder().setSchema("name: string @index(exact) .").build();
+
+    // Alters schema without exceeding the given deadline.
+    dgraphClient.alter(op);
+
+    // Creates a blocking stub directly, in order to force a deadline to be exceeded.
+    Method method = DgraphClient.class.getDeclaredMethod("anyClient");
+    method.setAccessible(true);
+
+    DgraphGrpc.DgraphBlockingStub client =
+        (DgraphGrpc.DgraphBlockingStub) method.invoke(dgraphClient, null);
+
+    Thread.sleep(1001);
+
+    try {
+      client.alter(op);
+      fail("Deadline should have been exceeded");
+    } catch (StatusRuntimeException sre) {
+      // Expected.
     }
   }
 }
