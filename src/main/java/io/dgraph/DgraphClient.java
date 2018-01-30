@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,6 +41,8 @@ public class DgraphClient {
   private static final Logger logger = LoggerFactory.getLogger(DgraphClient.class);
 
   private List<DgraphGrpc.DgraphBlockingStub> clients;
+
+  private int deadlineSecs;
 
   private LinRead linRead;
 
@@ -63,6 +66,11 @@ public class DgraphClient {
   public DgraphClient(List<DgraphGrpc.DgraphBlockingStub> clients) {
     this.clients = clients;
     linRead = LinRead.getDefaultInstance();
+  }
+
+  public DgraphClient(List<DgraphGrpc.DgraphBlockingStub> clients, int deadlineSecs) {
+    this(clients);
+    this.deadlineSecs = deadlineSecs;
   }
 
   /**
@@ -127,7 +135,14 @@ public class DgraphClient {
 
   private DgraphGrpc.DgraphBlockingStub anyClient() {
     Random rand = new Random();
-    return clients.get(rand.nextInt(clients.size()));
+
+    DgraphGrpc.DgraphBlockingStub client = clients.get(rand.nextInt(clients.size()));
+
+    if (deadlineSecs > 0) {
+      return client.withDeadlineAfter(deadlineSecs, TimeUnit.SECONDS);
+    }
+
+    return client;
   }
 
   static LinRead mergeLinReads(LinRead dst, LinRead src) {
