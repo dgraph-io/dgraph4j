@@ -16,6 +16,8 @@
 
 package io.dgraph;
 
+import static org.junit.Assert.*;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
@@ -24,15 +26,12 @@ import io.dgraph.DgraphProto.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Edgar Rodriguez-Diaz
@@ -184,7 +183,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     method.setAccessible(true);
 
     DgraphGrpc.DgraphBlockingStub client =
-        (DgraphGrpc.DgraphBlockingStub) method.invoke(dgraphClient, null);
+        (DgraphGrpc.DgraphBlockingStub) method.invoke(dgraphClient);
 
     Thread.sleep(1001);
 
