@@ -68,6 +68,15 @@ public class DgraphClient {
     linRead = LinRead.getDefaultInstance();
   }
 
+  /**
+   * Creates a new Dgraph for interacting with a Dgraph store, with the the specified deadline.
+   *
+   * <p>A single client is thread safe.
+   *
+   * @param clients One or more synchronous grpc clients. Can contain connections to multiple
+   *     servers in a cluster.
+   * @param deadlineSecs Deadline specified in secs, after which the client will timeout.
+   */
   public DgraphClient(List<DgraphGrpc.DgraphBlockingStub> clients, int deadlineSecs) {
     this(clients);
     this.deadlineSecs = deadlineSecs;
