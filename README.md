@@ -67,6 +67,13 @@ DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
 DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(blockingStub));
 ```
 
+Alternatively, you can specify a deadline (in seconds) after which the client will time out when making 
+requests to the server.
+
+```java
+DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(blockingStub), 60) // 1 min timeout
+```
+
 ### Alter the database
 
 To set the schema, create an `Operation` object, set the schema and pass it to
