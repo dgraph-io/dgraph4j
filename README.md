@@ -63,15 +63,16 @@ The following code snippet shows just one connection.
 
 ```java
 ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext(true).build();
-DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
-DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(blockingStub));
+DgraphClientPool pool = new DgraphClientPool(Collections.singletonList(channel));
+DgraphClient dgraphClient = new DgraphClient(pool);
 ```
 
-Alternatively, you can specify a deadline (in seconds) after which the client will time out when making 
+Alternatively, you can specify a deadline (in seconds) after which the client will time out when making
 requests to the server.
 
 ```java
-DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(blockingStub), 60) // 1 min timeout
+DgraphClientPool pool = new DgraphClientPool(Collections.singletonList(channel), 60); // 1 min timeout
+DgraphClient dgraphClient = new DgraphClient(pool);
 ```
 
 ### Alter the database

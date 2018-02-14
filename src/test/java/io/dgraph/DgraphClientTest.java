@@ -170,8 +170,8 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   public void testClientWithDeadline() throws Exception {
     ManagedChannel channel =
         ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
-    DgraphGrpc.DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
-    dgraphClient = new DgraphClient(Collections.singletonList(blockingStub), 1);
+    DgraphClientPool pool = new DgraphClientPool(Collections.singletonList(channel), 1);
+    dgraphClient = new DgraphClient(pool);
 
     Operation op = Operation.newBuilder().setSchema("name: string @index(exact) .").build();
 
@@ -179,11 +179,10 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     dgraphClient.alter(op);
 
     // Creates a blocking stub directly, in order to force a deadline to be exceeded.
-    Method method = DgraphClient.class.getDeclaredMethod("anyClient");
+    Method method = DgraphClientPool.class.getDeclaredMethod("anyClient");
     method.setAccessible(true);
 
-    DgraphGrpc.DgraphBlockingStub client =
-        (DgraphGrpc.DgraphBlockingStub) method.invoke(dgraphClient);
+    DgraphGrpc.DgraphBlockingStub client = (DgraphGrpc.DgraphBlockingStub) method.invoke(pool);
 
     Thread.sleep(1001);
 
