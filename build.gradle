@@ -67,6 +67,13 @@ protobuf {
     }
 
     generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java {
+                    option 'annotate_code'
+                }
+            }
+      	}
         all()*.plugins {
             grpc {}
         }
