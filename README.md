@@ -243,6 +243,9 @@ try {
 
 ### Building the source
 
+**Warning**: The gradle build runs integration tests on a locally running Dgraph server. 
+The tests will remove all data from your Dgraph instance. So make sure that you don't 
+have any important data on your Dgraph instance.
 ```
 ./gradlew build
 ```
@@ -257,9 +260,12 @@ commmitting it.
 [google-java-format]:https://github.com/google/google-java-format
 
 ### Running unit tests
+**Warning**: This command will runs integration tests on a locally running Dgraph server. 
+The tests will remove all data from your Dgraph instance. So make sure that you don't 
+have any important data on your Dgraph instance.
+
 Make sure you have a Dgraph server running on localhost before you run this task.
 
 ```
 ./gradlew test
 ```
-

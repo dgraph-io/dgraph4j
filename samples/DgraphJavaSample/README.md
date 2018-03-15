@@ -36,6 +36,10 @@ rm -r p w; dgraph server --memory_mb=1024 --zero localhost:5080
 For more configuration options, and other details, refer to [docs.dgraph.io](https://docs.dgraph.io)
 
 ## Run the sample code
+
+**Warning**: The sample code, when run, will remove all data from your locally running Dgraph instance. 
+So make sure that you don't have any important data on your Dgraph instance.
+
 ```
 $ ./gradlew run
 
