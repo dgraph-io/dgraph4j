@@ -175,6 +175,7 @@ public class DgraphClient {
 
     Transaction() {
       context = TxnContext.newBuilder().setLinRead(DgraphClient.this.getLinRead()).build();
+      sequencing = LinRead.Sequencing.CLIENT_SIDE;
     }
 
     /**

@@ -69,7 +69,7 @@ public class DeleteEdgeTest extends DgraphIntegrationTest {
             + "   }\n"
             + "   schools {\n"
             + "    uid\n"
-            + "    name@en\n"
+            + "    name\n"
             + "   }\n"
             + "  }\n"
             + " }";
