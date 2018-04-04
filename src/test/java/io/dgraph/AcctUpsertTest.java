@@ -44,9 +44,9 @@ public class AcctUpsertTest extends DgraphIntegrationTest {
 
     String schema =
         "\n"
-            + "   first:  string   @index(term) .\n"
-            + "   last:   string   @index(hash) .\n"
-            + "   age:    int      @index(int)  .\n"
+            + "   first:  string   @index(term) @upsert .\n"
+            + "   last:   string   @index(hash) @upsert .\n"
+            + "   age:    int      @index(int)  @upsert .\n"
             + "   when:   int                   .\n";
     Operation op = Operation.newBuilder().setSchema(schema).build();
     dgraphClient.alter(op);

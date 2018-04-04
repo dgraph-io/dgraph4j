@@ -20,7 +20,8 @@ public class MutatesTest extends DgraphIntegrationTest {
 
   @Test
   public void testInsert3Quads() throws Exception {
-    Operation op = Operation.newBuilder().setSchema("name: string @index(fulltext) .").build();
+    Operation op =
+        Operation.newBuilder().setSchema("name: string @index(fulltext) @upsert .").build();
     dgraphClient.alter(op);
 
     Transaction txn = dgraphClient.newTransaction();

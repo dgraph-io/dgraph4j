@@ -82,7 +82,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   @Test
   public void testTxnQueryVariables() throws Exception {
     // Set schema
-    Operation op = Operation.newBuilder().setSchema("name: string @index(exact) .").build();
+    Operation op = Operation.newBuilder().setSchema("name: string @index(exact) @upsert .").build();
     dgraphClient.alter(op);
 
     // Add data
@@ -173,7 +173,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     DgraphGrpc.DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
     dgraphClient = new DgraphClient(Collections.singletonList(blockingStub), 1);
 
-    Operation op = Operation.newBuilder().setSchema("name: string @index(exact) .").build();
+    Operation op = Operation.newBuilder().setSchema("name: string @index(exact) @upsert .").build();
 
     // Alters schema without exceeding the given deadline.
     dgraphClient.alter(op);
