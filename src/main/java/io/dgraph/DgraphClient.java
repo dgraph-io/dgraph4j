@@ -177,11 +177,11 @@ public class DgraphClient {
       context = TxnContext.newBuilder().setLinRead(DgraphClient.this.getLinRead()).build();
     }
 
-		/**
-		 * Sets the sequencing for this transaction. By default client_side_sequencing is used
-		 *
-		 * @param sequencing Sequencing Mode (ClIENT_SIDE or SERVER_SIDE).
-		 */
+    /**
+     * Sets the sequencing for this transaction. By default client_side_sequencing is used
+     *
+     * @param sequencing Sequencing Mode (ClIENT_SIDE or SERVER_SIDE).
+     */
     public void setSequencing(LinRead.Sequencing sequencing) {
       this.sequencing = sequencing;
     }
