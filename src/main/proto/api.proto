@@ -48,6 +48,7 @@ message Response {
 message Assigned {
 	map<string, string> uids = 1;
 	TxnContext context = 2;
+	Latency latency = 12;
 }
 
 message Mutation {
@@ -60,7 +61,7 @@ message Mutation {
 	repeated NQuad del = 11;
 	uint64 start_ts = 13;
 	bool commit_now = 14;
-	bool ignore_index_conflict = 15;
+	bool ignore_index_conflict = 15; // this field is not parsed and used by the server anymore.
 }
 
 
@@ -95,7 +96,13 @@ message Version {
 }
 
 message LinRead {
+	enum Sequencing {
+		CLIENT_SIDE = 0;
+		SERVER_SIDE = 1;
+	}
+
 	map<uint32, uint64> ids = 1;
+	Sequencing sequencing = 2;
 }
 
 message Latency {
@@ -154,6 +161,8 @@ message SchemaNode {
 	bool reverse = 5;
 	bool count = 6;
 	bool list = 7;
+	bool upsert = 8;
+	bool lang = 9;
 }
 
 // vim: noexpandtab sw=2 ts=2

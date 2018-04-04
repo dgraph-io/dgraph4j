@@ -171,9 +171,19 @@ public class DgraphClient {
     TxnContext context;
     boolean finished;
     boolean mutated;
+    LinRead.Sequencing sequencing;
 
     Transaction() {
       context = TxnContext.newBuilder().setLinRead(DgraphClient.this.getLinRead()).build();
+    }
+
+		/**
+		 * Sets the sequencing for this transaction. By default client_side_sequencing is used
+		 *
+		 * @param sequencing Sequencing Mode (ClIENT_SIDE or SERVER_SIDE).
+		 */
+    public void setSequencing(LinRead.Sequencing sequencing) {
+      this.sequencing = sequencing;
     }
 
     /**
@@ -187,12 +197,14 @@ public class DgraphClient {
      */
     public Response queryWithVars(final String query, final Map<String, String> vars) {
       logger.debug("Starting query...");
+      LinRead.Builder lr = LinRead.newBuilder(context.getLinRead());
+      lr.setSequencing(this.sequencing);
       final Request request =
           Request.newBuilder()
               .setQuery(query)
               .putAllVars(vars)
               .setStartTs(context.getStartTs())
-              .setLinRead(context.getLinRead())
+              .setLinRead(lr.build())
               .build();
       final DgraphGrpc.DgraphBlockingStub client = anyClient();
       logger.debug("Sending request to Dgraph...");
