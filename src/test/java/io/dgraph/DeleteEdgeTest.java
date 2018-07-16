@@ -78,7 +78,7 @@ public class DeleteEdgeTest extends DgraphIntegrationTest {
     System.out.println(resp.getJson().toStringUtf8());
 
     mu =
-        DgraphClient.deleteEdges(
+        Helpers.deleteEdges(
             Mutation.newBuilder().setCommitNow(true).build(), uid, "friends", "loc");
     dgraphClient.newTransaction().mutate(mu);
 

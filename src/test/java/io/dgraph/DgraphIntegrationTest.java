@@ -1,10 +1,8 @@
 package io.dgraph;
 
-import io.dgraph.DgraphGrpc.DgraphBlockingStub;
 import io.dgraph.DgraphProto.Operation;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -23,8 +21,8 @@ public abstract class DgraphIntegrationTest {
   public static void beforeClass() {
 
     channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
-    DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
-    dgraphClient = new DgraphClient(Collections.singletonList(blockingStub));
+    DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
+    dgraphClient = new DgraphClient(stub);
 
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
   }
