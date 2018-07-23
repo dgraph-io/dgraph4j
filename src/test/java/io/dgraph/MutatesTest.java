@@ -3,7 +3,6 @@ package io.dgraph;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
-import io.dgraph.DgraphClient.Transaction;
 import io.dgraph.DgraphProto.*;
 import java.util.Arrays;
 import java.util.HashMap;

@@ -4,7 +4,6 @@ import static junit.framework.TestCase.assertTrue;
 
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
-import io.dgraph.DgraphClient.Transaction;
 import io.dgraph.DgraphProto.Assigned;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
