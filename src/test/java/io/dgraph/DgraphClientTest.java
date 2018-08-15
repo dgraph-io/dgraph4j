@@ -41,7 +41,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   }
 
   @Test
-  public void testMergeContext() throws Exception {
+  public void testMergeContext() {
     LinRead dst =
         LinRead.newBuilder()
             .putAllIds(
@@ -76,7 +76,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   }
 
   @Test
-  public void testTxnQueryVariables() throws Exception {
+  public void testTxnQueryVariables() {
     // Set schema
     Operation op = Operation.newBuilder().setSchema("name: string @index(exact) @upsert .").build();
     dgraphClient.alter(op);
@@ -106,7 +106,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   }
 
   @Test
-  public void testDelete() throws Exception {
+  public void testDelete() {
     try (Transaction txn = dgraphClient.newTransaction()) {
 
       Mutation mutation =
@@ -161,35 +161,4 @@ public class DgraphClientTest extends DgraphIntegrationTest {
       txn.mutate(mu);
     }
   }
-
-  //    @Test
-  //    public void testClientWithDeadline() throws Exception {
-  //        ManagedChannel channel =
-  //                ManagedChannelBuilder.forAddress(TEST_HOSTNAME,
-  // TEST_PORT).usePlaintext(true).build();
-  //        DgraphGrpc.DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
-  //        dgraphClient = new DgraphClient(Collections.singletonList(blockingStub), 1);
-  //
-  //        Operation op = Operation.newBuilder().setSchema("name: string @index(exact) @upsert
-  // .").build();
-  //
-  //        // Alters schema without exceeding the given deadline.
-  //        dgraphClient.alter(op);
-  //
-  //        // Creates a blocking stub directly, in order to force a deadline to be exceeded.
-  //        Method method = DgraphClient_OLD.class.getDeclaredMethod("anyClient");
-  //        method.setAccessible(true);
-  //
-  //        DgraphGrpc.DgraphBlockingStub client =
-  //                (DgraphGrpc.DgraphBlockingStub) method.invoke(dgraphClient);
-  //
-  //        Thread.sleep(1001);
-  //
-  //        try {
-  //            client.alter(op);
-  //            fail("Deadline should have been exceeded");
-  //        } catch (StatusRuntimeException sre) {
-  //            // Expected.
-  //        }
-  //    }
 }
