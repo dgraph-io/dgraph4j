@@ -20,10 +20,7 @@ import io.dgraph.DgraphProto.*;
 import io.grpc.Status.Code;
 import io.grpc.StatusRuntimeException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +37,7 @@ public class DgraphClient {
 
   private static final Logger logger = LoggerFactory.getLogger(DgraphClient.class);
 
-  private List<DgraphGrpc.DgraphBlockingStub> clients;
-
-  private int deadlineSecs;
+  private DgraphClientPool clients;
 
   private LinRead linRead;
 
@@ -63,23 +58,9 @@ public class DgraphClient {
    * @param clients One or more synchronous grpc clients. Can contain connections to multiple
    *     servers in a cluster.
    */
-  public DgraphClient(List<DgraphGrpc.DgraphBlockingStub> clients) {
+  public DgraphClient(DgraphClientPool clients) {
     this.clients = clients;
     linRead = LinRead.getDefaultInstance();
-  }
-
-  /**
-   * Creates a new Dgraph for interacting with a Dgraph store, with the the specified deadline.
-   *
-   * <p>A single client is thread safe.
-   *
-   * @param clients One or more synchronous grpc clients. Can contain connections to multiple
-   *     servers in a cluster.
-   * @param deadlineSecs Deadline specified in secs, after which the client will timeout.
-   */
-  public DgraphClient(List<DgraphGrpc.DgraphBlockingStub> clients, int deadlineSecs) {
-    this(clients);
-    this.deadlineSecs = deadlineSecs;
   }
 
   /**
@@ -115,7 +96,7 @@ public class DgraphClient {
    * @param op a protocol buffer Operation object representing the operation being performed.
    */
   public void alter(Operation op) {
-    final DgraphGrpc.DgraphBlockingStub client = anyClient();
+    final DgraphGrpc.DgraphBlockingStub client = clients.anyClient();
     client.alter(op);
   }
 
@@ -142,16 +123,8 @@ public class DgraphClient {
     return b.build();
   }
 
-  private DgraphGrpc.DgraphBlockingStub anyClient() {
-    Random rand = new Random();
-
-    DgraphGrpc.DgraphBlockingStub client = clients.get(rand.nextInt(clients.size()));
-
-    if (deadlineSecs > 0) {
-      return client.withDeadlineAfter(deadlineSecs, TimeUnit.SECONDS);
-    }
-
-    return client;
+  public void close() throws InterruptedException {
+    clients.close();
   }
 
   static LinRead mergeLinReads(LinRead dst, LinRead src) {
@@ -207,7 +180,7 @@ public class DgraphClient {
               .setStartTs(context.getStartTs())
               .setLinRead(lr.build())
               .build();
-      final DgraphGrpc.DgraphBlockingStub client = anyClient();
+      final DgraphGrpc.DgraphBlockingStub client = clients.anyClient();
       logger.debug("Sending request to Dgraph...");
       final Response response = client.query(request);
       logger.debug("Received response from Dgraph!");
@@ -242,7 +215,7 @@ public class DgraphClient {
 
       Mutation request = Mutation.newBuilder(mutation).setStartTs(context.getStartTs()).build();
 
-      final DgraphGrpc.DgraphBlockingStub client = anyClient();
+      final DgraphGrpc.DgraphBlockingStub client = clients.anyClient();
       Assigned ag;
       try {
         ag = client.mutate(request);
@@ -286,7 +259,7 @@ public class DgraphClient {
         return;
       }
 
-      final DgraphGrpc.DgraphBlockingStub client = anyClient();
+      final DgraphGrpc.DgraphBlockingStub client = clients.anyClient();
       try {
         client.commitOrAbort(context);
       } catch (RuntimeException ex) {
@@ -314,7 +287,7 @@ public class DgraphClient {
 
       context = TxnContext.newBuilder(context).setAborted(true).build();
 
-      final DgraphGrpc.DgraphBlockingStub client = anyClient();
+      final DgraphGrpc.DgraphBlockingStub client = clients.anyClient();
       client.commitOrAbort(context);
     }
 

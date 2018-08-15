@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+* Use a separate `DgraphClientPool` class to manage GRPC clients.
 
 ## [1.3.0] - 2018-04-04
 * Added option to choose Client/Serve Side sequential mode.
