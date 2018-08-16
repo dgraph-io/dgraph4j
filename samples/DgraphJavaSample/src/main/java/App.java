@@ -20,8 +20,8 @@ public class App {
   public static void main(final String[] args) {
     ManagedChannel channel =
         ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
-    DgraphBlockingStub blockingStub = DgraphGrpc.newBlockingStub(channel);
-    DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(blockingStub));
+    DgraphBlockingStub stub = DgraphGrpc.newStub(channel);
+    DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(stub));
 
     // Initialize
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
