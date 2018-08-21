@@ -27,10 +27,11 @@ ossrhPassword=<…password…>
 ### Deploying
 * Build and test the code that needs to be published
 * Bump version by modifying the `version` variable in `build.gradle` file.
-* Run `./gradlew uploadArchives`
+* Run `./gradlew publish`
 * Release the deployment by following the steps on the page _Releasing the Deployment_ (link in references below)
 
 ### References
+* [Publishing a project on Maven Central](https://medium.com/@nmauti/publishing-a-project-on-maven-central-8106393db2c3)
 * [Deploying to OSSRH with Gradle - Introduction](http://central.sonatype.org/pages/gradle.html)
 * [StackOverflow thread on issues during signing artefacts](https://stackoverflow.com/questions/27936119/gradle-uploadarchives-task-unable-to-read-secret-key)
 * [Releasing the Deployment](http://central.sonatype.org/pages/releasing-the-deployment.html)
