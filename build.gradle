@@ -26,12 +26,12 @@ buildscript {
 }
 
 plugins {
+    id 'java-library'
     id 'jacoco'
     id 'com.github.kt3k.coveralls' version '2.8.2'
     id 'com.github.sherter.google-java-format' version '0.6'
 }
 // Apply the java plugin to add support for Java
-apply plugin: 'java'
 
 apply plugin: 'com.google.protobuf'
 apply plugin: 'idea'
@@ -41,7 +41,7 @@ apply plugin: 'signing'
 
 group = 'io.dgraph'
 archivesBaseName = 'dgraph4j'
-version = '1.4.1'
+version = '1.4.2'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -143,7 +143,7 @@ task sourceJar(type: Jar) {
 }
 
 artifacts {
-    archives buildJar
+    archives jar
     archives sourceJar
     archives javadocJar
 }
@@ -168,7 +168,7 @@ if(project.hasProperty("ossrhUsername")) {
         artifactId 'dgraph4j'
         version "${dgraph4jVersion}"
 
-        artifact(buildJar)
+        from components.java
 
         pom.withXml {
           def pomFile = file("${project.buildDir}/generated-pom.xml")

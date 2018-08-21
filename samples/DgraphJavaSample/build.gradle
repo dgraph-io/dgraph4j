@@ -10,12 +10,13 @@ apply plugin: 'application'
 
 // In this section you declare where to find the dependencies of your project
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
  	// Use Dgraph Java client
- 	compile 'io.dgraph:dgraph4j:1.4.1'
+ 	compile 'io.dgraph:dgraph4j:1.4.2'
 
     // Use JUnit test framework
     testCompile 'junit:junit:4.12'

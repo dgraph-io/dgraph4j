@@ -1,12 +1,12 @@
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import io.dgraph.DgraphClient;
-import io.dgraph.DgraphClient.Transaction;
 import io.dgraph.DgraphGrpc;
-import io.dgraph.DgraphGrpc.DgraphBlockingStub;
+import io.dgraph.DgraphGrpc.DgraphStub;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
+import io.dgraph.Transaction;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.Collections;
@@ -20,8 +20,8 @@ public class App {
   public static void main(final String[] args) {
     ManagedChannel channel =
         ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
-    DgraphBlockingStub stub = DgraphGrpc.newStub(channel);
-    DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(stub));
+    DgraphStub stub = DgraphGrpc.newStub(channel);
+    DgraphClient dgraphClient = new DgraphClient(stub);
 
     // Initialize
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());

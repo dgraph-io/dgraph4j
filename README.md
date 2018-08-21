@@ -38,12 +38,12 @@ grab via Maven:
 <dependency>
   <groupId>io.dgraph</groupId>
   <artifactId>dgraph4j</artifactId>
-  <version>1.4.1</version>
+  <version>1.4.2</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'io.dgraph:dgraph4j:1.4.1'
+compile 'io.dgraph:dgraph4j:1.4.2'
 ```
 
 ## Quickstart
@@ -64,7 +64,7 @@ The following code snippet shows just one connection.
 
 ```java
 ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext(true).build();
-DgraphBlockingStub stub = DgraphGrpc.newStub(channel);
+DgraphStub stub = DgraphGrpc.newStub(channel);
 DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(stub));
 ```
 
@@ -72,7 +72,7 @@ Alternatively, you can specify a deadline (in seconds) after which the client wi
 requests to the server.
 
 ```java
-DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(blockingStub), 60) // 1 min timeout
+DgraphClient dgraphClient = new DgraphClient(stub)
 ```
 
 ### Alter the database
@@ -267,18 +267,17 @@ String query =
 
 Map<String, String> vars = Collections.singletonMap("$a", "Alice");
 
-try(AsyncTransaction txn = dgraphAsyncClient.newTransaction()) {
-  txn.query(query).thenAccept(response -> {
-      // Deserialize
-      People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
+AsyncTransaction txn = dgraphAsyncClient.newTransaction();
+txn.query(query).thenAccept(response -> {
+    // Deserialize
+    People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
 
-      // Print results
-      System.out.printf("people found: %d\n", ppl.all.size());
-      ppl.all.forEach(person -> System.out.println(person.name));
-  });
-}
-
+    // Print results
+    System.out.printf("people found: %d\n", ppl.all.size());
+    ppl.all.forEach(person -> System.out.println(person.name));
+});
 ```
+
 ## Development
 
 ### Building the source
