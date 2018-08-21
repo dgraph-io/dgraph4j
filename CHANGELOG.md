@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.4.0] - 2018-08-21
+* Added Async client.
+
 ## [1.3.0] - 2018-04-04
 * Added option to choose Client/Serve Side sequential mode.
 
@@ -19,8 +22,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.0.0] - 2017-12-18
 * Fully compatible with Dgraph v1.0
 
-[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v1.3.0...HEAD
-[1.3.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.1.0...v1.3.0
+[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/dgraph-io/dgraph4j/tree/v1.0.0

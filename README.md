@@ -38,12 +38,12 @@ grab via Maven:
 <dependency>
   <groupId>io.dgraph</groupId>
   <artifactId>dgraph4j</artifactId>
-  <version>1.3.0</version>
+  <version>1.4.0</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'io.dgraph:dgraph4j:1.3.0'
+compile 'io.dgraph:dgraph4j:1.4.0'
 ```
 
 ## Quickstart
