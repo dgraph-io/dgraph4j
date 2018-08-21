@@ -168,7 +168,7 @@ if(project.hasProperty("ossrhUsername")) {
         artifactId 'dgraph4j'
         version "${dgraph4jVersion}"
 
-        from components.java
+        artifact(buildJar)
 
         pom.withXml {
           def pomFile = file("${project.buildDir}/generated-pom.xml")
@@ -183,6 +183,7 @@ if(project.hasProperty("ossrhUsername")) {
         artifact(sourceJar) {
             classifier = 'sources'
         }
+
         artifact(javadocJar) {
           classifier = 'javadoc'
         }
@@ -216,11 +217,6 @@ if(project.hasProperty("ossrhUsername")) {
 def customizePom(pom) {
     pom.withXml {
         def root = asNode()
-
-        // eliminate test-scoped dependencies (no need in maven central POMs)
-        root.dependencies.removeAll { dep ->
-            dep.scope == "test"
-        }
 
         // add all items necessary for maven central publication
         root.children().last() + {
