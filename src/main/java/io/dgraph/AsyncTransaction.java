@@ -239,6 +239,7 @@ public class AsyncTransaction implements AutoCloseable {
     }
 
     builder.addAllKeys(src.getKeysList());
+    builder.addAllPreds(src.getPredsList());
 
     this.context = builder.build();
   }
