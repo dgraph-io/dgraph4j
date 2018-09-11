@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.6.0] - 2018-09-11
+* Remove LinRead and sequencing map from client.
+
 ## [1.5.0] - 2018-09-03
 * Updated api.proto. Added a new preds field to TxnContext.
 
@@ -26,7 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [1.0.0] - 2017-12-18
 * Fully compatible with Dgraph v1.0
 
-[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v1.5.0...HEAD
+[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v1.6.0...HEAD
+[1.6.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.4.2...v1.5.0
 [1.4.2]: https://github.com/dgraph-io/dgraph4j/compare/v1.3.0...v1.4.2
 [1.3.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.2.0...v1.3.0

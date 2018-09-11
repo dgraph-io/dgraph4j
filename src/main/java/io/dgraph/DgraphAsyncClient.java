@@ -76,10 +76,6 @@ public class DgraphAsyncClient {
     return stubs.get(index);
   }
 
-  public synchronized void mergeLinReads(LinRead fresh) {
-    this.linRead = Helpers.mergeLinReads(linRead, fresh);
-  }
-
   /**
    * Creates a new AsyncTransaction object. All operations performed by this transaction are
    * asynchronous.
@@ -99,7 +95,7 @@ public class DgraphAsyncClient {
    * @return a new AsyncTransaction object.
    */
   public AsyncTransaction newTransaction(Sequencing sequencing) {
-    return new AsyncTransaction(linRead, this::anyClient, this::mergeLinReads, sequencing);
+    return new AsyncTransaction(this::anyClient);
   }
 
   public AsyncTransaction newTransaction() {

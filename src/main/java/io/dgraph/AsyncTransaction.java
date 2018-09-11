@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,25 +45,13 @@ public class AsyncTransaction implements AutoCloseable {
   private volatile boolean mutated;
   private volatile boolean finished;
 
-  private final LinRead.Sequencing sequencing;
-
   // provides
   private final Supplier<DgraphStub> stubSupplier;
 
-  // LinReads are updated with every response received;
-  // this is the way to convey that change
-  private final Consumer<LinRead> linReadUpdateListener;
+  AsyncTransaction(Supplier<DgraphStub> stubSupplier) {
+    this.context = TxnContext.newBuilder().build();
 
-  AsyncTransaction(
-      LinRead linRead,
-      Supplier<DgraphStub> stubSupplier,
-      Consumer<LinRead> linReadUpdateListener,
-      LinRead.Sequencing sequencing) {
-    this.context = TxnContext.newBuilder().setLinRead(linRead).build();
-
-    this.sequencing = sequencing;
     this.stubSupplier = stubSupplier;
-    this.linReadUpdateListener = linReadUpdateListener;
   }
 
   /**
@@ -81,7 +68,6 @@ public class AsyncTransaction implements AutoCloseable {
     LOG.debug("Starting query...");
 
     LinRead.Builder lr = LinRead.newBuilder(context.getLinRead());
-    lr.setSequencing(this.sequencing);
     final Request request =
         Request.newBuilder()
             .setQuery(query)
@@ -223,13 +209,6 @@ public class AsyncTransaction implements AutoCloseable {
 
   private void mergeContext(final TxnContext src) {
     TxnContext.Builder builder = TxnContext.newBuilder(context);
-
-    // update transaction context (LinReads) with response data
-    LinRead lr = Helpers.mergeLinReads(this.context.getLinRead(), src.getLinRead());
-    builder.setLinRead(lr);
-
-    // update client LinReads with transaction LinReads
-    linReadUpdateListener.accept(lr);
 
     if (context.getStartTs() == 0) {
       builder.setStartTs(src.getStartTs());

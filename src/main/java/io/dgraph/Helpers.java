@@ -15,8 +15,6 @@
  */
 package io.dgraph;
 
-import java.util.Map;
-
 public class Helpers {
   /**
    * Sets the edges corresponding to predicates on the node with the given uid for deletion. This
@@ -40,34 +38,5 @@ public class Helpers {
               .build());
     }
     return b.build();
-  }
-
-  /**
-   * Merges source LinRead instance contents to the destination instance if the version in the
-   * source is greater than the one in the destination.
-   *
-   * @param src - the source LinRead instance
-   * @param dst - the destination LinRead instance
-   * @return - new merged LinRead instance
-   */
-  public static DgraphProto.LinRead mergeLinReads(
-      DgraphProto.LinRead dst, DgraphProto.LinRead src) {
-    DgraphProto.LinRead.Builder result = DgraphProto.LinRead.newBuilder(dst);
-    Map<Integer, Long> dstMap = dst.getIdsMap();
-
-    src.getIdsMap()
-        .entrySet()
-        .stream()
-        .filter(
-            (Map.Entry<Integer, Long> e) -> {
-              Long dstValue = dstMap.get(e.getKey());
-              return dstValue == null || dstValue < e.getValue();
-            })
-        .forEach(
-            (Map.Entry<Integer, Long> e) -> {
-              result.putIds(e.getKey(), e.getValue());
-            });
-
-    return result.build();
   }
 }

@@ -23,7 +23,6 @@ import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import io.dgraph.DgraphProto.*;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,41 +36,6 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   @Before
   public void beforeTest() {
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
-  }
-
-  @Test
-  public void testMergeContext() {
-    LinRead dst =
-        LinRead.newBuilder()
-            .putAllIds(
-                new HashMap<Integer, Long>() {
-                  {
-                    put(1, 10L);
-                    put(2, 15L);
-                    put(3, 10L);
-                  }
-                })
-            .build();
-
-    LinRead src =
-        LinRead.newBuilder()
-            .putAllIds(
-                new HashMap<Integer, Long>() {
-                  {
-                    put(2, 10L);
-                    put(3, 15L);
-                    put(4, 10L);
-                  }
-                })
-            .build();
-
-    LinRead result = Helpers.mergeLinReads(dst, src);
-
-    assertEquals(4, result.getIdsCount());
-    assertEquals(10L, result.getIdsOrThrow(1));
-    assertEquals(15L, result.getIdsOrThrow(2));
-    assertEquals(15L, result.getIdsOrThrow(3));
-    assertEquals(10L, result.getIdsOrThrow(4));
   }
 
   @Test
