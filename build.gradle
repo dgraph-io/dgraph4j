@@ -246,16 +246,16 @@ def customizePom(pom) {
           }
         }
     }
+    model {
+      tasks.generatePomFileForMavenJavaPublication {
+        destination = file("$buildDir/generated-pom.xml")
+      }
+      tasks.publishMavenJavaPublicationToMavenLocal {
+        dependsOn project.tasks.signArchives
+      }
+      tasks.publishMavenJavaPublicationToMavenRepository {
+        dependsOn project.tasks.signArchives
+      }
+    }
 }
 
-model {
-    tasks.generatePomFileForMavenJavaPublication {
-        destination = file("$buildDir/generated-pom.xml")
-    }
-    tasks.publishMavenJavaPublicationToMavenLocal {
-        dependsOn project.tasks.signArchives
-    }
-    tasks.publishMavenJavaPublicationToMavenRepository {
-        dependsOn project.tasks.signArchives
-    }
-}
