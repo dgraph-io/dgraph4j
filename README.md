@@ -268,7 +268,7 @@ Dgraph Client for Java also bundles an asynchronous API, which can be used by
 instantiating the `DgraphAsyncClient` class. The usage is almost exactly the
 same as the `DgraphClient` (show in previous section) class. The main
 differences is that the `DgraphAsyncClient#newTransacation()` returns an
-`AsyncTransaction` class. The API for `AsyncTransaction` is exactly
+`AsyncTransaction` class. The API for `AsyncTransaction` is exactly the same as
 `Transcation`. The only difference is that instead of returning the results
 directly, it returns immediately with a corresponding `CompletableFuture<T>`
 object. This object represents the computation which runs asynchronously to
