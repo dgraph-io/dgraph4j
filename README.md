@@ -241,6 +241,14 @@ try {
 }
 ```
 
+### Setting deadlines
+It is recommended that you always set a deadline for each client call, after
+which the client terminaltes. This is
+in line with the recommendation for any gRPC client. Read [this forum post][deadline-post]
+for more details.
+
+[deadline-post]: https://discuss.dgraph.io/t/dgraph-java-client-setting-deadlines-per-call/3056
+
 ### Helper Methods
 
 #### Delete multiple edges
