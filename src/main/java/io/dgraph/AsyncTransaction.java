@@ -24,7 +24,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,12 +45,12 @@ public class AsyncTransaction implements AutoCloseable {
   private volatile boolean finished;
 
   // provides
-  private final Supplier<DgraphStub> stubSupplier;
+  private final DgraphStub stub;
 
-  AsyncTransaction(Supplier<DgraphStub> stubSupplier) {
+  AsyncTransaction(DgraphStub stub) {
     this.context = TxnContext.newBuilder().build();
 
-    this.stubSupplier = stubSupplier;
+    this.stub = stub;
   }
 
   /**
@@ -78,7 +77,7 @@ public class AsyncTransaction implements AutoCloseable {
 
     LOG.debug("Sending request to Dgraph...");
     StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
-    stubSupplier.get().query(request, bridge);
+    stub.query(request, bridge);
 
     return bridge
         .getDelegate()
@@ -119,7 +118,7 @@ public class AsyncTransaction implements AutoCloseable {
     Mutation request = Mutation.newBuilder(mutation).setStartTs(context.getStartTs()).build();
 
     StreamObserverBridge<Assigned> bridge = new StreamObserverBridge<>();
-    stubSupplier.get().mutate(request, bridge);
+    stub.mutate(request, bridge);
 
     return bridge
         .getDelegate()
@@ -166,7 +165,7 @@ public class AsyncTransaction implements AutoCloseable {
     }
 
     StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
-    stubSupplier.get().commitOrAbort(context, bridge);
+    stub.commitOrAbort(context, bridge);
 
     return bridge
         .getDelegate()
@@ -201,7 +200,7 @@ public class AsyncTransaction implements AutoCloseable {
 
     context = TxnContext.newBuilder(context).setAborted(true).build();
     StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
-    stubSupplier.get().commitOrAbort(context, bridge);
+    stub.commitOrAbort(context, bridge);
 
     // we are providing void operation, so just nullify the result
     return bridge.getDelegate().thenApply((o) -> null);

@@ -95,7 +95,7 @@ public class DgraphAsyncClient {
    * @return a new AsyncTransaction object.
    */
   public AsyncTransaction newTransaction(Sequencing sequencing) {
-    return new AsyncTransaction(this::anyClient);
+    return new AsyncTransaction(this.anyClient());
   }
 
   public AsyncTransaction newTransaction() {
