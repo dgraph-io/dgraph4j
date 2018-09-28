@@ -248,6 +248,20 @@ which the client terminaltes. This is
 in line with the recommendation for any gRPC client. Read [this forum post][deadline-post]
 for more details.
 
+```java
+channel = ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext(true).build();
+DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
+ClientInterceptor timeoutInterceptor = new ClientInterceptor(){
+  @Override
+  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+      MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+    return next.newCall(method, callOptions.withDeadlineAfter(500, TimeUnit.MILLISECONDS));
+  }
+};
+stub.withInterceptors(timeoutInterceptor);
+DgraphClient dgraphClient = new DgraphClient(stub);
+```
+
 [deadline-post]: https://discuss.dgraph.io/t/dgraph-java-client-setting-deadlines-per-call/3056
 
 ### Helper Methods
