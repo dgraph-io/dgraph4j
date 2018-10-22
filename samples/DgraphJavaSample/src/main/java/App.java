@@ -9,6 +9,9 @@ import io.dgraph.DgraphProto.Response;
 import io.dgraph.Transaction;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +24,11 @@ public class App {
     ManagedChannel channel =
         ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
     DgraphStub stub = DgraphGrpc.newStub(channel);
+
+    Metadata metadata = new Metadata();
+    metadata.put(Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
+    stub = MetadataUtils.attachHeaders(stub, metadata);
+
     DgraphClient dgraphClient = new DgraphClient(stub);
 
     // Initialize
