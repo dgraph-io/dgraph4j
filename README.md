@@ -27,6 +27,7 @@ and understand how to run and work with Dgraph.
   * [Run a query](#run-a-query)
   * [Commit a transaction](#commit-a-transaction)
   * [Setting Deadlines](#setting-deadlines)
+  * [Setting Metadata Headers](#setting-metedata-headers)
   * [Helper Methods](#helper-methods)
 * [Using the Asynchronous Client](#using-the-asynchronous-client)
 - [Development](#development)
@@ -264,6 +265,25 @@ DgraphClient dgraphClient = new DgraphClient(stub);
 
 [deadline-post]: https://discuss.dgraph.io/t/dgraph-java-client-setting-deadlines-per-call/3056
 
+### Setting Metadata Headers
+Certain headers such as authentication tokens need to be set globally for all subsequent calls.
+Below is an example of setting a header with the name "auth-token":
+```java
+// create the stub first
+ManagedChannel channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
+DgraphStub stub = DgraphGrpc.newStub(channel);
+
+// use MetadataUtils to augment the stub with headers
+Metadata metadata = new Metadata();
+metadata.put(Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
+stub = MetadataUtils.attachHeaders(stub, metadata);
+
+// create the DgraphClient wrapper around the stub
+DgraphClient dgraphClient = new DgraphClient(stub);
+
+// trigger a RPC call using the DgraphClient
+dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
+```
 ### Helper Methods
 
 #### Delete multiple edges
