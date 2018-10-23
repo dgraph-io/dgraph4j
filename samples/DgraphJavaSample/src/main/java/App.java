@@ -9,6 +9,9 @@ import io.dgraph.DgraphProto.Response;
 import io.dgraph.Transaction;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -17,11 +20,22 @@ public class App {
   private static final String TEST_HOSTNAME = "localhost";
   private static final int TEST_PORT = 9080;
 
-  public static void main(final String[] args) {
+  private static DgraphClient createDgraphClient(boolean withAuthHeader) {
     ManagedChannel channel =
-        ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
+            ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
     DgraphStub stub = DgraphGrpc.newStub(channel);
-    DgraphClient dgraphClient = new DgraphClient(stub);
+
+    if (withAuthHeader) {
+      Metadata metadata = new Metadata();
+      metadata.put(Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
+      stub = MetadataUtils.attachHeaders(stub, metadata);
+    }
+
+    return new DgraphClient(stub);
+  }
+
+  public static void main(final String[] args) {
+    DgraphClient dgraphClient = createDgraphClient(false);
 
     // Initialize
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
