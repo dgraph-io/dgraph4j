@@ -27,7 +27,7 @@ and understand how to run and work with Dgraph.
   * [Run a query](#run-a-query)
   * [Commit a transaction](#commit-a-transaction)
   * [Setting Deadlines](#setting-deadlines)
-  * [Setting Metadata Headers](#setting-metedata-headers)
+  * [Setting Metadata Headers](#setting-metadata-headers)
   * [Helper Methods](#helper-methods)
 * [Using the Asynchronous Client](#using-the-asynchronous-client)
 - [Development](#development)
