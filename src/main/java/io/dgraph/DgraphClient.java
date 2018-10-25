@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-18 Dgraph Labs, Inc. and Contributors
+ * Copyright (C) 2018 Dgraph Labs, Inc. and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,17 @@ public class DgraphClient {
    */
   public Transaction newTransaction() {
     return new Transaction(asyncClient.newTransaction());
+  }
+
+  /**
+   * Creates a new AsyncTransaction object that only allows queries. Any Transaction#mutate() or
+   * Transaction#commit() call made to the read only transaction will result in
+   * TxnReadOnlyException. All operations performed by this transaction are synchronous.
+   *
+   * @return a new AsyncTransaction object
+   */
+  public Transaction newReadOnlyTransaction() {
+    return new Transaction(asyncClient.newReadOnlyTransaction());
   }
 
   /**

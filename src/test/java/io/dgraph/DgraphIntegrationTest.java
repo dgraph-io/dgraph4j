@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-18 Dgraph Labs, Inc. and Contributors
+ * Copyright (C) 2018 Dgraph Labs, Inc. and Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public abstract class DgraphIntegrationTest {
   protected static DgraphClient dgraphClient;
 
   protected static final String TEST_HOSTNAME = "localhost";
-  protected static final int TEST_PORT = 9080;
+  protected static final int TEST_PORT = 9180;
 
   @BeforeClass
   public static void beforeClass() {

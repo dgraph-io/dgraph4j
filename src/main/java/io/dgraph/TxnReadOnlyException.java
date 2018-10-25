@@ -15,8 +15,8 @@
  */
 package io.dgraph;
 
-public class TxnConflictException extends TxnException {
-  public TxnConflictException(String msg) {
-    super(msg);
+public class TxnReadOnlyException extends TxnException {
+  TxnReadOnlyException() {
+    super("Transaction is read only. No mutate or commit operation is allowed.");
   }
 }

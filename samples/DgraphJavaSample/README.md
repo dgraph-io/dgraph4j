@@ -23,15 +23,19 @@ Then start `dgraph zero`:
 
 ```
 cd dgraphdata/zero
-rm -r zw; dgraph zero --port_offset -2000
+rm -r zw; dgraph zero
 ```
 
-Finally, start the `dgraph server`:
+Finally, start the `dgraph alpha` server:
 
 ```
 cd dgraphdata/data
-rm -r p w; dgraph server --memory_mb=1024 --zero localhost:5080
+rm -r p w; dgraph alpha --lru_mb=1024 --zero localhost:5080 -o 100
 ```
+
+Notice that in the command above, we shifted the ports by 100 from the default ports of 7080 for
+internal traffic, 8080 for http, and 9080 for GRPC, which means the alpha server is binding to
+the port 7180 for internal traffic, 8180 for http, and 9180 for GRPC.
 
 For more configuration options, and other details, refer to [docs.dgraph.io](https://docs.dgraph.io)
 
