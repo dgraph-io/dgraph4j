@@ -30,7 +30,7 @@ public abstract class DgraphIntegrationTest {
   protected static DgraphClient dgraphClient;
 
   protected static final String TEST_HOSTNAME = "localhost";
-  protected static final int TEST_PORT = 9080;
+  protected static final int TEST_PORT = 9180;
 
   @BeforeClass
   public static void beforeClass() {

@@ -15,7 +15,7 @@
  */
 package io.dgraph;
 
-import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertTrue;
 
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;

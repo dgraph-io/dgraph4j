@@ -14,9 +14,21 @@
  * limitations under the License.
  */
 
+// Style guide for Protocol Buffer 3.
+// Use CamelCase (with an initial capital) for message names – for example,
+// SongServerRequest. Use underscore_separated_names for field names – for
+// example, song_name.
+
 syntax = "proto3";
 
 package api;
+
+/* import "gogoproto/gogo.proto"; */
+
+/* option (gogoproto.marshaler_all) = true; */
+/* option (gogoproto.sizer_all) = true; */
+/* option (gogoproto.unmarshaler_all) = true; */
+/* option (gogoproto.goproto_getters_all) = true; */
 
 option java_package = "io.dgraph";
 option java_outer_classname = "DgraphProto";
@@ -36,6 +48,7 @@ message Request {
 
 	uint64 start_ts = 13;
 	LinRead lin_read = 14;
+	bool read_only = 15;
 }
 
 message Response {
@@ -64,11 +77,6 @@ message Mutation {
 	bool ignore_index_conflict = 15; // this field is not parsed and used by the server anymore.
 }
 
-
-message AssignedIds {
-	uint64 startId = 1;
-	uint64 endId = 2;
-}
 
 message Operation {
 	string schema = 1;

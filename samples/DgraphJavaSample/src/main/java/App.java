@@ -11,23 +11,23 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.stub.MetadataUtils;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 public class App {
   private static final String TEST_HOSTNAME = "localhost";
-  private static final int TEST_PORT = 9080;
+  private static final int TEST_PORT = 9180;
 
   private static DgraphClient createDgraphClient(boolean withAuthHeader) {
     ManagedChannel channel =
-            ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
+        ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
     DgraphStub stub = DgraphGrpc.newStub(channel);
 
     if (withAuthHeader) {
       Metadata metadata = new Metadata();
-      metadata.put(Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
+      metadata.put(
+          Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
       stub = MetadataUtils.attachHeaders(stub, metadata);
     }
 
