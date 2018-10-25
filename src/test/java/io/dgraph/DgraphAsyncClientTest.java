@@ -15,6 +15,7 @@
  */
 package io.dgraph;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.google.gson.JsonObject;
@@ -23,6 +24,8 @@ import com.google.protobuf.ByteString;
 import io.dgraph.DgraphProto.*;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -111,5 +114,34 @@ public class DgraphAsyncClientTest {
 
       Assigned result = txn.mutate(mutation).join();
     }
+  }
+
+  @Test
+  public void testQueryInReadOnlyTransactions() {
+    Operation op = Operation.newBuilder().setSchema("name: string @index(exact) @upsert .").build();
+    dgraphAsyncClient.alter(op).join();
+
+    // Add data
+    JsonObject json = new JsonObject();
+    json.addProperty("name", "Alice");
+
+    Mutation mu =
+        Mutation.newBuilder()
+            .setCommitNow(true)
+            .setSetJson(ByteString.copyFromUtf8(json.toString()))
+            .build();
+    dgraphAsyncClient.newTransaction().mutate(mu).join();
+
+    // Query
+    String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
+    Map<String, String> vars = Collections.singletonMap("$a", "Alice");
+    Response res = dgraphAsyncClient.newReadOnlyTransaction().queryWithVars(query, vars).join();
+
+    // Verify data as expected
+    JsonParser parser = new JsonParser();
+    json = parser.parse(res.getJson().toStringUtf8()).getAsJsonObject();
+    assertTrue(json.has("me"));
+    String name = json.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
+    assertEquals("Alice", name);
   }
 }
