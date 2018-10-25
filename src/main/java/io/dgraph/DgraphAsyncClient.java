@@ -91,14 +91,29 @@ public class DgraphAsyncClient {
    * clean up resources. Discard is a no-op if Commit has already been called, so it's safe to call
    * it after Commit.
    *
-   * @param sequencing - the Sequencing strategy to be used
    * @return a new AsyncTransaction object.
    */
-  public AsyncTransaction newTransaction(Sequencing sequencing) {
+  public AsyncTransaction newTransaction() {
     return new AsyncTransaction(this.anyClient());
   }
 
-  public AsyncTransaction newTransaction() {
-    return newTransaction(Sequencing.CLIENT_SIDE);
+  /**
+   * Creates a new AsyncTransaction object that only allows queries. Any AsyncTransaction#mutate()
+   * or AsyncTransaction#commit() call made to the read only transaction will result in
+   * TxnReadOnlyException. All operations performed by this transaction are asynchronous.
+   *
+   * @return a new AsyncTransaction object
+   */
+  public AsyncTransaction newReadOnlyTransaction() {
+    return new AsyncTransaction(this.anyClient(), true);
+  }
+
+  /**
+   * @param sequencing - the Sequencing strategy to be used
+   * @return
+   * @deprecated the sequencing feature has been deprecated
+   */
+  public AsyncTransaction newTransaction(Sequencing sequencing) {
+    return new AsyncTransaction(this.anyClient());
   }
 }

@@ -43,14 +43,20 @@ public class AsyncTransaction implements AutoCloseable {
   private volatile TxnContext context;
   private volatile boolean mutated;
   private volatile boolean finished;
+  private volatile boolean readOnly;
 
   // provides
   private final DgraphStub stub;
 
   AsyncTransaction(DgraphStub stub) {
     this.context = TxnContext.newBuilder().build();
-
     this.stub = stub;
+    this.readOnly = false;
+  }
+
+  AsyncTransaction(DgraphStub stub, final boolean readOnly) {
+    this(stub);
+    this.readOnly = readOnly;
   }
 
   /**
@@ -73,6 +79,7 @@ public class AsyncTransaction implements AutoCloseable {
             .putAllVars(vars)
             .setStartTs(context.getStartTs())
             .setLinRead(lr.build())
+            .setReadOnly(readOnly)
             .build();
 
     LOG.debug("Sending request to Dgraph...");
@@ -111,6 +118,9 @@ public class AsyncTransaction implements AutoCloseable {
    *     subsequently be made.
    */
   public CompletableFuture<Assigned> mutate(Mutation mutation) {
+    if (readOnly) {
+      throw new TxnReadOnlyException();
+    }
     if (finished) {
       throw new TxnFinishedException();
     }
@@ -152,10 +162,11 @@ public class AsyncTransaction implements AutoCloseable {
    * @return CompletableFuture with Void result
    */
   public CompletableFuture<Void> commit() {
+    if (readOnly) {
+      throw new TxnReadOnlyException();
+    }
     if (finished) {
-      CompletableFuture<Void> result = new CompletableFuture<>();
-      result.completeExceptionally(new TxnFinishedException());
-      return result;
+      throw new TxnFinishedException();
     }
 
     finished = true;

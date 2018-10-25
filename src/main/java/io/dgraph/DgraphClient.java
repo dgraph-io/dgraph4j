@@ -63,6 +63,17 @@ public class DgraphClient {
   }
 
   /**
+   * Creates a new AsyncTransaction object that only allows queries. Any Transaction#mutate() or
+   * Transaction#commit() call made to the read only transaction will result in
+   * TxnReadOnlyException. All operations performed by this transaction are synchronous.
+   *
+   * @return a new AsyncTransaction object
+   */
+  public Transaction newReadOnlyTransaction() {
+    return new Transaction(asyncClient.newReadOnlyTransaction());
+  }
+
+  /**
    * Alter can be used to perform the following operations, by setting the right fields in the
    * protocol buffer Operation object.
    *

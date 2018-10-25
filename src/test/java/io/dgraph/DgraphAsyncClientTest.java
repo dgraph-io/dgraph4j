@@ -100,4 +100,16 @@ public class DgraphAsyncClientTest {
       txn.commit();
     }
   }
+
+  @Test(expected = TxnReadOnlyException.class)
+  public void testMutationsInReadOnlyTransactions() {
+    try (AsyncTransaction txn = dgraphAsyncClient.newReadOnlyTransaction()) {
+      Mutation mutation =
+          Mutation.newBuilder()
+              .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
+              .build();
+
+      Assigned result = txn.mutate(mutation).join();
+    }
+  }
 }
