@@ -19,6 +19,7 @@ and understand how to run and work with Dgraph.
 ## Table of Contents
 - [Download](#download)
 - [Quickstart](#quickstart)
+- [Intro](#intro)
 - [Using the Synchronous Client](#using-the-synchronous-client)
   * [Create the client](#create-the-client)
   * [Alter the database](#alter-the-database)
