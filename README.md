@@ -56,13 +56,15 @@ instructions in the README of that project.
 
 [DgraphJavaSample]: https://github.com/dgraph-io/dgraph4j/tree/master/samples/DgraphJavaSample
 
-## Using the Synchronous Client
-
-### Create the client
+## Intro
 This library supports two styles of clients, the synchronous client `DgraphClient` and the async client `DgraphAsyncClient`.
 A `DgraphClient` or `DgraphAsyncClient` can be initialised by passing it a list of `DgraphBlockingStub`
 clients. Connecting to multiple Dgraph servers in the same cluster allows for better
-distribution of workload. In the next a few examples, we will mainly use the synchronous client and a more detailed description for the async client can be found in the [Using the Asynchronous Client](#using-the-asynchronous-client) section.
+distribution of workload. In the next section, we will explain how to create a synchronous client and use it to mutate or query dgraph. For the async client, more details can be found in the [Using the Asynchronous Client](#using-the-asynchronous-client) section.
+
+## Using the Synchronous Client
+
+### Create the client
 
 The following code snippet shows how to create a synchronous client using just one connection.
 
@@ -103,7 +105,7 @@ dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
 
 ### Create a transaction
 
-There are two types of transactions in dgraph, i.e. the read-only transactions that only include queries and the transactions that change data in dgraph with alter or mutate operations. Both the synchronous client `DgraphClient` and the async client `DgraphAsyncClient` support the two types of transactions by providing the `newTransaction` and the `newReadOnlyTransaction` APIs. Creating a transaction is a local operation and incurs no network overhead.
+There are two types of transactions in dgraph, i.e. the read-only transactions that only include queries and the transactions that change data in dgraph with mutate operations. Both the synchronous client `DgraphClient` and the async client `DgraphAsyncClient` support the two types of transactions by providing the `newTransaction` and the `newReadOnlyTransaction` APIs. Creating a transaction is a local operation and incurs no network overhead.
 
 If a transaction is _not_ read-only, it can have any number of query, or mutate operations, which means such a transaction may also include only query operations. However, _non_ read-only transactions place a heavier load on the dgraph cluster by requesting unique timestamps, while all read-only transactions can share the same timestamp. Therefore if a transaction contains only query operations, we strongly recommend to use a read-only transaction.
 
