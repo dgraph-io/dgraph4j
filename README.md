@@ -59,11 +59,12 @@ instructions in the README of that project.
 ## Using the Synchronous Client
 
 ### Create the client
-a `DgraphClient` object can be initialised by passing it a list of `DgraphBlockingStub`
+This library supports two styles of clients, the synchronous client `DgraphClient` and the async client `DgraphAsyncClient`.
+A `DgraphClient` or `DgraphAsyncClient` can be initialised by passing it a list of `DgraphBlockingStub`
 clients. Connecting to multiple Dgraph servers in the same cluster allows for better
-distribution of workload.
+distribution of workload. In the next a few examples, we will mainly use the synchronous client and a more detailed description for the async client can be found in the [Using the Asynchronous Client](#using-the-asynchronous-client) section.
 
-The following code snippet shows just one connection.
+The following code snippet shows how to create a synchronous client using just one connection.
 
 ```java
 ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext(true).build();
@@ -75,7 +76,7 @@ Alternatively, you can specify a deadline (in seconds) after which the client wi
 requests to the server.
 
 ```java
-DgraphClient dgraphClient = new DgraphClient(stub)
+DgraphClient dgraphClient = new DgraphClient(stub);
 ```
 
 ### Alter the database
@@ -102,10 +103,11 @@ dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
 
 ### Create a transaction
 
-To create a transaction, call `DgraphClient#newTransaction()` method, which returns a
-new `Transaction` object. This operation incurs no network overhead.
+There are two types of transactions in dgraph, i.e. the read-only transactions that only include queries and the transactions that change data in dgraph with alter or mutate operations. Both the synchronous client `DgraphClient` and the async client `DgraphAsyncClient` support the two types of transactions by providing the `newTransaction` and the `newReadOnlyTransaction` APIs. Creating a transaction is a local operation and incurs no network overhead.
 
-It is good practise to call `Transaction#discard()` in a `finally` block after running
+If a transaction is _not_ read-only, it can have any number of query, or mutate operations, which means such a transaction may also include only query operations. However, _non_ read-only transactions place a heavier load on the dgraph cluster by requesting unique timestamps, while all read-only transactions can share the same timestamp. Therefore if a transaction contains only query operations, we strongly recommend to use a read-only transaction.
+
+For _non_ read only transactions, it is a good practise to call `Transaction#discard()` in a `finally` block after running
 the transaction. Calling `Transaction#discard()` after `Transaction#commit()` is a no-op
 and you can call `discard()` multiple times with no additional side-effects.
 
@@ -162,6 +164,32 @@ to not run conflict detection over the index, which would decrease the number
 of transaction conflicts and aborts. However, this would come at the cost of
 potentially inconsistent upsert operations.
 
+### Commit a transaction
+A transaction can be committed using the `Transaction#commit()` method. If your transaction
+consisted solely of calls to `Transaction#query()`, and no calls to `Transaction#mutate()`,
+then calling `Transaction#commit()` is not necessary.
+
+An error will be returned if other transactions running concurrently modify the same data that was
+modified in this transaction. It is up to the user to retry transactions when they fail.
+
+```java
+Transaction txn = dgraphClient.newTransaction();
+
+try {
+  // …
+  // Perform any number of queries and mutations
+  //…
+  // and finally…
+  txn.commit()
+} catch (TxnConflictException ex) {
+   // Retry or handle exception.
+} finally {
+   // Clean up. Calling this after txn.commit() is a no-op
+   // and hence safe.
+   txn.discard();
+}
+```
+
 ### Run a query
 You can run a query by calling `Transaction#query()`. You will need to pass in a GraphQL+-
 query string, and a map (optional, could be empty) of any variables that you might want to
@@ -201,7 +229,7 @@ String query =
 "}\n";
 
 Map<String, String> vars = Collections.singletonMap("$a", "Alice");
-Response res = dgraphClient.newTransaction().queryWithVars(query, vars);
+Response res = dgraphClient.newReadOnlyTransaction().queryWithVars(query, vars);
 
 // Deserialize
 People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
@@ -217,31 +245,6 @@ people found: 1
 Alice
 ```
 
-### Commit a transaction
-A transaction can be committed using the `Transaction#commit()` method. If your transaction
-consisted solely of calls to `Transaction#query()`, and no calls to `Transaction#mutate()`,
-then calling `Transaction#commit()` is not necessary.
-
-An error will be returned if other transactions running concurrently modify the same data that was
-modified in this transaction. It is up to the user to retry transactions when they fail.
-
-```java
-Transaction txn = dgraphClient.newTransaction();
-
-try {
-  // …
-  // Perform any number of queries and mutations
-  //…
-  // and finally…
-  txn.commit()
-} catch (TxnConflictException ex) {
-   // Retry or handle exception.
-} finally {
-   // Clean up. Calling this after txn.commit() is a no-op
-   // and hence safe.
-   txn.discard();
-}
-```
 
 ### Setting deadlines
 It is recommended that you always set a deadline for each client call, after
