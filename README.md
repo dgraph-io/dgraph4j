@@ -60,8 +60,7 @@ instructions in the README of that project.
 ## Intro
 This library supports two styles of clients, the synchronous client `DgraphClient` and the async client `DgraphAsyncClient`.
 A `DgraphClient` or `DgraphAsyncClient` can be initialised by passing it a list of `DgraphBlockingStub`
-clients. Connecting to multiple Dgraph servers in the same cluster allows for better
-distribution of workload. In the next section, we will explain how to create a synchronous client and use it to mutate or query dgraph. For the async client, more details can be found in the [Using the Asynchronous Client](#using-the-asynchronous-client) section.
+clients. The `anyClient()` API can randomly pick a stub, which can then be used for GRPC operations. In the next section, we will explain how to create a synchronous client and use it to mutate or query dgraph. For the async client, more details can be found in the [Using the Asynchronous Client](#using-the-asynchronous-client) section.
 
 ## Using the Synchronous Client
 
@@ -108,9 +107,9 @@ dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
 
 There are two types of transactions in dgraph, i.e. the read-only transactions that only include queries and the transactions that change data in dgraph with mutate operations. Both the synchronous client `DgraphClient` and the async client `DgraphAsyncClient` support the two types of transactions by providing the `newTransaction` and the `newReadOnlyTransaction` APIs. Creating a transaction is a local operation and incurs no network overhead.
 
-If a transaction is _not_ read-only, it can have any number of query, or mutate operations, which means such a transaction may also include only query operations. However, _non_ read-only transactions place a heavier load on the dgraph cluster by requesting unique timestamps, while all read-only transactions can share the same timestamp. Therefore if a transaction contains only query operations, we strongly recommend to use a read-only transaction.
+In most of the cases, the normal read-write transactions should be used, which can have any number of query, or mutate operations. However, if a transaction only has queries, you might benefit from a read-only transaction, which can share the same read timestamp across multiple such read-only transactions, thus, potentially providing better latency.
 
-For _non_ read only transactions, it is a good practise to call `Transaction#discard()` in a `finally` block after running
+For normal read-write transactions, it is a good practise to call `Transaction#discard()` in a `finally` block after running
 the transaction. Calling `Transaction#discard()` after `Transaction#commit()` is a no-op
 and you can call `discard()` multiple times with no additional side-effects.
 
@@ -123,6 +122,7 @@ Transaction txn = dgraphClient.newTransaction();
     txn.discard();
   }
 ```
+For read-only transactions, there is no need to call `Transaction.discard`, which is equivalent to a no-op.
 
 ### Run a mutation
 `Transaction#mutate` runs a mutation. It takes in a `Mutation` object,
