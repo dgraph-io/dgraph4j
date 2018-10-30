@@ -58,9 +58,13 @@ instructions in the README of that project.
 [DgraphJavaSample]: https://github.com/dgraph-io/dgraph4j/tree/master/samples/DgraphJavaSample
 
 ## Intro
-This library supports two styles of clients, the synchronous client `DgraphClient` and the async client `DgraphAsyncClient`.
-A `DgraphClient` or `DgraphAsyncClient` can be initialised by passing it a list of `DgraphBlockingStub`
-clients. The `anyClient()` API can randomly pick a stub, which can then be used for GRPC operations. In the next section, we will explain how to create a synchronous client and use it to mutate or query dgraph. For the async client, more details can be found in the [Using the Asynchronous Client](#using-the-asynchronous-client) section.
+This library supports two styles of clients, the synchronous client `DgraphClient` and
+the async client `DgraphAsyncClient`.
+A `DgraphClient` or `DgraphAsyncClient` can be initialised by passing it
+a list of `DgraphBlockingStub` clients. The `anyClient()` API can randomly pick a stub, which can
+then be used for GRPC operations. In the next section, we will explain how to create a
+synchronous client and use it to mutate or query dgraph. For the async client, more details can
+be found in the [Using the Asynchronous Client](#using-the-asynchronous-client) section.
 
 ## Using the Synchronous Client
 
@@ -69,13 +73,14 @@ clients. The `anyClient()` API can randomly pick a stub, which can then be used 
 The following code snippet shows how to create a synchronous client using just one connection.
 
 ```java
-ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext(true).build();
+ManagedChannel channel =
+ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext(true).build();
 DgraphStub stub = DgraphGrpc.newStub(channel);
 DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(stub));
 ```
 
-Alternatively, you can specify a deadline (in seconds) after which the client will time out when making
-requests to the server.
+Alternatively, you can specify a deadline (in seconds) after which the client will time out when
+making requests to the server.
 
 ```java
 DgraphClient dgraphClient = new DgraphClient(stub);
@@ -105,13 +110,21 @@ dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
 
 ### Create a transaction
 
-There are two types of transactions in dgraph, i.e. the read-only transactions that only include queries and the transactions that change data in dgraph with mutate operations. Both the synchronous client `DgraphClient` and the async client `DgraphAsyncClient` support the two types of transactions by providing the `newTransaction` and the `newReadOnlyTransaction` APIs. Creating a transaction is a local operation and incurs no network overhead.
+There are two types of transactions in dgraph, i.e. the read-only transactions that only include
+queries and the transactions that change data in dgraph with mutate operations. Both the
+synchronous client `DgraphClient` and the async client `DgraphAsyncClient` support the two types
+of transactions by providing the `newTransaction` and the `newReadOnlyTransaction` APIs. Creating
+ a transaction is a local operation and incurs no network overhead.
 
-In most of the cases, the normal read-write transactions should be used, which can have any number of query, or mutate operations. However, if a transaction only has queries, you might benefit from a read-only transaction, which can share the same read timestamp across multiple such read-only transactions, thus, potentially providing better latency.
+In most of the cases, the normal read-write transactions should be used, which can have any
+number of query, or mutate operations. However, if a transaction only has queries, you might
+benefit from a read-only transaction, which can share the same read timestamp across multiple
+such read-only transactions, thus, potentially providing better latency.
 
-For normal read-write transactions, it is a good practise to call `Transaction#discard()` in a `finally` block after running
-the transaction. Calling `Transaction#discard()` after `Transaction#commit()` is a no-op
-and you can call `discard()` multiple times with no additional side-effects.
+For normal read-write transactions, it is a good practise to call `Transaction#discard()` in a
+`finally` block after running the transaction. Calling `Transaction#discard()` after
+`Transaction#commit()` is a no-op and you can call `discard()` multiple times with no additional
+side-effects.
 
 ```java
 Transaction txn = dgraphClient.newTransaction();
@@ -122,7 +135,8 @@ Transaction txn = dgraphClient.newTransaction();
     txn.discard();
   }
 ```
-For read-only transactions, there is no need to call `Transaction.discard`, which is equivalent to a no-op.
+For read-only transactions, there is no need to call `Transaction.discard`, which is equivalent
+to a no-op.
 
 ### Run a mutation
 `Transaction#mutate` runs a mutation. It takes in a `Mutation` object,
@@ -276,12 +290,14 @@ Certain headers such as authentication tokens need to be set globally for all su
 Below is an example of setting a header with the name "auth-token":
 ```java
 // create the stub first
-ManagedChannel channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
+ManagedChannel channel =
+ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
 DgraphStub stub = DgraphGrpc.newStub(channel);
 
 // use MetadataUtils to augment the stub with headers
 Metadata metadata = new Metadata();
-metadata.put(Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
+metadata.put(
+  Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
 stub = MetadataUtils.attachHeaders(stub, metadata);
 
 // create the DgraphClient wrapper around the stub
@@ -356,9 +372,9 @@ If you have made changes to the `task.proto` file, this step will also regenerat
 generated by Protocol Buffer tools.
 
 ### Code Style
-We use [google-java-format] to format the source code. If you run `./gradlew build`, you will be warned
-if there is code that is not conformant. You can run `./gradlew goJF` to format the source code, before
-committing it.
+We use [google-java-format] to format the source code. If you run `./gradlew build`, you will be
+warned if there is code that is not conformant. You can run `./gradlew goJF` to format the source
+ code, before committing it.
 
 [google-java-format]:https://github.com/google/google-java-format
 
