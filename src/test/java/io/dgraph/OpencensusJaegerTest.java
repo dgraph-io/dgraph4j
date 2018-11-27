@@ -23,8 +23,8 @@ public class OpencensusJaegerTest extends DgraphIntegrationTest {
         TraceConfig traceConfig = Tracing.getTraceConfig();
         TraceParams activeTraceParams = traceConfig.getActiveTraceParams();
         traceConfig.updateActiveTraceParams(
-                activeTraceParams.toBuilder().setSampler(
-                        Samplers.alwaysSample()).build());
+            activeTraceParams.toBuilder().setSampler(
+                Samplers.alwaysSample()).build());
 
         // 3. Get the global singleton Tracer object.
         Tracer tracer = Tracing.getTracer();
@@ -42,7 +42,7 @@ public class OpencensusJaegerTest extends DgraphIntegrationTest {
     private static void runTransactions() {
         // change schema
         DgraphProto.Operation op =
-                DgraphProto.Operation.newBuilder().setSchema("name: string @index(fulltext) @upsert .").build();
+            DgraphProto.Operation.newBuilder().setSchema("name: string @index(fulltext) @upsert .").build();
         dgraphClient.alter(op);
 
         // Add data
@@ -50,10 +50,10 @@ public class OpencensusJaegerTest extends DgraphIntegrationTest {
         json.addProperty("name", "Alice");
 
         DgraphProto.Mutation mu =
-                DgraphProto.Mutation.newBuilder()
-                        .setCommitNow(true)
-                        .setSetJson(ByteString.copyFromUtf8(json.toString()))
-                        .build();
+            DgraphProto.Mutation.newBuilder()
+                .setCommitNow(true)
+                .setSetJson(ByteString.copyFromUtf8(json.toString()))
+                .build();
         dgraphClient.newTransaction().mutate(mu);
     }
 }

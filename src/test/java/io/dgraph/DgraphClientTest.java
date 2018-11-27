@@ -49,10 +49,10 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     json.addProperty("name", "Alice");
 
     Mutation mu =
-            Mutation.newBuilder()
-                    .setCommitNow(true)
-                    .setSetJson(ByteString.copyFromUtf8(json.toString()))
-                    .build();
+        Mutation.newBuilder()
+            .setCommitNow(true)
+            .setSetJson(ByteString.copyFromUtf8(json.toString()))
+            .build();
     dgraphClient.newTransaction().mutate(mu);
 
     // Query
