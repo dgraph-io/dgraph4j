@@ -31,8 +31,7 @@ and understand how to run and work with Dgraph.
   * [Setting Metadata Headers](#setting-metadata-headers)
   * [Helper Methods](#helper-methods)
 * [Using the Asynchronous Client](#using-the-asynchronous-client)
-* [Troubleshooting](#troubleshooting)
-  * [Checking the request latency](#checking-the-request-latency)
+* [Checking the request latency](#checking-the-request-latency)
 - [Development](#development)
   * [Building the source](#building-the-source)
   * [Code Style](#code-style)
@@ -359,11 +358,10 @@ txn.query(query).thenAccept(response -> {
     ppl.all.forEach(person -> System.out.println(person.name));
 });
 ```
-## Troubleshooting
-### Checking the request latency
-If you are experiencing slow requests, and would like to see the latency for either a mutation or
+## Checking the request latency
+If you would like to see the latency for either a mutation or
 query request, the latency field in the returned result can be helpful. Here is an example to log
- the latency of a query request
+ the latency of a query request:
 ```java
       Response resp = txn.query(query);
       Latency latency = resp.getLatency();
@@ -371,7 +369,7 @@ query request, the latency field in the returned result can be helpful. Here is 
       logger.info("processing latency:" + latency.getProcessingNs());
       logger.info("encoding latency:" + latency.getEncodingNs());
 ```
-Similarly you can get the latency of a mutation request
+Similarly you can get the latency of a mutation request:
 ```java
     Assigned assignedIds = dgraphClient.newTransaction().mutate(mu);
     Latency latency = assignedIds.getLatency();
