@@ -110,7 +110,7 @@ public class DgraphAsyncClient {
 
   /**
    * @param sequencing - the Sequencing strategy to be used
-   * @return
+   * @return the new async transaction object
    * @deprecated the sequencing feature has been deprecated
    */
   public AsyncTransaction newTransaction(Sequencing sequencing) {
