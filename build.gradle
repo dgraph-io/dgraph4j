@@ -50,10 +50,6 @@ def dgraph4jVersion = "$version"
 def openCensusVersion = '0.17.0'
 
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.3'
-}
-
 protobuf {
     protoc {
         // The version of protoc must match protobuf-java. If you don't depend on
