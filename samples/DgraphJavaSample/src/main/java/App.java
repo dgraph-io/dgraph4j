@@ -27,7 +27,7 @@ public class App {
     if (withAuthHeader) {
       Metadata metadata = new Metadata();
       metadata.put(
-          Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
+              Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
       stub = MetadataUtils.attachHeaders(stub, metadata);
     }
 

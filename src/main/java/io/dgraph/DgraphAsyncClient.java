@@ -17,12 +17,20 @@ package io.dgraph;
 
 import static java.util.Arrays.asList;
 
-import io.dgraph.DgraphProto.LinRead;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.dgraph.DgraphProto.LinRead.Sequencing;
 import io.dgraph.DgraphProto.Payload;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Asynchronous implementation of a Dgraph client using grpc.
@@ -34,9 +42,10 @@ import java.util.concurrent.ThreadLocalRandom;
  * @author Michail Klimenkov
  */
 public class DgraphAsyncClient {
-
+  private static final Logger LOG = LoggerFactory.getLogger(DgraphAsyncClient.class);
   private final List<DgraphGrpc.DgraphStub> stubs;
-
+  private final ReadWriteLock jwtLock;
+  private DgraphProto.Jwt jwt;
   /**
    * Creates a new client for interacting with a Dgraph store.
    *
@@ -47,9 +56,88 @@ public class DgraphAsyncClient {
    */
   public DgraphAsyncClient(DgraphGrpc.DgraphStub... stubs) {
     this.stubs = asList(stubs);
+    this.jwtLock = new ReentrantReadWriteLock();
   }
 
-  private LinRead linRead = LinRead.newBuilder().build();
+  /**
+   * login sends a LoginRequest to the server that contains the userid and password.
+   * If the LoginRequest is processed successfully, the response returned by the server will contain an access JWT
+   * and a refresh JWT, which will be stored in the jwt field of this class, and used for authorizing all subsequent
+   * requests sent to the server.
+   * @param userid the id of the user who is trying to login, e.g. Alice
+   * @param password the password of the user
+   * @return a future which can be used to wait for completion of the login request
+   */
+  public CompletableFuture<Void> login(String userid, String password) {
+    Lock wlock = jwtLock.writeLock();
+    wlock.lock();
+    try {
+      final DgraphGrpc.DgraphStub client = anyClient();
+      final DgraphProto.LoginRequest loginRequest = DgraphProto.LoginRequest.newBuilder().
+              setUserid(userid).
+              setPassword(password).
+              build();
+      StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
+      client.login(loginRequest, bridge);
+      return bridge.getDelegate().thenAccept((DgraphProto.Response response) -> {
+        try {
+          // set the jwt field
+          jwt = DgraphProto.Jwt.parseFrom(response.getJson());
+        } catch (InvalidProtocolBufferException e) {
+          LOG.error("error while parsing jwt from the response: ", e);
+        }
+      });
+    } finally {
+      wlock.unlock();
+    }
+  }
+
+  protected CompletableFuture<Void> retryLogin() {
+    Lock rlock = jwtLock.readLock();
+    rlock.lock();
+    try {
+      if (jwt.getRefreshJwt().isEmpty()) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        future.completeExceptionally(new Exception("refresh JWT should not be empty"));
+        return future;
+      }
+
+      final DgraphGrpc.DgraphStub client = anyClient();
+      final DgraphProto.LoginRequest loginRequest = DgraphProto.LoginRequest.newBuilder().
+              setRefreshToken(jwt.getRefreshJwt()).
+              build();
+
+      StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
+      client.login(loginRequest, bridge);
+      return bridge.getDelegate().thenAccept((DgraphProto.Response response) -> {
+        try {
+          // set the jwt field
+          jwt = DgraphProto.Jwt.parseFrom(response.getJson());
+        } catch (InvalidProtocolBufferException e) {
+          LOG.error("error while parsing jwt from the response: ", e);
+        }
+      });
+    } finally {
+      rlock.unlock();
+    }
+  }
+
+  protected DgraphGrpc.DgraphStub getStubWithJwt(DgraphGrpc.DgraphStub stub) {
+    Lock rlock = jwtLock.readLock();
+    rlock.lock();
+    try {
+      if (!jwt.getAccessJwt().isEmpty()) {
+        Metadata metadata = new Metadata();
+        metadata.put(
+                Metadata.Key.of("accessJwt", Metadata.ASCII_STRING_MARSHALLER), jwt.getAccessJwt());
+        return MetadataUtils.attachHeaders(stub, metadata);
+      }
+
+      return stub;
+    } finally {
+      rlock.unlock();
+    }
+  }
 
   /**
    * Alter can be used to perform the following operations, by setting the right fields in the
@@ -94,7 +182,7 @@ public class DgraphAsyncClient {
    * @return a new AsyncTransaction object.
    */
   public AsyncTransaction newTransaction() {
-    return new AsyncTransaction(this.anyClient());
+    return new AsyncTransaction(this, this.anyClient());
   }
 
   /**
@@ -105,7 +193,7 @@ public class DgraphAsyncClient {
    * @return a new AsyncTransaction object
    */
   public AsyncTransaction newReadOnlyTransaction() {
-    return new AsyncTransaction(this.anyClient(), true);
+    return new AsyncTransaction(this, this.anyClient(), true);
   }
 
   /**
@@ -114,6 +202,6 @@ public class DgraphAsyncClient {
    * @deprecated the sequencing feature has been deprecated
    */
   public AsyncTransaction newTransaction(Sequencing sequencing) {
-    return new AsyncTransaction(this.anyClient());
+    return new AsyncTransaction(this, this.anyClient());
   }
 }

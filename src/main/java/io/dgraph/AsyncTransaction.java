@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
+
+import io.netty.util.concurrent.CompleteFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,17 +47,18 @@ public class AsyncTransaction implements AutoCloseable {
   private volatile boolean finished;
   private volatile boolean readOnly;
 
-  // provides
+  private final DgraphAsyncClient client;
   private final DgraphStub stub;
 
-  AsyncTransaction(DgraphStub stub) {
+  AsyncTransaction(DgraphAsyncClient client, DgraphStub stub) {
     this.context = TxnContext.newBuilder().build();
+    this.client = client;
     this.stub = stub;
     this.readOnly = false;
   }
 
-  AsyncTransaction(DgraphStub stub, final boolean readOnly) {
-    this(stub);
+  AsyncTransaction(DgraphAsyncClient client, DgraphStub stub, final boolean readOnly) {
+    this(client, stub);
     this.readOnly = readOnly;
   }
 
@@ -84,15 +87,17 @@ public class AsyncTransaction implements AutoCloseable {
 
     LOG.debug("Sending request to Dgraph...");
     StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
-    stub.query(request, bridge);
+    DgraphStub localStub = client.getStubWithJwt(this.stub);
+    localStub.query(request, bridge);
 
     return bridge
         .getDelegate()
-        .thenApply(
+        .thenCompose(
             (Response response) -> {
               LOG.debug("Received response from Dgraph!");
+              LOG.info("response for query", response);
               mergeContext(response.getTxn());
-              return response;
+              return CompletableFuture.completedFuture(response);
             });
   }
 
