@@ -15,7 +15,11 @@
  */
 package io.dgraph;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.dgraph.DgraphProto.Operation;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Implementation of a DgraphClient using grpc.
@@ -41,7 +45,7 @@ public class DgraphClient {
   public DgraphClient(DgraphGrpc.DgraphStub... stubs) {
     this.asyncClient = new DgraphAsyncClient(stubs);
   }
-
+  
   /**
    * Creates a new Transaction object. All operations performed by this transaction are synchronous.
    *
