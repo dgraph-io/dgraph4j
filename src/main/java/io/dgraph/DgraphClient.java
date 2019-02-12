@@ -45,7 +45,7 @@ public class DgraphClient {
   public DgraphClient(DgraphGrpc.DgraphStub... stubs) {
     this.asyncClient = new DgraphAsyncClient(stubs);
   }
-  
+
   /**
    * Creates a new Transaction object. All operations performed by this transaction are synchronous.
    *

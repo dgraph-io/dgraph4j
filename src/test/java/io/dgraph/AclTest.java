@@ -16,7 +16,6 @@ public class AclTest extends DgraphIntegrationTest {
 
     private void createAccountAndData() {
         dgraphClient.alter(DgraphProto.Operation.newBuilder().setDropAll(true).build());
-        dgraphClient.
     }
 
     private void resetUser() throws Exception {
