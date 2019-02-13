@@ -1,7 +1,9 @@
 package io.dgraph;
 
-import com.codesnippets4all.json.parsers.JSONParser;
-import com.codesnippets4all.json.parsers.JsonParserFactory;
+import static org.junit.Assert.assertTrue;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -19,7 +21,7 @@ public class AclTest {
   private static final String GROOT_PASSWORD = "password";
   private static final String PREDICATE_TO_READ = "predicate_to_read";
   private static final String QUERY_ATTR = "name";
-  private static final JSONParser JSON_PARSER = JsonParserFactory.getInstance().newJsonParser();
+  private static final JsonParser JSON_PARSER = new JsonParser();
 
   protected static final String TEST_HOSTNAME = "localhost";
   protected static final int TEST_PORT = 9180;
@@ -66,8 +68,14 @@ public class AclTest {
             "	{" + "q(func: eq(%s, \"SF\")) {" + "%s" + "}}", PREDICATE_TO_READ, QUERY_ATTR);
     Transaction txn = dgraphClient.newTransaction();
     DgraphProto.Response resp = txn.query(query);
+    JsonElement rootElem = JSON_PARSER.parse(resp.getJson().toStringUtf8());
+    System.out.println("response:\n" + rootElem);
+    if (shouldFail) {
 
-    System.out.println("response:\n" + resp.getJson());
+    } else {
+      assertTrue(
+          "the response should have the q block", rootElem.getAsJsonObject().get("q") != null);
+    }
   }
 
   private void resetUser() throws Exception {
