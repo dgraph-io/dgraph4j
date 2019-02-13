@@ -1,13 +1,12 @@
 package io.dgraph;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
@@ -20,8 +19,9 @@ public class AclTest {
   private static final String USER_PASSWORD = "simplepassword";
   private static final String GROOT_PASSWORD = "password";
   private static final String PREDICATE_TO_READ = "predicate_to_read";
+  private static final String PREDICATE_TO_WRITE = "predicate_to_write";
+  private static final String PREDICATE_TO_ALTER = "predicate_to_alter";
   private static final String QUERY_ATTR = "name";
-  private static final JsonParser JSON_PARSER = new JsonParser();
 
   protected static final String TEST_HOSTNAME = "localhost";
   protected static final int TEST_PORT = 9180;
@@ -50,7 +50,11 @@ public class AclTest {
   @Test
   public void testLogin() throws Exception {
     createAccountAndData();
+    // initially all the operations should succeed when there are no rules
+    // defined on the predicates (the fail open approach)
     queryPredicateWithUserAccount(false);
+    mutatePredicateWithUserAccount(false);
+    alterPredicateWithUserAccount(false);
   }
 
   private void createAccountAndData() throws Exception {
@@ -62,19 +66,165 @@ public class AclTest {
             .build());
   }
 
-  private void queryPredicateWithUserAccount(boolean shouldFail) {
-    String query =
-        String.format(
-            "	{" + "q(func: eq(%s, \"SF\")) {" + "%s" + "}}", PREDICATE_TO_READ, QUERY_ATTR);
-    Transaction txn = dgraphClient.newTransaction();
-    DgraphProto.Response resp = txn.query(query);
-    JsonElement rootElem = JSON_PARSER.parse(resp.getJson().toStringUtf8());
-    System.out.println("response:\n" + rootElem);
-    if (shouldFail) {
+  private void createGroupAndAcls(String group, boolean addUserToGroup)
+      throws IOException, InterruptedException {
+    // create a new group
+    checkCmd(
+        "unable to create the group " + group,
+        "dgraph",
+        "acl",
+        "groupadd",
+        "-d",
+        DGRPAH_ENDPOINT,
+        "-g",
+        group,
+        "-x",
+        GROOT_PASSWORD);
 
-    } else {
-      assertTrue(
-          "the response should have the q block", rootElem.getAsJsonObject().get("q") != null);
+    if (addUserToGroup) {
+      checkCmd(
+          "unable to add user " + USER_ID + " to the group " + group,
+          "dgraph",
+          "acl",
+          "usermod",
+          "-d",
+          DGRPAH_ENDPOINT,
+          "-u",
+          USER_ID,
+          "-g",
+          group,
+          "-x",
+          GROOT_PASSWORD);
+    }
+
+    // add READ permission on the predicate_to_read to the group
+    checkCmd(
+        "unable to add READ permission on " + PREDICATE_TO_READ + " to the group " + group,
+        "dgraph",
+        "acl",
+        "chmod",
+        "-d",
+        DGRPAH_ENDPOINT,
+        "-g",
+        group,
+        "-p",
+        PREDICATE_TO_READ,
+        "-P",
+        "4",
+        "-x",
+        GROOT_PASSWORD);
+
+    // also add READ permission on the attribute queryAttr, which is used inside the query block
+    checkCmd(
+        "unable to add READ permission on " + QUERY_ATTR + " to the group " + group,
+        "dgraph",
+        "acl",
+        "chmod",
+        "-d",
+        DGRPAH_ENDPOINT,
+        "-g",
+        group,
+        "-p",
+        QUERY_ATTR,
+        "-P",
+        "4",
+        "-x",
+        GROOT_PASSWORD);
+
+    checkCmd(
+        "unable to add WRITE permission on " + PREDICATE_TO_WRITE + " to the group " + group,
+        "dgraph",
+        "acl",
+        "chmod",
+        "-d",
+        DGRPAH_ENDPOINT,
+        "-g",
+        group,
+        "-p",
+        PREDICATE_TO_WRITE,
+        "-P",
+        "2",
+        "-x",
+        GROOT_PASSWORD);
+    checkCmd(
+        "unable to add WRITE permission on " + PREDICATE_TO_ALTER + " to the group " + group,
+        "dgraph",
+        "acl",
+        "chmod",
+        "-d",
+        DGRPAH_ENDPOINT,
+        "-g",
+        group,
+        "-p",
+        PREDICATE_TO_ALTER,
+        "-P",
+        "2",
+        "-x",
+        GROOT_PASSWORD);
+  }
+
+  private void checkCmd(String failureMsg, String... args)
+      throws IOException, InterruptedException {
+    Process cmd = new ProcessBuilder(args).start();
+    cmd.waitFor();
+    if (cmd.exitValue() != 0) {
+      fail(failureMsg);
+    }
+  }
+
+  private void queryPredicateWithUserAccount(boolean shouldFail) {
+    verifyOperation(
+        shouldFail,
+        "query",
+        () -> {
+          String query =
+              String.format(
+                  "	{" + "q(func: eq(%s, \"SF\")) {" + "%s" + "}}", PREDICATE_TO_READ, QUERY_ATTR);
+          Transaction txn = dgraphClient.newTransaction();
+          txn.query(query);
+        });
+  }
+
+  private void mutatePredicateWithUserAccount(boolean shouldFail) {
+    verifyOperation(
+        shouldFail,
+        "mutation",
+        () -> {
+          Transaction txn = dgraphClient.newTransaction();
+          txn.mutate(
+              DgraphProto.Mutation.newBuilder()
+                  .setCommitNow(true)
+                  .setSetNquads(
+                      ByteString.copyFromUtf8(
+                          String.format("_:a <%s> \"string\" .", PREDICATE_TO_WRITE)))
+                  .build());
+        });
+  }
+
+  private void alterPredicateWithUserAccount(boolean shouldFail) {
+    verifyOperation(
+        shouldFail,
+        "alter",
+        () -> {
+          dgraphClient.alter(
+              DgraphProto.Operation.newBuilder()
+                  .setSchema(String.format("%s: int .", PREDICATE_TO_ALTER))
+                  .build());
+        });
+  }
+
+  private void verifyOperation(boolean shouldFail, String operation, Runnable runnable) {
+    boolean failed = false;
+    try {
+      runnable.run();
+    } catch (io.grpc.StatusRuntimeException e) {
+      e.printStackTrace();
+      failed = true;
+    }
+    if (shouldFail && !failed) {
+      fail("the " + operation + " should have failed");
+    } else if (!shouldFail && failed) {
+      fail("the " + operation + " should have succeed");
     }
   }
 
@@ -113,7 +263,7 @@ public class AclTest {
       // print out the output from the command
       InputStream inputStream = createUserCmd.getInputStream();
       BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-      String line = null;
+      String line;
       while ((line = br.readLine()) != null) {
         System.out.println(line);
       }
