@@ -22,6 +22,8 @@ public class AclTest {
   private static final String PREDICATE_TO_WRITE = "predicate_to_write";
   private static final String PREDICATE_TO_ALTER = "predicate_to_alter";
   private static final String QUERY_ATTR = "name";
+  private static final String UNUSED_GROUP = "unusedGroup";
+  private static final String DEV_GROUP = "dev";
 
   protected static final String TEST_HOSTNAME = "localhost";
   protected static final int TEST_PORT = 9180;
@@ -48,12 +50,37 @@ public class AclTest {
   }
 
   @Test
-  public void testLogin() throws Exception {
+  public void testAuthorization() throws Exception {
     createAccountAndData();
     // initially all the operations should succeed when there are no rules
     // defined on the predicates (the fail open approach)
     queryPredicateWithUserAccount(false);
     mutatePredicateWithUserAccount(false);
+    alterPredicateWithUserAccount(false);
+
+    createGroupAndAcls(UNUSED_GROUP, false);
+    System.out.println("Sleep for 35 seconds for acl caches to be refreshed");
+    Thread.sleep(35 * 1000);
+
+    // now all the operations should fail since there are rules defined on the unusedGroup
+    queryPredicateWithUserAccount(true);
+    mutatePredicateWithUserAccount(true);
+    alterPredicateWithUserAccount(true);
+
+    // create the dev group and add the user to it
+    createGroupAndAcls(DEV_GROUP, true);
+    System.out.println("Sleep for 35 seconds for acl caches to be refreshed");
+    Thread.sleep(35 * 1000);
+
+    // now the operations should succeed again through the dev group
+    queryPredicateWithUserAccount(false);
+    // sleep long enough (10s per the docker-compose.yml in this directory)
+    // for the accessJwt to expire in order to test auto login through refresh jwt
+    System.out.println("Sleep for 12 seconds for the accessJwt to expire");
+    Thread.sleep(12 * 1000);
+    mutatePredicateWithUserAccount(false);
+    System.out.println("Sleep for 12 seconds for the accessJwt to expire");
+    Thread.sleep(12 * 1000);
     alterPredicateWithUserAccount(false);
   }
 
@@ -147,7 +174,7 @@ public class AclTest {
         "-x",
         GROOT_PASSWORD);
     checkCmd(
-        "unable to add WRITE permission on " + PREDICATE_TO_ALTER + " to the group " + group,
+        "unable to add ALTER permission on " + PREDICATE_TO_ALTER + " to the group " + group,
         "dgraph",
         "acl",
         "chmod",
@@ -158,7 +185,7 @@ public class AclTest {
         "-p",
         PREDICATE_TO_ALTER,
         "-P",
-        "2",
+        "1",
         "-x",
         GROOT_PASSWORD);
   }

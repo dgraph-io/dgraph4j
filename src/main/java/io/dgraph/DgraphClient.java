@@ -86,7 +86,10 @@ public class DgraphClient {
    * @param op a protocol buffer Operation object representing the operation being performed.
    */
   public void alter(Operation op) {
-    asyncClient.alter(op).join();
+    ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          asyncClient.alter(op).join();
+        });
   }
 
   /**
