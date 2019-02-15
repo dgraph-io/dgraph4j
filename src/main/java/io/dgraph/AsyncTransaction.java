@@ -27,7 +27,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,8 +88,8 @@ public class AsyncTransaction implements AutoCloseable {
 
     LOG.debug("Sending request to Dgraph...");
     StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
-    DgraphStub localStub = client.getStubWithJwt(this.stub);
-    localStub.query(request, bridge);
+    DgraphStub stub = client.getStubWithJwt(this.stub);
+    stub.query(request, bridge);
 
     CompletableFuture<Response> respFuture =
         bridge
@@ -114,7 +113,7 @@ public class AsyncTransaction implements AutoCloseable {
               // handle the token expiration exception
               try {
                 client.retryLogin().get();
-                DgraphStub retryStub = client.getStubWithJwt(stub);
+                DgraphStub retryStub = client.getStubWithJwt(this.stub);
                 StreamObserverBridge<Response> retryBridge = new StreamObserverBridge<>();
                 retryStub.query(request, retryBridge);
 
@@ -255,42 +254,42 @@ public class AsyncTransaction implements AutoCloseable {
     StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
     stub.commitOrAbort(context, bridge);
 
-    CompletableFuture<TxnContext> commitFuture = bridge
-        .getDelegate();
+    CompletableFuture<TxnContext> commitFuture = bridge.getDelegate();
 
-    return CompletableFuture.supplyAsync(new Supplier<Void>() {
-      @Override
-      public Void get() {
-        try {
-          commitFuture.get();
-          return null;
-        } catch (InterruptedException e) {
-          LOG.error("The commit got interrupted:", e);
-          throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-          if (ExceptionUtil.isJwtExpired(e)) {
+    return CompletableFuture.supplyAsync(
+        new Supplier<Void>() {
+          @Override
+          public Void get() {
             try {
-              client.retryLogin().get();
-              DgraphStub retryStub = client.getStubWithJwt(stub);
-              StreamObserverBridge<TxnContext> retryBridge = new StreamObserverBridge<>();
-              retryStub.commitOrAbort(context, retryBridge);
-              retryBridge.getDelegate().get();
+              commitFuture.get();
               return null;
-            } catch (InterruptedException innerE) {
-              LOG.error("The retried commit got interrupted:", innerE);
-              throw new RuntimeException(innerE);
-            } catch (ExecutionException innerE) {
-              LOG.error("The retried commit encounters an exception:", innerE);
-              throw launderException(innerE);
+            } catch (InterruptedException e) {
+              LOG.error("The commit got interrupted:", e);
+              throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+              if (ExceptionUtil.isJwtExpired(e)) {
+                try {
+                  client.retryLogin().get();
+                  DgraphStub retryStub = client.getStubWithJwt(stub);
+                  StreamObserverBridge<TxnContext> retryBridge = new StreamObserverBridge<>();
+                  retryStub.commitOrAbort(context, retryBridge);
+                  retryBridge.getDelegate().get();
+                  return null;
+                } catch (InterruptedException innerE) {
+                  LOG.error("The retried commit got interrupted:", innerE);
+                  throw new RuntimeException(innerE);
+                } catch (ExecutionException innerE) {
+                  LOG.error("The retried commit encounters an exception:", innerE);
+                  throw launderException(innerE);
+                }
+              }
+
+              // when the outer exception is not caused by JWT expiration, run the following logic
+              LOG.error("The commit encounters an exception:", e);
+              throw launderException(e);
             }
           }
-
-          // when the outer exception is not caused by JWT expiration, run the following logic
-          LOG.error("The commit encounters an exception:", e);
-          throw launderException(e);
-        }
-      }
-    });
+        });
   }
 
   /**

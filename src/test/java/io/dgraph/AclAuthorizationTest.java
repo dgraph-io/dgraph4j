@@ -12,11 +12,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class AclTest {
+interface AclTest {}
+
+@Category(AclTest.class)
+public class AclAuthorizationTest {
+  private static final Logger LOG = LoggerFactory.getLogger(AclAuthorizationTest.class);
   private static final String USER_ID = "alice";
   private static final String USER_PASSWORD = "simplepassword";
   private static final String GROOT_PASSWORD = "password";
@@ -33,8 +41,27 @@ public class AclTest {
   private static ManagedChannel channel;
   protected static DgraphClient dgraphClient;
 
+  private static Process startClusterCmd;
+
   @BeforeClass
-  public static void beforeClass() {
+  public static void beforeClass() throws IOException, InterruptedException {
+    // start the cluster using the $GOPATH/src/github.com/dgraph-io/dgraph/ee/acl/docker-compose.yml
+    startClusterCmd =
+        new ProcessBuilder(
+                "docker-compose",
+                "-f",
+                System.getenv("GOPATH")
+                    + "/src/github.com/dgraph-io/dgraph/ee/acl/docker-compose.yml",
+                "up",
+                "--force-recreate",
+                "--remove-orphans",
+                "--detach")
+            .start();
+
+    System.out.println("Started the dgraph cluster");
+    // sleep for 10 seconds for the cluster to stablize
+    Thread.sleep(10 * 1000);
+
     channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
     DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
     dgraphClient = new DgraphClient(stub);
@@ -48,7 +75,12 @@ public class AclTest {
 
   @AfterClass
   public static void afterClass() throws InterruptedException {
-    channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    if (channel != null) {
+      channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    }
+    if (startClusterCmd != null) {
+      startClusterCmd.destroy();
+    }
   }
 
   @Test
@@ -194,12 +226,14 @@ public class AclTest {
         GROOT_PASSWORD);
   }
 
-  private void checkCmd(String failureMsg, String... args)
+  private static void checkCmd(String failureMsg, String... args)
       throws IOException, InterruptedException {
-    Process cmd = new ProcessBuilder(args).start();
+    System.out.println(String.join(" ", args));
+    Process cmd = new ProcessBuilder(args).redirectErrorStream(true).start();
     cmd.waitFor();
     if (cmd.exitValue() != 0) {
-      fail(failureMsg);
+      BufferedReader br = new BufferedReader(new InputStreamReader(cmd.getInputStream()));
+      fail(failureMsg + "\n" + br.lines().collect(Collectors.joining("\n")));
     }
   }
 
@@ -245,10 +279,11 @@ public class AclTest {
   }
 
   /**
-   * verifyOperitans executes the runnable, and then checks whether the runable runs into any exception.
-   * If the shouldFail is true, and the runnable does not encounter any exception, this method will fail the test.
-   * On the other hand, if the shouldFail is false, and the runnable encounters an exception, this method will also
-   * fail the test.
+   * verifyOperitans executes the runnable, and then checks whether the runable runs into any
+   * exception. If the shouldFail is true, and the runnable does not encounter any exception, this
+   * method will fail the test. On the other hand, if the shouldFail is false, and the runnable
+   * encounters an exception, this method will also fail the test.
+   *
    * @param shouldFail whether the runnable should fail
    * @param operation the operation name of the runnable
    * @param runnable the runnable to be executed
@@ -264,7 +299,8 @@ public class AclTest {
         cause = cause.getCause();
       }
 
-      assertTrue(cause.getCause() != null && cause.getCause() instanceof io.grpc.StatusRuntimeException);
+      assertTrue(
+          cause.getCause() != null && cause.getCause() instanceof io.grpc.StatusRuntimeException);
       StatusRuntimeException statusRuntimeException = (StatusRuntimeException) cause.getCause();
       e.printStackTrace();
       assertEquals(Status.Code.PERMISSION_DENIED, statusRuntimeException.getStatus().getCode());

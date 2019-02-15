@@ -161,34 +161,35 @@ public class DgraphAsyncClient {
     StreamObserverBridge<Payload> observerBridge = new StreamObserverBridge<>();
     stub.alter(op, observerBridge);
     CompletableFuture<Payload> alterFuture = observerBridge.getDelegate();
-    return CompletableFuture.supplyAsync(() -> {
-      try {
-        return alterFuture.get();
-      } catch (InterruptedException e) {
-        LOG.error("The alter got interrupted:", e);
-        throw new RuntimeException(e);
-      } catch (ExecutionException e) {
-        if (ExceptionUtil.isJwtExpired(e)) {
+    return CompletableFuture.supplyAsync(
+        () -> {
           try {
-            this.retryLogin().get();
-            DgraphGrpc.DgraphStub retryStub = this.getStubWithJwt(stub);
-            StreamObserverBridge<Payload> retryBridge = new StreamObserverBridge<>();
-            retryStub.alter(op, retryBridge);
-            return retryBridge.getDelegate().get();
-          } catch (InterruptedException innerE) {
-            LOG.error("The retried alter got interrupted:", innerE);
-            throw new RuntimeException(innerE);
-          } catch (ExecutionException innerE) {
-            LOG.error("The retried alter encounters an exception:", innerE);
-            throw new RuntimeException(innerE);
-          }
-        }
+            return alterFuture.get();
+          } catch (InterruptedException e) {
+            LOG.error("The alter got interrupted:", e);
+            throw new RuntimeException(e);
+          } catch (ExecutionException e) {
+            if (ExceptionUtil.isJwtExpired(e)) {
+              try {
+                this.retryLogin().get();
+                DgraphGrpc.DgraphStub retryStub = this.getStubWithJwt(stub);
+                StreamObserverBridge<Payload> retryBridge = new StreamObserverBridge<>();
+                retryStub.alter(op, retryBridge);
+                return retryBridge.getDelegate().get();
+              } catch (InterruptedException innerE) {
+                LOG.error("The retried alter got interrupted:", innerE);
+                throw new RuntimeException(innerE);
+              } catch (ExecutionException innerE) {
+                LOG.error("The retried alter encounters an exception:", innerE);
+                throw new RuntimeException(innerE);
+              }
+            }
 
-        // when the outer exception is not caused by JWT expiration
-        LOG.error("The alter encounters an exception:", e);
-        throw new RuntimeException(e);
-      }
-    });
+            // when the outer exception is not caused by JWT expiration
+            LOG.error("The alter encounters an exception:", e);
+            throw new RuntimeException(e);
+          }
+        });
   }
 
   private DgraphGrpc.DgraphStub anyClient() {

@@ -117,7 +117,6 @@ dependencies {
     // testCompile dependency to testCompile 'org.testng:testng:6.8.1' and add
     // 'test.useTestNG()' to your build script.
     testCompile 'junit:junit:4.12'
-    //testCompile 'com.google.code.gson:gson:2.8.5'
     // javax.annotation is removed from the oracle java se 11, and requires explicit dependency
     compile 'javax.annotation:javax.annotation-api:1.2-b01'
 }
@@ -296,3 +295,10 @@ def customizePom(pom) {
     }
 }
 
+task aclTest(type: Test) {
+    outputs.upToDateWhen { false }
+    testLogging.showStandardStreams = true
+    useJUnit {
+        includeCategories 'io.dgraph.AclTest'
+    }
+}
