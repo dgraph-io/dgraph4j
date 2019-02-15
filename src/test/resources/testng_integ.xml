@@ -1,0 +1,11 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="IntegTestSuite" verbose="1" >
+    <test name="IntegTest" >
+        <packages>
+            <package name="io.dgraph">
+                <exclude name="io.dgraph.AclTest"></exclude>
+            </package>
+        </packages>
+    </test>
+</suite>

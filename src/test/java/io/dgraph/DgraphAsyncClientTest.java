@@ -15,8 +15,8 @@
  */
 package io.dgraph;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -27,10 +27,10 @@ import io.grpc.ManagedChannelBuilder;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 /** @author Deepak Jois */
 public class DgraphAsyncClientTest {
@@ -53,7 +53,7 @@ public class DgraphAsyncClientTest {
     channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
   }
 
-  @Before
+  @BeforeTest
   public void beforeTest() throws Exception {
     dgraphAsyncClient.alter(Operation.newBuilder().setDropAll(true).build()).get();
   }
@@ -104,7 +104,7 @@ public class DgraphAsyncClientTest {
     }
   }
 
-  @Test(expected = TxnReadOnlyException.class)
+  @Test(expectedExceptions = TxnReadOnlyException.class)
   public void testMutationsInReadOnlyTransactions() {
     try (AsyncTransaction txn = dgraphAsyncClient.newReadOnlyTransaction()) {
       Mutation mutation =
@@ -142,6 +142,6 @@ public class DgraphAsyncClientTest {
     json = parser.parse(res.getJson().toStringUtf8()).getAsJsonObject();
     assertTrue(json.has("me"));
     String name = json.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
-    assertEquals("Alice", name);
+    assertEquals(name, "Alice");
   }
 }

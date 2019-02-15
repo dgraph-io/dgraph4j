@@ -9,7 +9,7 @@ import io.opencensus.trace.Tracing;
 import io.opencensus.trace.config.TraceConfig;
 import io.opencensus.trace.config.TraceParams;
 import io.opencensus.trace.samplers.Samplers;
-import org.junit.Test;
+import org.testng.annotations.Test;
 
 public class OpencensusJaegerTest extends DgraphIntegrationTest {
   public static final String JAEGER_COLLECTOR = "http://localhost:14268/api/traces";

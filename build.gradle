@@ -113,10 +113,7 @@ dependencies {
     runtime "io.opencensus:opencensus-impl:${openCensusVersion}"
 
     // Declare the dependency for your favourite test framework you want to use in your tests.
-    // TestNG is also supported by the Gradle Test task. Just change the
-    // testCompile dependency to testCompile 'org.testng:testng:6.8.1' and add
-    // 'test.useTestNG()' to your build script.
-    testCompile 'junit:junit:4.12'
+    testCompile 'org.testng:testng:6.8.8'
     // javax.annotation is removed from the oracle java se 11, and requires explicit dependency
     compile 'javax.annotation:javax.annotation-api:1.2-b01'
 }
@@ -295,10 +292,19 @@ def customizePom(pom) {
     }
 }
 
+
+task integTest(type: Test) {
+    outputs.upToDateWhen { false }
+    testLogging.showStandardStreams = true
+    useTestNG {
+        suites 'src/test/resources/testng_integ.xml'
+    }
+}
+
 task aclTest(type: Test) {
     outputs.upToDateWhen { false }
     testLogging.showStandardStreams = true
-    useJUnit {
-        includeCategories 'io.dgraph.AclTest'
+    useTestNG {
+        suites 'src/test/resources/testng_acl.xml'
     }
 }

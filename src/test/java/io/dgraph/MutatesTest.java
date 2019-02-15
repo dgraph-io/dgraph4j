@@ -15,8 +15,8 @@
  */
 package io.dgraph;
 
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertTrue;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import io.dgraph.DgraphProto.*;
 import java.util.Arrays;
@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.junit.Test;
+import org.testng.annotations.Test;
 
 public class MutatesTest extends DgraphIntegrationTest {
 
@@ -71,7 +71,7 @@ public class MutatesTest extends DgraphIntegrationTest {
     logger.debug("Response JSON: {}\n", res);
 
     String exp = "{\"me\":[{\"name\":\"ok 200\"},{\"name\":\"ok 300\"},{\"name\":\"ok 400\"}]}";
-    assertEquals(exp, res);
+    assertEquals(res, exp);
     assertTrue(response.getTxn().getStartTs() > 0);
     txn.commit();
   }

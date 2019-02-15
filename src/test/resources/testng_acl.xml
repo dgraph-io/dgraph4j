@@ -1,0 +1,9 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+
+<suite name="AclTestSuite" verbose="1" >
+    <test name="AclTest" >
+        <classes>
+            <class name="io.dgraph.AclTest" />
+        </classes>
+    </test>
+</suite>

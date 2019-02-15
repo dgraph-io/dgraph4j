@@ -19,10 +19,10 @@ import io.dgraph.DgraphProto.Operation;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.util.concurrent.TimeUnit;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 
 public abstract class DgraphIntegrationTest {
   protected static final Logger logger = LoggerFactory.getLogger(DgraphIntegrationTest.class);
@@ -34,7 +34,6 @@ public abstract class DgraphIntegrationTest {
 
   @BeforeClass
   public static void beforeClass() {
-
     channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
     DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
     dgraphClient = new DgraphClient(stub);

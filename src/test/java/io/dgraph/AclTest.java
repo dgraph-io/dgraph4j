@@ -1,6 +1,9 @@
 package io.dgraph;
 
-import static org.junit.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -13,18 +16,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
-interface AclTest {}
-
-@Category(AclTest.class)
-public class AclAuthorizationTest {
-  private static final Logger LOG = LoggerFactory.getLogger(AclAuthorizationTest.class);
+public class AclTest {
   private static final String USER_ID = "alice";
   private static final String USER_PASSWORD = "simplepassword";
   private static final String GROOT_PASSWORD = "password";
@@ -228,7 +224,6 @@ public class AclAuthorizationTest {
 
   private static void checkCmd(String failureMsg, String... args)
       throws IOException, InterruptedException {
-    System.out.println(String.join(" ", args));
     Process cmd = new ProcessBuilder(args).redirectErrorStream(true).start();
     cmd.waitFor();
     if (cmd.exitValue() != 0) {
@@ -292,7 +287,7 @@ public class AclAuthorizationTest {
     try {
       runnable.run();
     } catch (RuntimeException e) {
-      assertTrue("the " + operation + " should have succeed", shouldFail);
+      assertTrue(shouldFail, "the " + operation + " should have succeed");
       // if there is an exception, we assert that it must be caused by permission being denied
       Throwable cause = e;
       while (cause.getCause() != null && !(cause.getCause() instanceof StatusRuntimeException)) {
@@ -307,7 +302,7 @@ public class AclAuthorizationTest {
       return;
     }
 
-    assertFalse("the " + operation + " should have failed", shouldFail);
+    assertFalse(shouldFail, "the " + operation + " should have failed");
   }
 
   private void resetUser() throws Exception {
