@@ -201,7 +201,7 @@ public class AsyncTransaction implements AutoCloseable {
             throw new RuntimeException(e);
           } catch (ExecutionException e) {
             // we should retry login if the exception is caused by expired JWT
-            if (!ExceptionUtil.isJwtExpired(e.getCause())) {
+            if (ExceptionUtil.isJwtExpired(e.getCause())) {
               try {
                 client.retryLogin().get();
                 DgraphStub retryStub = client.getStubWithJwt(stub);
