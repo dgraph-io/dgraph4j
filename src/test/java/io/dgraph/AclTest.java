@@ -1,10 +1,12 @@
 package io.dgraph;
 
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,6 +56,7 @@ public class AclTest {
     createAccountAndData();
     // initially all the operations should succeed when there are no rules
     // defined on the predicates (the fail open approach)
+    dgraphClient.login(USER_ID, USER_PASSWORD);
     queryPredicateWithUserAccount(false);
     mutatePredicateWithUserAccount(false);
     alterPredicateWithUserAccount(false);
@@ -65,6 +68,7 @@ public class AclTest {
     // now all the operations should fail since there are rules defined on the unusedGroup
     queryPredicateWithUserAccount(true);
     mutatePredicateWithUserAccount(true);
+
     alterPredicateWithUserAccount(true);
 
     // create the dev group and add the user to it
@@ -240,19 +244,34 @@ public class AclTest {
         });
   }
 
+  /**
+   * verifyOperitans executes the runnable, and then checks whether the runable runs into any exception.
+   * If the shouldFail is true, and the runnable does not encounter any exception, this method will fail the test.
+   * On the other hand, if the shouldFail is false, and the runnable encounters an exception, this method will also
+   * fail the test.
+   * @param shouldFail whether the runnable should fail
+   * @param operation the operation name of the runnable
+   * @param runnable the runnable to be executed
+   */
   private void verifyOperation(boolean shouldFail, String operation, Runnable runnable) {
-    boolean failed = false;
     try {
       runnable.run();
-    } catch (io.grpc.StatusRuntimeException e) {
+    } catch (RuntimeException e) {
+      assertTrue("the " + operation + " should have succeed", shouldFail);
+      // if there is an exception, we assert that it must be caused by permission being denied
+      Throwable cause = e;
+      while (cause.getCause() != null && !(cause.getCause() instanceof StatusRuntimeException)) {
+        cause = cause.getCause();
+      }
+
+      assertTrue(cause.getCause() != null && cause.getCause() instanceof io.grpc.StatusRuntimeException);
+      StatusRuntimeException statusRuntimeException = (StatusRuntimeException) cause.getCause();
       e.printStackTrace();
-      failed = true;
+      assertEquals(Status.Code.PERMISSION_DENIED, statusRuntimeException.getStatus().getCode());
+      return;
     }
-    if (shouldFail && !failed) {
-      fail("the " + operation + " should have failed");
-    } else if (!shouldFail && failed) {
-      fail("the " + operation + " should have succeed");
-    }
+
+    assertFalse("the " + operation + " should have failed", shouldFail);
   }
 
   private void resetUser() throws Exception {

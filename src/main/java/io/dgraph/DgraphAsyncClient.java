@@ -24,6 +24,7 @@ import io.grpc.Metadata;
 import io.grpc.stub.MetadataUtils;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -156,10 +157,38 @@ public class DgraphAsyncClient {
    * @return CompletableFuture with instance of Payload set as result
    */
   public CompletableFuture<Payload> alter(DgraphProto.Operation op) {
-    final DgraphGrpc.DgraphStub client = anyClient();
+    final DgraphGrpc.DgraphStub stub = anyClient();
     StreamObserverBridge<Payload> observerBridge = new StreamObserverBridge<>();
-    client.alter(op, observerBridge);
-    return observerBridge.getDelegate();
+    stub.alter(op, observerBridge);
+    CompletableFuture<Payload> alterFuture = observerBridge.getDelegate();
+    return CompletableFuture.supplyAsync(() -> {
+      try {
+        return alterFuture.get();
+      } catch (InterruptedException e) {
+        LOG.error("The alter got interrupted:", e);
+        throw new RuntimeException(e);
+      } catch (ExecutionException e) {
+        if (ExceptionUtil.isJwtExpired(e)) {
+          try {
+            this.retryLogin().get();
+            DgraphGrpc.DgraphStub retryStub = this.getStubWithJwt(stub);
+            StreamObserverBridge<Payload> retryBridge = new StreamObserverBridge<>();
+            retryStub.alter(op, retryBridge);
+            return retryBridge.getDelegate().get();
+          } catch (InterruptedException innerE) {
+            LOG.error("The retried alter got interrupted:", innerE);
+            throw new RuntimeException(innerE);
+          } catch (ExecutionException innerE) {
+            LOG.error("The retried alter encounters an exception:", innerE);
+            throw new RuntimeException(innerE);
+          }
+        }
+
+        // when the outer exception is not caused by JWT expiration
+        LOG.error("The alter encounters an exception:", e);
+        throw new RuntimeException(e);
+      }
+    });
   }
 
   private DgraphGrpc.DgraphStub anyClient() {
