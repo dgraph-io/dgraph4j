@@ -9,10 +9,12 @@ import io.opencensus.trace.Tracing;
 import io.opencensus.trace.config.TraceConfig;
 import io.opencensus.trace.config.TraceParams;
 import io.opencensus.trace.samplers.Samplers;
+import java.util.concurrent.*;
 import org.testng.annotations.Test;
 
 public class OpencensusJaegerTest extends DgraphIntegrationTest {
   public static final String JAEGER_COLLECTOR = "http://localhost:14268/api/traces";
+  private static final ExecutorService SHUTDOWN_EXECUTER = Executors.newFixedThreadPool(1);
 
   @Test
   public void testOpencensusJaeger() {
@@ -35,7 +37,27 @@ public class OpencensusJaegerTest extends DgraphIntegrationTest {
     }
 
     // 5. Gracefully shutdown the exporter, so that it'll flush queued traces to Jaeger.
-    Tracing.getExportComponent().shutdown();
+    Future<?> shutdownFuture =
+        SHUTDOWN_EXECUTER.submit(
+            new Runnable() {
+              @Override
+              public void run() {
+                Tracing.getExportComponent().shutdown();
+              }
+            });
+
+    try {
+      shutdownFuture.get(10, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      System.out.println("Tracking export component shutdown got interrupted");
+      // ignore
+    } catch (ExecutionException e) {
+      // ignore
+      System.out.println("Tracking export component shutdown encountered an exception");
+    } catch (TimeoutException e) {
+      // ignore
+      System.out.println("Tracking export component shutdown timed out after 10s");
+    }
   }
 
   private static void runTransactions() {

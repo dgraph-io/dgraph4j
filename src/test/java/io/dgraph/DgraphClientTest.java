@@ -24,7 +24,7 @@ import com.google.protobuf.ByteString;
 import io.dgraph.DgraphProto.*;
 import java.util.Collections;
 import java.util.Map;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
@@ -33,8 +33,8 @@ import org.testng.annotations.Test;
  */
 public class DgraphClientTest extends DgraphIntegrationTest {
 
-  @BeforeTest
-  public void beforeTest() {
+  @BeforeMethod
+  public void beforeMethod() {
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
   }
 

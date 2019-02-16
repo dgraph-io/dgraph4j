@@ -3,7 +3,6 @@ package io.dgraph;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
 
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
@@ -15,7 +14,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -37,24 +35,19 @@ public class AclTest {
   private static ManagedChannel channel;
   protected static DgraphClient dgraphClient;
 
-  private static Process startClusterCmd;
-
   @BeforeClass
-  public static void beforeClass() throws IOException, InterruptedException {
+  public void beforeClass() throws IOException, InterruptedException {
     // start the cluster using the $GOPATH/src/github.com/dgraph-io/dgraph/ee/acl/docker-compose.yml
-    startClusterCmd =
-        new ProcessBuilder(
-                "docker-compose",
-                "-f",
-                System.getenv("GOPATH")
-                    + "/src/github.com/dgraph-io/dgraph/ee/acl/docker-compose.yml",
-                "up",
-                "--force-recreate",
-                "--remove-orphans",
-                "--detach")
-            .start();
-
-    System.out.println("Started the dgraph cluster");
+    TestUtils.checkCmd(
+        "unable to start the cluster",
+        "docker-compose",
+        "-f",
+        System.getenv("GOPATH") + "/src/github.com/dgraph-io/dgraph/ee/acl/docker-compose.yml",
+        "up",
+        "--force-recreate",
+        "--remove-orphans",
+        "--detach");
+    System.out.println("Started the dgraph cluster. Sleeping for 10s for cluster to stabilize");
     // sleep for 10 seconds for the cluster to stablize
     Thread.sleep(10 * 1000);
 
@@ -70,16 +63,20 @@ public class AclTest {
   }
 
   @AfterClass
-  public static void afterClass() throws InterruptedException {
+  public void afterClass() throws InterruptedException, IOException {
     if (channel != null) {
       channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
-    if (startClusterCmd != null) {
-      startClusterCmd.destroy();
-    }
+    // tear down the cluster
+    TestUtils.checkCmd(
+        "unable to start the cluster",
+        "docker-compose",
+        "-f",
+        System.getenv("GOPATH") + "/src/github.com/dgraph-io/dgraph/ee/acl/docker-compose.yml",
+        "down");
   }
 
-  @Test
+  @Test(groups = {"acl"})
   public void testAuthorization() throws Exception {
     createAccountAndData();
     // initially all the operations should succeed when there are no rules
@@ -128,7 +125,7 @@ public class AclTest {
   private void createGroupAndAcls(String group, boolean addUserToGroup)
       throws IOException, InterruptedException {
     // create a new group
-    checkCmd(
+    TestUtils.checkCmd(
         "unable to create the group " + group,
         "dgraph",
         "acl",
@@ -141,7 +138,7 @@ public class AclTest {
         GROOT_PASSWORD);
 
     if (addUserToGroup) {
-      checkCmd(
+      TestUtils.checkCmd(
           "unable to add user " + USER_ID + " to the group " + group,
           "dgraph",
           "acl",
@@ -157,7 +154,7 @@ public class AclTest {
     }
 
     // add READ permission on the predicate_to_read to the group
-    checkCmd(
+    TestUtils.checkCmd(
         "unable to add READ permission on " + PREDICATE_TO_READ + " to the group " + group,
         "dgraph",
         "acl",
@@ -174,7 +171,7 @@ public class AclTest {
         GROOT_PASSWORD);
 
     // also add READ permission on the attribute queryAttr, which is used inside the query block
-    checkCmd(
+    TestUtils.checkCmd(
         "unable to add READ permission on " + QUERY_ATTR + " to the group " + group,
         "dgraph",
         "acl",
@@ -190,7 +187,7 @@ public class AclTest {
         "-x",
         GROOT_PASSWORD);
 
-    checkCmd(
+    TestUtils.checkCmd(
         "unable to add WRITE permission on " + PREDICATE_TO_WRITE + " to the group " + group,
         "dgraph",
         "acl",
@@ -205,7 +202,7 @@ public class AclTest {
         "2",
         "-x",
         GROOT_PASSWORD);
-    checkCmd(
+    TestUtils.checkCmd(
         "unable to add ALTER permission on " + PREDICATE_TO_ALTER + " to the group " + group,
         "dgraph",
         "acl",
@@ -220,16 +217,6 @@ public class AclTest {
         "1",
         "-x",
         GROOT_PASSWORD);
-  }
-
-  private static void checkCmd(String failureMsg, String... args)
-      throws IOException, InterruptedException {
-    Process cmd = new ProcessBuilder(args).redirectErrorStream(true).start();
-    cmd.waitFor();
-    if (cmd.exitValue() != 0) {
-      BufferedReader br = new BufferedReader(new InputStreamReader(cmd.getInputStream()));
-      fail(failureMsg + "\n" + br.lines().collect(Collectors.joining("\n")));
-    }
   }
 
   private void queryPredicateWithUserAccount(boolean shouldFail) {

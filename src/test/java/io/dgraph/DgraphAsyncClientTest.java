@@ -29,32 +29,31 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /** @author Deepak Jois */
 public class DgraphAsyncClientTest {
-  private static ManagedChannel channel;
-  protected static DgraphAsyncClient dgraphAsyncClient;
+  private ManagedChannel channel;
+  protected DgraphAsyncClient dgraphAsyncClient;
 
   protected static final String TEST_HOSTNAME = "localhost";
   protected static final int TEST_PORT = 9180;
 
   @BeforeClass
-  public static void beforeClass() throws Exception {
-
+  public void beforeClass() {
     channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
     DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
     dgraphAsyncClient = new DgraphAsyncClient(stub);
   }
 
   @AfterClass
-  public static void afterClass() throws InterruptedException {
+  public void classTearDown() throws InterruptedException {
     channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
   }
 
-  @BeforeTest
-  public void beforeTest() throws Exception {
+  @BeforeMethod
+  public void beforeMethod() throws Exception {
     dgraphAsyncClient.alter(Operation.newBuilder().setDropAll(true).build()).get();
   }
 
@@ -112,7 +111,7 @@ public class DgraphAsyncClientTest {
               .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
               .build();
 
-      Assigned result = txn.mutate(mutation).join();
+      txn.mutate(mutation).join();
     }
   }
 

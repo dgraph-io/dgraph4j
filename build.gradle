@@ -294,7 +294,6 @@ def customizePom(pom) {
 
 
 task integTest(type: Test) {
-    outputs.upToDateWhen { false }
     testLogging.showStandardStreams = true
     useTestNG {
         suites 'src/test/resources/testng_integ.xml'
@@ -302,7 +301,6 @@ task integTest(type: Test) {
 }
 
 task aclTest(type: Test) {
-    outputs.upToDateWhen { false }
     testLogging.showStandardStreams = true
     useTestNG {
         suites 'src/test/resources/testng_acl.xml'

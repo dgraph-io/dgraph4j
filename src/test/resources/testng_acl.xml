@@ -3,7 +3,7 @@
 <suite name="AclTestSuite" verbose="1" >
     <test name="AclTest" >
         <classes>
-            <class name="io.dgraph.AclTest" />
+            <class name="io.dgraph.AclTest"></class>
         </classes>
     </test>
 </suite>
