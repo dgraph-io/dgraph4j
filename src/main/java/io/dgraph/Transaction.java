@@ -20,8 +20,6 @@ import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Response;
 import java.util.Collections;
 import java.util.Map;
-import java.util.concurrent.CompletionException;
-import java.util.function.Supplier;
 
 /**
  * This is synchronous implementation of Dgraph transaction. All operations are delegated to
@@ -48,7 +46,7 @@ public class Transaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public Response queryWithVars(final String query, final Map<String, String> vars) {
-    return withExceptionUnwrapped(
+    return ExceptionUtil.withExceptionUnwrapped(
         () -> {
           return asyncTransaction.queryWithVars(query, vars).join();
         });
@@ -76,7 +74,7 @@ public class Transaction implements AutoCloseable {
    *     subsequently be made.
    */
   public Assigned mutate(Mutation mutation) {
-    return withExceptionUnwrapped(
+    return ExceptionUtil.withExceptionUnwrapped(
         () -> {
           return asyncTransaction.mutate(mutation).join();
         });
@@ -91,7 +89,7 @@ public class Transaction implements AutoCloseable {
    * user to decide if they wish to retry. In this case, the user should create a new transaction.
    */
   public void commit() {
-    withExceptionUnwrapped(
+    ExceptionUtil.withExceptionUnwrapped(
         () -> {
           asyncTransaction.commit().join();
         });
@@ -106,7 +104,7 @@ public class Transaction implements AutoCloseable {
    * In these cases, the server will eventually do the transaction clean up.
    */
   public void discard() {
-    withExceptionUnwrapped(
+    ExceptionUtil.withExceptionUnwrapped(
         () -> {
           asyncTransaction.discard().join();
         });
@@ -114,31 +112,6 @@ public class Transaction implements AutoCloseable {
 
   @Override
   public void close() {
-    withExceptionUnwrapped(this::discard);
-  }
-
-  private <R> R withExceptionUnwrapped(Supplier<R> s) {
-    try {
-      return s.get();
-    } catch (CompletionException ex) {
-      // here we are trying to fish out any Dgraph-specific exceptions and pass them up
-      throw unwrapException(ex);
-    }
-  }
-
-  private void withExceptionUnwrapped(Runnable r) {
-    try {
-      r.run();
-    } catch (CompletionException ex) {
-      // here we are trying to fish out any Dgraph-specific exceptions and pass them up
-      throw unwrapException(ex);
-    }
-  }
-
-  private RuntimeException unwrapException(CompletionException ex) {
-    if (ex.getCause() instanceof RuntimeException) {
-      return (RuntimeException) ex.getCause();
-    }
-    return ex;
+    ExceptionUtil.withExceptionUnwrapped(this::discard);
   }
 }

@@ -86,6 +86,22 @@ public class DgraphClient {
    * @param op a protocol buffer Operation object representing the operation being performed.
    */
   public void alter(Operation op) {
-    asyncClient.alter(op).join();
+    ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          asyncClient.alter(op).join();
+        });
+  }
+
+  /**
+   * login sends a LoginRequest to the server that contains the userid and password. If the
+   * LoginRequest is processed successfully, the response returned by the server will contain an
+   * access JWT and a refresh JWT, which will be stored in the jwt field of this class, and used for
+   * authorizing all subsequent requests sent to the server.
+   *
+   * @param userid the id of the user who is trying to login, e.g. Alice
+   * @param password the password of the user
+   */
+  public void login(String userid, String password) {
+    asyncClient.login(userid, password).join();
   }
 }

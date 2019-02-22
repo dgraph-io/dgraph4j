@@ -15,8 +15,8 @@
  */
 package io.dgraph;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -27,34 +27,34 @@ import io.grpc.ManagedChannelBuilder;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /** @author Deepak Jois */
 public class DgraphAsyncClientTest {
-  private static ManagedChannel channel;
-  protected static DgraphAsyncClient dgraphAsyncClient;
+  private ManagedChannel channel;
+  protected DgraphAsyncClient dgraphAsyncClient;
 
   protected static final String TEST_HOSTNAME = "localhost";
   protected static final int TEST_PORT = 9180;
 
   @BeforeClass
-  public static void beforeClass() throws Exception {
-
+  public void beforeClass() {
     channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
     DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
     dgraphAsyncClient = new DgraphAsyncClient(stub);
+    dgraphAsyncClient.login("groot", "password").join();
   }
 
   @AfterClass
-  public static void afterClass() throws InterruptedException {
+  public void classTearDown() throws InterruptedException {
     channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
   }
 
-  @Before
-  public void beforeTest() throws Exception {
+  @BeforeMethod
+  public void beforeMethod() throws Exception {
     dgraphAsyncClient.alter(Operation.newBuilder().setDropAll(true).build()).get();
   }
 
@@ -104,7 +104,7 @@ public class DgraphAsyncClientTest {
     }
   }
 
-  @Test(expected = TxnReadOnlyException.class)
+  @Test(expectedExceptions = TxnReadOnlyException.class)
   public void testMutationsInReadOnlyTransactions() {
     try (AsyncTransaction txn = dgraphAsyncClient.newReadOnlyTransaction()) {
       Mutation mutation =
@@ -112,7 +112,7 @@ public class DgraphAsyncClientTest {
               .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
               .build();
 
-      Assigned result = txn.mutate(mutation).join();
+      txn.mutate(mutation).join();
     }
   }
 
@@ -142,6 +142,6 @@ public class DgraphAsyncClientTest {
     json = parser.parse(res.getJson().toStringUtf8()).getAsJsonObject();
     assertTrue(json.has("me"));
     String name = json.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
-    assertEquals("Alice", name);
+    assertEquals(name, "Alice");
   }
 }
