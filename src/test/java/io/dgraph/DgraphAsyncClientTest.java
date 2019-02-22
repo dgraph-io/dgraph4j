@@ -45,6 +45,7 @@ public class DgraphAsyncClientTest {
     channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
     DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
     dgraphAsyncClient = new DgraphAsyncClient(stub);
+    dgraphAsyncClient.login("groot", "password").join();
   }
 
   @AfterClass
