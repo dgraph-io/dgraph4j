@@ -95,8 +95,8 @@ public class DgraphAsyncClient {
   }
 
   protected CompletableFuture<Void> retryLogin() {
-    Lock rlock = jwtLock.readLock();
-    rlock.lock();
+    Lock wlock = jwtLock.writeLock();
+    wlock.lock();
     try {
       if (jwt.getRefreshJwt().isEmpty()) {
         CompletableFuture<Void> future = new CompletableFuture<>();
@@ -122,7 +122,7 @@ public class DgraphAsyncClient {
                 }
               });
     } finally {
-      rlock.unlock();
+      wlock.unlock();
     }
   }
 

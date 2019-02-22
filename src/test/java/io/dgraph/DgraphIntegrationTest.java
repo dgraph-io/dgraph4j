@@ -40,14 +40,15 @@ public abstract class DgraphIntegrationTest {
     channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
     DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
     dgraphClient = new DgraphClient(stub);
-
     boolean succeed = false;
     boolean retriable;
     do {
       retriable = false;
 
       try {
-        dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
+        // since the cluster is run with ACL turned on by default,
+        // we need to login as groot to perform arbitrary operations
+        dgraphClient.login("groot", "password");
         succeed = true;
       } catch (RuntimeException e) {
         // check if the error is retriable
@@ -70,6 +71,7 @@ public abstract class DgraphIntegrationTest {
     if (!succeed) {
       fail("Unable to perform the DropAll operation");
     }
+    dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
   }
 
   @AfterClass
