@@ -15,6 +15,8 @@
  */
 package io.dgraph;
 
+import static org.testng.Assert.fail;
+
 import io.dgraph.DgraphProto.Operation;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -23,9 +25,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeSuite;
 
 public abstract class DgraphIntegrationTest {
   protected static final Logger logger = LoggerFactory.getLogger(DgraphIntegrationTest.class);
@@ -35,47 +35,20 @@ public abstract class DgraphIntegrationTest {
   protected static final String TEST_HOSTNAME = "localhost";
   protected static final int TEST_PORT = 9180;
 
-  @BeforeSuite
-  public static void setupCluster() throws IOException, InterruptedException {
-    System.out.println("Starting the cluster");
-    TestUtils.checkCmd(
-        "unable to start the cluster",
-        "docker-compose",
-        "-f",
-        System.getenv("GOPATH") + "/src/github.com/dgraph-io/dgraph/dgraph/docker-compose.yml",
-        "up",
-        "--force-recreate",
-        "--remove-orphans",
-        "--detach");
-    System.out.println("Cluster setup complete. Sleeping for 10s for cluster to stabilize");
-    // sleep for 10 seconds for the cluster to stablize
-    Thread.sleep(10 * 1000);
-  }
-
-  @AfterSuite
-  public static void tearDownCluster() throws IOException, InterruptedException {
-    System.out.println("Tearing down the cluser");
-    TestUtils.checkCmd(
-        "unable to start the cluster",
-        "docker-compose",
-        "-f",
-        System.getenv("GOPATH") + "/src/github.com/dgraph-io/dgraph/dgraph/docker-compose.yml",
-        "down");
-    System.out.println("Cluster tear-down complete.");
-  }
-
   @BeforeClass
   public static void beforeClass() throws IOException, InterruptedException {
     channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
     DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
     dgraphClient = new DgraphClient(stub);
 
+    boolean succeed = false;
     boolean retriable;
     do {
       retriable = false;
 
       try {
         dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
+        succeed = true;
       } catch (RuntimeException e) {
         // check if the error is retriable
         Throwable t = e;
@@ -93,6 +66,10 @@ public abstract class DgraphIntegrationTest {
         Thread.sleep(1000);
       }
     } while (retriable);
+
+    if (!succeed) {
+      fail("Unable to perform the DropAll operation");
+    }
   }
 
   @AfterClass

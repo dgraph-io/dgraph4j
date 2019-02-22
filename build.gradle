@@ -132,7 +132,8 @@ idea {
 }
 
 test {
-    testLogging.showStandardStreams = true
+    useTestNG()
+    //testLogging.showStandardStreams = true
     systemProperties['org.slf4j.simpleLogger.log.io.dgraph.DgraphIntegrationTest'] = 'DEBUG'
 }
 
@@ -289,20 +290,5 @@ def customizePom(pom) {
       tasks.publishMavenJavaPublicationToMavenRepository {
         dependsOn project.tasks.signArchives
       }
-    }
-}
-
-
-task integTest(type: Test) {
-    testLogging.showStandardStreams = true
-    useTestNG {
-        suites 'src/test/resources/testng_integ.xml'
-    }
-}
-
-task aclTest(type: Test) {
-    testLogging.showStandardStreams = true
-    useTestNG {
-        suites 'src/test/resources/testng_acl.xml'
     }
 }

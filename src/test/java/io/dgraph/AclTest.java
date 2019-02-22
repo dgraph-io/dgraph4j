@@ -37,20 +37,6 @@ public class AclTest {
 
   @BeforeClass
   public void beforeClass() throws IOException, InterruptedException {
-    // start the cluster using the $GOPATH/src/github.com/dgraph-io/dgraph/ee/acl/docker-compose.yml
-    TestUtils.checkCmd(
-        "unable to start the cluster",
-        "docker-compose",
-        "-f",
-        System.getenv("GOPATH") + "/src/github.com/dgraph-io/dgraph/ee/acl/docker-compose.yml",
-        "up",
-        "--force-recreate",
-        "--remove-orphans",
-        "--detach");
-    System.out.println("Started the dgraph cluster. Sleeping for 10s for cluster to stabilize");
-    // sleep for 10 seconds for the cluster to stablize
-    Thread.sleep(10 * 1000);
-
     channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
     DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
     dgraphClient = new DgraphClient(stub);
@@ -67,13 +53,6 @@ public class AclTest {
     if (channel != null) {
       channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     }
-    // tear down the cluster
-    TestUtils.checkCmd(
-        "unable to start the cluster",
-        "docker-compose",
-        "-f",
-        System.getenv("GOPATH") + "/src/github.com/dgraph-io/dgraph/ee/acl/docker-compose.yml",
-        "down");
   }
 
   @Test(groups = {"acl"})
@@ -284,7 +263,6 @@ public class AclTest {
       assertTrue(
           cause.getCause() != null && cause.getCause() instanceof io.grpc.StatusRuntimeException);
       StatusRuntimeException statusRuntimeException = (StatusRuntimeException) cause.getCause();
-      e.printStackTrace();
       assertEquals(Status.Code.PERMISSION_DENIED, statusRuntimeException.getStatus().getCode());
       return;
     }
