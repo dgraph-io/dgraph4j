@@ -108,7 +108,7 @@ public class AclTest {
         "unable to create the group " + group,
         "dgraph",
         "acl",
-        "groupadd",
+        "add",
         "-d",
         DGRPAH_ENDPOINT,
         "-g",
@@ -121,12 +121,12 @@ public class AclTest {
           "unable to add user " + USER_ID + " to the group " + group,
           "dgraph",
           "acl",
-          "usermod",
+          "mod",
           "-d",
           DGRPAH_ENDPOINT,
           "-u",
           USER_ID,
-          "-g",
+          "--group_list",
           group,
           "-x",
           GROOT_PASSWORD);
@@ -137,7 +137,7 @@ public class AclTest {
         "unable to add READ permission on " + PREDICATE_TO_READ + " to the group " + group,
         "dgraph",
         "acl",
-        "chmod",
+        "mod",
         "-d",
         DGRPAH_ENDPOINT,
         "-g",
@@ -154,7 +154,7 @@ public class AclTest {
         "unable to add READ permission on " + QUERY_ATTR + " to the group " + group,
         "dgraph",
         "acl",
-        "chmod",
+        "mod",
         "-d",
         DGRPAH_ENDPOINT,
         "-g",
@@ -170,7 +170,7 @@ public class AclTest {
         "unable to add WRITE permission on " + PREDICATE_TO_WRITE + " to the group " + group,
         "dgraph",
         "acl",
-        "chmod",
+        "mod",
         "-d",
         DGRPAH_ENDPOINT,
         "-g",
@@ -185,7 +185,7 @@ public class AclTest {
         "unable to add ALTER permission on " + PREDICATE_TO_ALTER + " to the group " + group,
         "dgraph",
         "acl",
-        "chmod",
+        "mod",
         "-d",
         DGRPAH_ENDPOINT,
         "-g",
@@ -273,15 +273,7 @@ public class AclTest {
   private void resetUser() throws Exception {
     Process deleteUserCmd =
         new ProcessBuilder(
-                "dgraph",
-                "acl",
-                "userdel",
-                "-d",
-                DGRPAH_ENDPOINT,
-                "-u",
-                USER_ID,
-                "-x",
-                GROOT_PASSWORD)
+                "dgraph", "acl", "del", "-d", DGRPAH_ENDPOINT, "-u", USER_ID, "-x", GROOT_PASSWORD)
             .start();
     deleteUserCmd.waitFor();
 
@@ -289,7 +281,7 @@ public class AclTest {
         new ProcessBuilder(
                 "dgraph",
                 "acl",
-                "useradd",
+                "add",
                 "-d",
                 DGRPAH_ENDPOINT,
                 "-u",

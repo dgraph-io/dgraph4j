@@ -25,7 +25,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +63,51 @@ public class AsyncTransaction implements AutoCloseable {
   }
 
   /**
+   * runWithRetries takes a supplier of CompletableFuture, tries to get the result from it while
+   * handling exceptions caused by access JWT expiration. If such an exception happens,
+   * runWithRetries will retry login using the refresh JWT and retry the logic in the supplier.
+   *
+   * @param supplier the supplier to the CompletableFuture, which encapsulates the logic to run
+   *     queries, mutations or alter operations
+   * @param <T> The type of the supplier's returned CompletableFuture. If the supplier provides
+   *     logic to run queries, then the type T will be DgraphProto.Response.
+   * @return
+   */
+  private <T> CompletableFuture<T> runWithRetries(
+      String operation, Supplier<CompletableFuture<T>> supplier) {
+    return CompletableFuture.supplyAsync(
+        () -> {
+          try {
+            return supplier.get().get();
+          } catch (InterruptedException e) {
+            LOG.error("The " + operation + " got interrupted:", e);
+            throw new RuntimeException(e);
+          } catch (ExecutionException e) {
+            if (ExceptionUtil.isJwtExpired(e.getCause())) {
+              try {
+                // retry the login
+                client.retryLogin().get();
+                // retry the supplied logic
+                return supplier.get().get();
+
+              } catch (InterruptedException innerE) {
+                LOG.error("The retried " + operation + " got interrupted:", innerE);
+                throw new RuntimeException(innerE);
+              } catch (ExecutionException innerE) {
+                LOG.error(
+                    "The retried " + operation + " encounters an execution exception:", innerE);
+                throw new RuntimeException(innerE);
+              }
+            }
+
+            // when the outer exception is not caused by JWT expiration
+            throw new RuntimeException(
+                "The " + operation + " encountered an execution exception:", e);
+          }
+        });
+  }
+
+  /**
    * sends a query to one of the connected dgraph instances. If no mutations need to be made in the
    * same transaction, it's convenient to chain the method: <code>
    * client.NewTransaction().queryWithVars(...)</code>.
@@ -87,57 +131,20 @@ public class AsyncTransaction implements AutoCloseable {
             .build();
 
     LOG.debug("Sending request to Dgraph...");
-    StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
-    DgraphStub stub = client.getStubWithJwt(this.stub);
-    stub.query(request, bridge);
-
-    CompletableFuture<Response> respFuture =
-        bridge
-            .getDelegate()
-            .thenApply(
-                (response) -> {
-                  LOG.debug("Received response from Dgraph!");
-                  mergeContext(response.getTxn());
-                  return response;
-                });
-
-    return CompletableFuture.supplyAsync(
+    return runWithRetries(
+        "query",
         () -> {
-          try {
-            return respFuture.get();
-          } catch (InterruptedException e) {
-            LOG.error("The query got interrupted:", e);
-            throw new RuntimeException(e);
-          } catch (ExecutionException e) {
-            if (ExceptionUtil.isJwtExpired(e.getCause())) {
-              // handle the token expiration exception
-              try {
-                client.retryLogin().get();
-                DgraphStub retryStub = client.getStubWithJwt(this.stub);
-                StreamObserverBridge<Response> retryBridge = new StreamObserverBridge<>();
-                retryStub.query(request, retryBridge);
-
-                return retryBridge
-                    .getDelegate()
-                    .thenApply(
-                        (resp) -> {
-                          LOG.debug("Received response from Dgraph");
-                          mergeContext(resp.getTxn());
-                          return resp;
-                        })
-                    .get();
-              } catch (InterruptedException innerE) {
-                LOG.error("The retried query got interrupted:", innerE);
-                throw new RuntimeException(innerE);
-              } catch (ExecutionException innerE) {
-                LOG.error("The retried query encounters an execution exception:", innerE);
-                throw new RuntimeException(innerE);
-              }
-            }
-
-            // when the outer exception is not caused by JWT expiration
-            throw new RuntimeException("The query encounters an execution exception:", e);
-          }
+          StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
+          DgraphStub localStub = client.getStubWithJwt(stub);
+          localStub.query(request, bridge);
+          return bridge
+              .getDelegate()
+              .thenApply(
+                  (response) -> {
+                    LOG.debug("Received response from Dgraph!");
+                    mergeContext(response.getTxn());
+                    return response;
+                  });
         });
   }
 
@@ -172,58 +179,24 @@ public class AsyncTransaction implements AutoCloseable {
 
     Mutation request = Mutation.newBuilder(mutation).setStartTs(context.getStartTs()).build();
 
-    StreamObserverBridge<Assigned> bridge = new StreamObserverBridge<>();
-    stub.mutate(request, bridge);
-
-    // completionHandler processes the response when the mutation succeeds
-    Function<Assigned, Assigned> completionHandler =
-        new Function<Assigned, Assigned>() {
-          @Override
-          public Assigned apply(Assigned assigned) {
-            mutated = true;
-            if (mutation.getCommitNow()) {
-              finished = true;
-            }
-            mergeContext(assigned.getContext());
-            return assigned;
-          }
-        };
-
-    CompletableFuture<Assigned> mutationFuture = bridge.getDelegate().thenApply(completionHandler);
-
-    return CompletableFuture.supplyAsync(
+    return runWithRetries(
+        "mutation",
         () -> {
-          try {
-            return mutationFuture.get();
-          } catch (InterruptedException e) {
-            LOG.error("The mutation got interrputed:", e);
-            throw new RuntimeException(e);
-          } catch (ExecutionException e) {
-            // we should retry login if the exception is caused by expired JWT
-            if (ExceptionUtil.isJwtExpired(e.getCause())) {
-              try {
-                client.retryLogin().get();
-                DgraphStub retryStub = client.getStubWithJwt(stub);
-                StreamObserverBridge<Assigned> retryBridge = new StreamObserverBridge<>();
-                retryStub.mutate(request, retryBridge);
-                return retryBridge.getDelegate().thenApply(completionHandler).get();
-              } catch (InterruptedException innerE) {
-                LOG.error("The retried mutation got interrupted:", innerE);
-                throw new RuntimeException(innerE);
-              } catch (ExecutionException innerE) {
-                LOG.error("The retried mutation encounters an exception:", innerE);
-                discard();
-                throw launderException(innerE);
-              }
-            }
+          StreamObserverBridge<Assigned> bridge = new StreamObserverBridge<>();
+          DgraphStub localStub = client.getStubWithJwt(stub);
+          localStub.mutate(request, bridge);
 
-            // when the outer exception is not caused by JWT expiration, run the following logic
-            // IMPORTANT: the discard is asynchronous meaning that the remote
-            // transaction may or may not be cancelled when this CompletionStage finishes.
-            // All errors occurring during the discard are ignored.
-            discard();
-            throw launderException(e);
-          }
+          return bridge
+              .getDelegate()
+              .thenApply(
+                  (assigned) -> {
+                    mutated = true;
+                    if (mutation.getCommitNow()) {
+                      finished = true;
+                    }
+                    mergeContext(assigned.getContext());
+                    return assigned;
+                  });
         });
   }
 
@@ -251,44 +224,13 @@ public class AsyncTransaction implements AutoCloseable {
       return CompletableFuture.completedFuture(null);
     }
 
-    StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
-    stub.commitOrAbort(context, bridge);
-
-    CompletableFuture<TxnContext> commitFuture = bridge.getDelegate();
-
-    return CompletableFuture.supplyAsync(
-        new Supplier<Void>() {
-          @Override
-          public Void get() {
-            try {
-              commitFuture.get();
-              return null;
-            } catch (InterruptedException e) {
-              LOG.error("The commit got interrupted:", e);
-              throw new RuntimeException(e);
-            } catch (ExecutionException e) {
-              if (ExceptionUtil.isJwtExpired(e)) {
-                try {
-                  client.retryLogin().get();
-                  DgraphStub retryStub = client.getStubWithJwt(stub);
-                  StreamObserverBridge<TxnContext> retryBridge = new StreamObserverBridge<>();
-                  retryStub.commitOrAbort(context, retryBridge);
-                  retryBridge.getDelegate().get();
-                  return null;
-                } catch (InterruptedException innerE) {
-                  LOG.error("The retried commit got interrupted:", innerE);
-                  throw new RuntimeException(innerE);
-                } catch (ExecutionException innerE) {
-                  LOG.error("The retried commit encounters an exception:", innerE);
-                  throw launderException(innerE);
-                }
-              }
-
-              // when the outer exception is not caused by JWT expiration, run the following logic
-              LOG.error("The commit encounters an exception:", e);
-              throw launderException(e);
-            }
-          }
+    return runWithRetries(
+        "commit",
+        () -> {
+          StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
+          DgraphStub localStub = client.getStubWithJwt(stub);
+          localStub.commitOrAbort(context, bridge);
+          return bridge.getDelegate().thenApply(txnContext -> null);
         });
   }
 
@@ -313,11 +255,14 @@ public class AsyncTransaction implements AutoCloseable {
     }
 
     context = TxnContext.newBuilder(context).setAborted(true).build();
-    StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
-    stub.commitOrAbort(context, bridge);
-
-    // we are providing void operation, so just nullify the result
-    return bridge.getDelegate().thenApply((o) -> null);
+    return runWithRetries(
+        "discard",
+        () -> {
+          StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
+          DgraphStub localStub = client.getStubWithJwt(stub);
+          localStub.commitOrAbort(context, bridge);
+          return bridge.getDelegate().thenApply((o) -> null);
+        });
   }
 
   private void mergeContext(final TxnContext src) {
