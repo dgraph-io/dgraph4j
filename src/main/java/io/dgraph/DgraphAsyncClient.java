@@ -86,7 +86,9 @@ public class DgraphAsyncClient {
                   // set the jwt field
                   jwt = DgraphProto.Jwt.parseFrom(response.getJson());
                 } catch (InvalidProtocolBufferException e) {
-                  LOG.error("error while parsing jwt from the response: ", e);
+                  String errMsg = "error while parsing jwt from the response: ";
+                  LOG.error(errMsg, e);
+                  throw new RuntimeException(errMsg, e);
                 }
               });
     } finally {
@@ -185,7 +187,7 @@ public class DgraphAsyncClient {
               }
             }
 
-            // when the outer exception is not caused by JWT expiration
+            // Handle the case when the outer exception is not caused by JWT expiration
             LOG.error("The alter encounters an exception:", e);
             throw new RuntimeException(e);
           }

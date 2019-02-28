@@ -100,7 +100,7 @@ public class AsyncTransaction implements AutoCloseable {
               }
             }
 
-            // when the outer exception is not caused by JWT expiration
+            // Handle the case when the outer exception is not caused by JWT expiration
             throw new RuntimeException(
                 "The " + operation + " encountered an execution exception:", e);
           }
