@@ -17,9 +17,13 @@ package io.dgraph;
 
 import io.dgraph.DgraphGrpc.DgraphStub;
 import io.dgraph.DgraphProto.*;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,25 +132,35 @@ public class AsyncTransaction implements AutoCloseable {
 
     Mutation request = Mutation.newBuilder(mutation).setStartTs(context.getStartTs()).build();
 
-    return client.runWithRetries(
-        "mutation",
-        () -> {
-          StreamObserverBridge<Assigned> bridge = new StreamObserverBridge<>();
-          DgraphStub localStub = client.getStubWithJwt(stub);
-          localStub.mutate(request, bridge);
+    return client
+        .runWithRetries(
+            "mutation",
+            () -> {
+              StreamObserverBridge<Assigned> bridge = new StreamObserverBridge<>();
+              DgraphStub localStub = client.getStubWithJwt(stub);
+              localStub.mutate(request, bridge);
 
-          return bridge
-              .getDelegate()
-              .thenApply(
-                  (assigned) -> {
-                    mutated = true;
-                    if (mutation.getCommitNow()) {
-                      finished = true;
-                    }
-                    mergeContext(assigned.getContext());
-                    return assigned;
-                  });
-        });
+              return bridge
+                  .getDelegate()
+                  .thenApply(
+                      (assigned) -> {
+                        mutated = true;
+                        if (mutation.getCommitNow()) {
+                          finished = true;
+                        }
+                        mergeContext(assigned.getContext());
+                        return assigned;
+                      });
+            })
+        .handle(
+            (Assigned assigned, Throwable throwable) -> {
+              if (throwable != null) {
+                discard();
+                throw launderException(throwable);
+              }
+
+              return assigned;
+            });
   }
 
   /**
@@ -228,6 +242,25 @@ public class AsyncTransaction implements AutoCloseable {
     builder.addAllPreds(src.getPredsList());
 
     this.context = builder.build();
+  }
+
+  private CompletionException launderException(Throwable ex) {
+    if (ex instanceof CompletionStage) {
+      Throwable cause = ex.getCause();
+
+      if (cause instanceof StatusRuntimeException) {
+        StatusRuntimeException ex1 = (StatusRuntimeException) ex;
+        Status.Code code = ex1.getStatus().getCode();
+        String desc = ex1.getStatus().getDescription();
+
+        if (code.equals(Status.Code.ABORTED) || code.equals(Status.Code.FAILED_PRECONDITION)) {
+          return new CompletionException(new TxnConflictException(desc));
+        }
+      }
+      return (CompletionException) ex;
+    }
+
+    return new CompletionException(ex);
   }
 
   @Override
