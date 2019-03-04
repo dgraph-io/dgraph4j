@@ -17,15 +17,9 @@ package io.dgraph;
 
 import io.dgraph.DgraphGrpc.DgraphStub;
 import io.dgraph.DgraphProto.*;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,51 +57,6 @@ public class AsyncTransaction implements AutoCloseable {
   }
 
   /**
-   * runWithRetries takes a supplier of CompletableFuture, tries to get the result from it while
-   * handling exceptions caused by access JWT expiration. If such an exception happens,
-   * runWithRetries will retry login using the refresh JWT and retry the logic in the supplier.
-   *
-   * @param supplier the supplier to the CompletableFuture, which encapsulates the logic to run
-   *     queries, mutations or alter operations
-   * @param <T> The type of the supplier's returned CompletableFuture. If the supplier provides
-   *     logic to run queries, then the type T will be DgraphProto.Response.
-   * @return
-   */
-  private <T> CompletableFuture<T> runWithRetries(
-      String operation, Supplier<CompletableFuture<T>> supplier) {
-    return CompletableFuture.supplyAsync(
-        () -> {
-          try {
-            return supplier.get().get();
-          } catch (InterruptedException e) {
-            LOG.error("The " + operation + " got interrupted:", e);
-            throw new RuntimeException(e);
-          } catch (ExecutionException e) {
-            if (ExceptionUtil.isJwtExpired(e.getCause())) {
-              try {
-                // retry the login
-                client.retryLogin().get();
-                // retry the supplied logic
-                return supplier.get().get();
-
-              } catch (InterruptedException innerE) {
-                LOG.error("The retried " + operation + " got interrupted:", innerE);
-                throw new RuntimeException(innerE);
-              } catch (ExecutionException innerE) {
-                LOG.error(
-                    "The retried " + operation + " encounters an execution exception:", innerE);
-                throw new RuntimeException(innerE);
-              }
-            }
-
-            // Handle the case when the outer exception is not caused by JWT expiration
-            throw new RuntimeException(
-                "The " + operation + " encountered an execution exception:", e);
-          }
-        });
-  }
-
-  /**
    * sends a query to one of the connected dgraph instances. If no mutations need to be made in the
    * same transaction, it's convenient to chain the method: <code>
    * client.NewTransaction().queryWithVars(...)</code>.
@@ -131,7 +80,7 @@ public class AsyncTransaction implements AutoCloseable {
             .build();
 
     LOG.debug("Sending request to Dgraph...");
-    return runWithRetries(
+    return client.runWithRetries(
         "query",
         () -> {
           StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
@@ -179,7 +128,7 @@ public class AsyncTransaction implements AutoCloseable {
 
     Mutation request = Mutation.newBuilder(mutation).setStartTs(context.getStartTs()).build();
 
-    return runWithRetries(
+    return client.runWithRetries(
         "mutation",
         () -> {
           StreamObserverBridge<Assigned> bridge = new StreamObserverBridge<>();
@@ -224,7 +173,7 @@ public class AsyncTransaction implements AutoCloseable {
       return CompletableFuture.completedFuture(null);
     }
 
-    return runWithRetries(
+    return client.runWithRetries(
         "commit",
         () -> {
           StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
@@ -255,7 +204,7 @@ public class AsyncTransaction implements AutoCloseable {
     }
 
     context = TxnContext.newBuilder(context).setAborted(true).build();
-    return runWithRetries(
+    return client.runWithRetries(
         "discard",
         () -> {
           StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
@@ -279,25 +228,6 @@ public class AsyncTransaction implements AutoCloseable {
     builder.addAllPreds(src.getPredsList());
 
     this.context = builder.build();
-  }
-
-  private CompletionException launderException(Throwable ex) {
-    if (ex instanceof CompletionStage) {
-      Throwable cause = ex.getCause();
-
-      if (cause instanceof StatusRuntimeException) {
-        StatusRuntimeException ex1 = (StatusRuntimeException) ex;
-        Status.Code code = ex1.getStatus().getCode();
-        String desc = ex1.getStatus().getDescription();
-
-        if (code.equals(Status.Code.ABORTED) || code.equals(Status.Code.FAILED_PRECONDITION)) {
-          return new CompletionException(new TxnConflictException(desc));
-        }
-      }
-      return (CompletionException) ex;
-    }
-
-    return new CompletionException(ex);
   }
 
   @Override

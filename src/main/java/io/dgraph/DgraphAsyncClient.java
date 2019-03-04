@@ -29,6 +29,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,6 +129,14 @@ public class DgraphAsyncClient {
     }
   }
 
+  /**
+   * getStubWithJwt adds an AttachHeadersInterceptor to the stub, which will eventually attach a
+   * header whose key is accessJwt and value is the access JWT stored in the current
+   * DgraphAsyncClient object.
+   *
+   * @param stub
+   * @return
+   */
   protected DgraphGrpc.DgraphStub getStubWithJwt(DgraphGrpc.DgraphStub stub) {
     Lock rlock = jwtLock.readLock();
     rlock.lock();
@@ -146,6 +155,51 @@ public class DgraphAsyncClient {
   }
 
   /**
+   * runWithRetries takes a supplier of CompletableFuture, tries to get the result from it while
+   * handling exceptions caused by access JWT expiration. If such an exception happens,
+   * runWithRetries will retry login using the refresh JWT and retry the logic in the supplier.
+   *
+   * @param supplier the supplier to the CompletableFuture, which encapsulates the logic to run
+   *     queries, mutations or alter operations
+   * @param <T> The type of the supplier's returned CompletableFuture. If the supplier provides
+   *     logic to run queries, then the type T will be DgraphProto.Response.
+   * @return
+   */
+  protected <T> CompletableFuture<T> runWithRetries(
+      String operation, Supplier<CompletableFuture<T>> supplier) {
+    return CompletableFuture.supplyAsync(
+        () -> {
+          try {
+            return supplier.get().get();
+          } catch (InterruptedException e) {
+            LOG.error("The " + operation + " got interrupted:", e);
+            throw new RuntimeException(e);
+          } catch (ExecutionException e) {
+            if (ExceptionUtil.isJwtExpired(e.getCause())) {
+              try {
+                // retry the login
+                retryLogin().get();
+                // retry the supplied logic
+                return supplier.get().get();
+
+              } catch (InterruptedException innerE) {
+                LOG.error("The retried " + operation + " got interrupted:", innerE);
+                throw new RuntimeException(innerE);
+              } catch (ExecutionException innerE) {
+                LOG.error(
+                    "The retried " + operation + " encounters an execution exception:", innerE);
+                throw new RuntimeException(innerE);
+              }
+            }
+
+            // Handle the case when the outer exception is not caused by JWT expiration
+            throw new RuntimeException(
+                "The " + operation + " encountered an execution exception:", e);
+          }
+        });
+  }
+
+  /**
    * Alter can be used to perform the following operations, by setting the right fields in the
    * protocol buffer Operation object.
    *
@@ -160,37 +214,14 @@ public class DgraphAsyncClient {
    */
   public CompletableFuture<Payload> alter(DgraphProto.Operation op) {
     final DgraphGrpc.DgraphStub stub = anyClient();
-    StreamObserverBridge<Payload> observerBridge = new StreamObserverBridge<>();
-    stub.alter(op, observerBridge);
-    CompletableFuture<Payload> alterFuture = observerBridge.getDelegate();
-    return CompletableFuture.supplyAsync(
-        () -> {
-          try {
-            return alterFuture.get();
-          } catch (InterruptedException e) {
-            LOG.error("The alter got interrupted:", e);
-            throw new RuntimeException(e);
-          } catch (ExecutionException e) {
-            if (ExceptionUtil.isJwtExpired(e)) {
-              try {
-                this.retryLogin().get();
-                DgraphGrpc.DgraphStub retryStub = this.getStubWithJwt(stub);
-                StreamObserverBridge<Payload> retryBridge = new StreamObserverBridge<>();
-                retryStub.alter(op, retryBridge);
-                return retryBridge.getDelegate().get();
-              } catch (InterruptedException innerE) {
-                LOG.error("The retried alter got interrupted:", innerE);
-                throw new RuntimeException(innerE);
-              } catch (ExecutionException innerE) {
-                LOG.error("The retried alter encounters an exception:", innerE);
-                throw new RuntimeException(innerE);
-              }
-            }
 
-            // Handle the case when the outer exception is not caused by JWT expiration
-            LOG.error("The alter encounters an exception:", e);
-            throw new RuntimeException(e);
-          }
+    return runWithRetries(
+        "alter",
+        () -> {
+          StreamObserverBridge<Payload> observerBridge = new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.alter(op, observerBridge);
+          return observerBridge.getDelegate();
         });
   }
 
