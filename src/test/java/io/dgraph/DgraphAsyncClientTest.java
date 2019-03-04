@@ -49,7 +49,7 @@ public class DgraphAsyncClientTest {
   }
 
   @AfterClass
-  public void classTearDown() throws InterruptedException {
+  public void afterClass() throws InterruptedException {
     channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
   }
 

@@ -181,7 +181,6 @@ public class DgraphAsyncClient {
                 retryLogin().get();
                 // retry the supplied logic
                 return supplier.get().get();
-
               } catch (InterruptedException innerE) {
                 LOG.error("The retried " + operation + " got interrupted:", innerE);
                 throw new RuntimeException(innerE);
