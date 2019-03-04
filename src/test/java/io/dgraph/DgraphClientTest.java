@@ -15,8 +15,8 @@
  */
 package io.dgraph;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -24,8 +24,8 @@ import com.google.protobuf.ByteString;
 import io.dgraph.DgraphProto.*;
 import java.util.Collections;
 import java.util.Map;
-import org.junit.Before;
-import org.junit.Test;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 /**
  * @author Edgar Rodriguez-Diaz
@@ -33,8 +33,8 @@ import org.junit.Test;
  */
 public class DgraphClientTest extends DgraphIntegrationTest {
 
-  @Before
-  public void beforeTest() {
+  @BeforeMethod
+  public void beforeMethod() {
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
   }
 
@@ -99,7 +99,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     }
   }
 
-  @Test(expected = TxnFinishedException.class)
+  @Test(expectedExceptions = TxnFinishedException.class)
   public void testCommitAfterCommitNow() {
     try (Transaction txn = dgraphClient.newTransaction()) {
 

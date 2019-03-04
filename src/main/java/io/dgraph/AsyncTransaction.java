@@ -45,17 +45,18 @@ public class AsyncTransaction implements AutoCloseable {
   private volatile boolean finished;
   private volatile boolean readOnly;
 
-  // provides
+  private final DgraphAsyncClient client;
   private final DgraphStub stub;
 
-  AsyncTransaction(DgraphStub stub) {
+  AsyncTransaction(DgraphAsyncClient client, DgraphStub stub) {
     this.context = TxnContext.newBuilder().build();
+    this.client = client;
     this.stub = stub;
     this.readOnly = false;
   }
 
-  AsyncTransaction(DgraphStub stub, final boolean readOnly) {
-    this(stub);
+  AsyncTransaction(DgraphAsyncClient client, DgraphStub stub, final boolean readOnly) {
+    this(client, stub);
     this.readOnly = readOnly;
   }
 
@@ -83,17 +84,21 @@ public class AsyncTransaction implements AutoCloseable {
             .build();
 
     LOG.debug("Sending request to Dgraph...");
-    StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
-    stub.query(request, bridge);
-
-    return bridge
-        .getDelegate()
-        .thenApply(
-            (Response response) -> {
-              LOG.debug("Received response from Dgraph!");
-              mergeContext(response.getTxn());
-              return response;
-            });
+    return client.runWithRetries(
+        "query",
+        () -> {
+          StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
+          DgraphStub localStub = client.getStubWithJwt(stub);
+          localStub.query(request, bridge);
+          return bridge
+              .getDelegate()
+              .thenApply(
+                  (response) -> {
+                    LOG.debug("Received response from Dgraph!");
+                    mergeContext(response.getTxn());
+                    return response;
+                  });
+        });
   }
 
   /**
@@ -127,27 +132,34 @@ public class AsyncTransaction implements AutoCloseable {
 
     Mutation request = Mutation.newBuilder(mutation).setStartTs(context.getStartTs()).build();
 
-    StreamObserverBridge<Assigned> bridge = new StreamObserverBridge<>();
-    stub.mutate(request, bridge);
+    return client
+        .runWithRetries(
+            "mutation",
+            () -> {
+              StreamObserverBridge<Assigned> bridge = new StreamObserverBridge<>();
+              DgraphStub localStub = client.getStubWithJwt(stub);
+              localStub.mutate(request, bridge);
 
-    return bridge
-        .getDelegate()
+              return bridge
+                  .getDelegate()
+                  .thenApply(
+                      (assigned) -> {
+                        mutated = true;
+                        if (mutation.getCommitNow()) {
+                          finished = true;
+                        }
+                        mergeContext(assigned.getContext());
+                        return assigned;
+                      });
+            })
         .handle(
             (Assigned assigned, Throwable throwable) -> {
               if (throwable != null) {
-                // IMPORTANT: the discard is asynchronous meaning that the remote
-                // transaction may or may not be cancelled when this CompletionStage finishes.
-                // All errors occurring during the discard are ignored.
                 discard();
                 throw launderException(throwable);
-              } else {
-                mutated = true;
-                if (mutation.getCommitNow()) {
-                  finished = true;
-                }
-                mergeContext(assigned.getContext());
-                return assigned;
               }
+
+              return assigned;
             });
   }
 
@@ -175,18 +187,14 @@ public class AsyncTransaction implements AutoCloseable {
       return CompletableFuture.completedFuture(null);
     }
 
-    StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
-    stub.commitOrAbort(context, bridge);
-
-    return bridge
-        .getDelegate()
-        .handle(
-            (TxnContext txnContext, Throwable throwable) -> {
-              if (throwable != null) {
-                throw launderException(throwable);
-              }
-              return null;
-            });
+    return client.runWithRetries(
+        "commit",
+        () -> {
+          StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
+          DgraphStub localStub = client.getStubWithJwt(stub);
+          localStub.commitOrAbort(context, bridge);
+          return bridge.getDelegate().thenApply(txnContext -> null);
+        });
   }
 
   /**
@@ -210,11 +218,14 @@ public class AsyncTransaction implements AutoCloseable {
     }
 
     context = TxnContext.newBuilder(context).setAborted(true).build();
-    StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
-    stub.commitOrAbort(context, bridge);
-
-    // we are providing void operation, so just nullify the result
-    return bridge.getDelegate().thenApply((o) -> null);
+    return client.runWithRetries(
+        "discard",
+        () -> {
+          StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
+          DgraphStub localStub = client.getStubWithJwt(stub);
+          localStub.commitOrAbort(context, bridge);
+          return bridge.getDelegate().thenApply((o) -> null);
+        });
   }
 
   private void mergeContext(final TxnContext src) {

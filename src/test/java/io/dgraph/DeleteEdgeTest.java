@@ -15,6 +15,8 @@
  */
 package io.dgraph;
 
+import static org.testng.Assert.assertNull;
+
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import io.dgraph.DgraphProto.Assigned;
@@ -23,8 +25,7 @@ import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
 import java.util.ArrayList;
 import java.util.List;
-import junit.framework.TestCase;
-import org.junit.Test;
+import org.testng.annotations.Test;
 
 public class DeleteEdgeTest extends DgraphIntegrationTest {
   @Test
@@ -101,16 +102,14 @@ public class DeleteEdgeTest extends DgraphIntegrationTest {
     System.out.println(resp.getJson().toStringUtf8());
 
     Root r = gson.fromJson(resp.getJson().toStringUtf8(), Root.class);
-    TestCase.assertNull(r.me.get(0).friends);
+    assertNull(r.me.get(0).friends);
   }
 
   static class School {
-    String uid;
     String name;
   }
 
   static class Person {
-    String uid;
     String name;
     int age;
     boolean married;
