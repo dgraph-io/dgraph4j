@@ -44,6 +44,7 @@ public class AsyncTransaction implements AutoCloseable {
   private volatile boolean mutated;
   private volatile boolean finished;
   private volatile boolean readOnly;
+  private volatile boolean bestEffort;
 
   private final DgraphAsyncClient client;
   private final DgraphStub stub;
@@ -53,6 +54,7 @@ public class AsyncTransaction implements AutoCloseable {
     this.client = client;
     this.stub = stub;
     this.readOnly = false;
+    this.bestEffort = false;
   }
 
   AsyncTransaction(DgraphAsyncClient client, DgraphStub stub, final boolean readOnly) {
@@ -81,6 +83,7 @@ public class AsyncTransaction implements AutoCloseable {
             .setStartTs(context.getStartTs())
             .setLinRead(lr.build())
             .setReadOnly(readOnly)
+            .setBestEffort(bestEffort)
             .build();
 
     LOG.debug("Sending request to Dgraph...");
@@ -109,6 +112,18 @@ public class AsyncTransaction implements AutoCloseable {
    */
   public CompletableFuture<Response> query(final String query) {
     return queryWithVars(query, Collections.emptyMap());
+  }
+
+  /**
+   * Sets the best effort flag for this transaction. The Best effort flag can only be set for
+   * read-only transactions, and setting the best effort flag will enable a read-only transaction to
+   * see mutations made by other transactions even if those mutations have not been committed.
+   */
+  public void setBestEffort(boolean bestEffort) {
+    if (!this.readOnly) {
+      throw new RuntimeException("Best effort only works for read-only queries");
+    }
+    this.bestEffort = bestEffort;
   }
 
   /**

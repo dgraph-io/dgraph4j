@@ -66,8 +66,8 @@ public class AclTest {
     alterPredicateWithUserAccount(false);
 
     createGroupAndAcls(UNUSED_GROUP, false);
-    System.out.println("Sleep for 35 seconds for acl caches to be refreshed");
-    Thread.sleep(35 * 1000);
+    System.out.println("Sleep for 6 seconds for acl caches to be refreshed");
+    Thread.sleep(6 * 1000);
 
     // now all the operations should fail since there are rules defined on the unusedGroup
     queryPredicateWithUserAccount(true);
@@ -77,18 +77,18 @@ public class AclTest {
 
     // create the dev group and add the user to it
     createGroupAndAcls(DEV_GROUP, true);
-    System.out.println("Sleep for 35 seconds for acl caches to be refreshed");
-    Thread.sleep(35 * 1000);
+    System.out.println("Sleep for 6 seconds for acl caches to be refreshed");
+    Thread.sleep(6 * 1000);
 
     // now the operations should succeed again through the dev group
     queryPredicateWithUserAccount(false);
     // sleep long enough (10s per the docker-compose.yml in this directory)
     // for the accessJwt to expire in order to test auto login through refresh jwt
-    System.out.println("Sleep for 12 seconds for the accessJwt to expire");
-    Thread.sleep(12 * 1000);
+    System.out.println("Sleep for 4 seconds for the accessJwt to expire");
+    Thread.sleep(4 * 1000);
     mutatePredicateWithUserAccount(false);
-    System.out.println("Sleep for 12 seconds for the accessJwt to expire");
-    Thread.sleep(12 * 1000);
+    System.out.println("Sleep for 4 seconds for the accessJwt to expire");
+    Thread.sleep(4 * 1000);
     alterPredicateWithUserAccount(false);
   }
 
@@ -144,7 +144,7 @@ public class AclTest {
         group,
         "-p",
         PREDICATE_TO_READ,
-        "-P",
+        "-m",
         "4",
         "-x",
         GROOT_PASSWORD);
@@ -161,7 +161,7 @@ public class AclTest {
         group,
         "-p",
         QUERY_ATTR,
-        "-P",
+        "-m",
         "4",
         "-x",
         GROOT_PASSWORD);
@@ -177,7 +177,7 @@ public class AclTest {
         group,
         "-p",
         PREDICATE_TO_WRITE,
-        "-P",
+        "-m",
         "2",
         "-x",
         GROOT_PASSWORD);
@@ -192,7 +192,7 @@ public class AclTest {
         group,
         "-p",
         PREDICATE_TO_ALTER,
-        "-P",
+        "-m",
         "1",
         "-x",
         GROOT_PASSWORD);
