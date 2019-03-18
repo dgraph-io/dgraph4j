@@ -179,7 +179,10 @@ public class AclTest extends DgraphIntegrationTest {
       return;
     }
 
-    assertFalse(shouldFail, "the " + operation + " should have failed");
+    // assertFalse(shouldFail, );
+    if (shouldFail != false) {
+      throw new RuntimeException("the " + operation + " should have failed");
+    }
   }
 
   private void resetUser() throws Exception {
