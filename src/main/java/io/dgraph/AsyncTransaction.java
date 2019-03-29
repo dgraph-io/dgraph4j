@@ -171,6 +171,11 @@ public class AsyncTransaction implements AutoCloseable {
               return bridge
                   .getDelegate()
                   .handle((assigned, throwable) -> {
+                    if (throwable != null) {
+                      discard();
+                      throw launderException(throwable);
+                    }
+
                     if (mutation.getCommitNow()) {
                       handleResponseTxn(assigned.getContext(), throwable, TxnState.Committed);
                     } else {
