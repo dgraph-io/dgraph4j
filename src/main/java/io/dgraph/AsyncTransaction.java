@@ -282,9 +282,9 @@ public class AsyncTransaction implements AutoCloseable {
   }
 
   /**
-   * @return whether the current transaction has been aborted
+   * @return the current transaction state
    */
-  public boolean isAborted() {
-    return context.getAborted();
+  public TxnState getTxnState() {
+    return txnState;
   }
 }
