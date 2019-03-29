@@ -83,20 +83,20 @@ public class DgraphAsyncClientTest {
                                   .setDelNquads(
                                       ByteString.copyFromUtf8(String.format("<%s> * * .", bob)))
                                   .build();
-                          return txn.mutate(mutation1)
-                              .thenCompose(
-                                  ag1 ->
-                                      txn.query(query)
-                                          .thenAccept(
-                                              resp1 -> {
-                                                JsonObject json1 =
-                                                    parser
-                                                        .parse(resp1.getJson().toStringUtf8())
-                                                        .getAsJsonObject();
-                                                assertTrue(
-                                                    json1.getAsJsonArray("find_bob").size() == 0);
-                                              }));
-                        });
+                          return txn.mutate(mutation1);
+                        })
+                    .thenCompose(
+                        ag1 ->
+                            txn.query(query)
+                                .thenAccept(
+                                    resp1 -> {
+                                      JsonObject json1 =
+                                          parser
+                                              .parse(resp1.getJson().toStringUtf8())
+                                              .getAsJsonObject();
+                                      System.out.println(json1.getAsJsonArray("find_bob"));
+                                      assertEquals(json1.getAsJsonArray("find_bob").size(), 0);
+                                    }));
               })
           .get();
 
