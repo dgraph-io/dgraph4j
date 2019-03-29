@@ -15,8 +15,8 @@
  */
 package io.dgraph;
 
-public class TxnFinishedException extends TxnException {
-  TxnFinishedException() {
-    super("Transaction has already been committed or discarded");
+public class TxnWrongStateException extends TxnException {
+  TxnWrongStateException(AsyncTransaction.TxnState currentState) {
+    super("Transaction is in state " + currentState + " and hence the operation is not allowed");
   }
 }

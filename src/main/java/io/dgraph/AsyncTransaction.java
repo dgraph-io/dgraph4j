@@ -41,13 +41,16 @@ public class AsyncTransaction implements AutoCloseable {
 
   // these can potentially be set from different threads executing the Stub callback
   private volatile TxnContext context;
-  private volatile boolean mutated;
-  private volatile boolean finished;
+  private volatile TxnState txnState;
   private volatile boolean readOnly;
   private volatile boolean bestEffort;
 
   private final DgraphAsyncClient client;
   private final DgraphStub stub;
+
+  enum TxnState {
+    Initial, Mutated, Committed, Aborted
+  }
 
   AsyncTransaction(DgraphAsyncClient client, DgraphStub stub) {
     this.context = TxnContext.newBuilder().build();
@@ -55,6 +58,7 @@ public class AsyncTransaction implements AutoCloseable {
     this.stub = stub;
     this.readOnly = false;
     this.bestEffort = false;
+    this.txnState = TxnState.Initial;
   }
 
   AsyncTransaction(DgraphAsyncClient client, DgraphStub stub, final boolean readOnly) {
@@ -104,6 +108,15 @@ public class AsyncTransaction implements AutoCloseable {
         });
   }
 
+  private void handleResponseTxn(DgraphProto.TxnContext responseTxn, Throwable throwable, TxnState successState) {
+    mergeContext(responseTxn);
+    if (throwable != null) {
+      this.txnState = TxnState.Aborted;
+    } else {
+      this.txnState = successState;
+    }
+  }
+
   /**
    * Calls {@code Transcation#queryWithVars} with an empty vars map.
    *
@@ -141,12 +154,12 @@ public class AsyncTransaction implements AutoCloseable {
     if (readOnly) {
       throw new TxnReadOnlyException();
     }
-    if (finished) {
-      throw new TxnFinishedException();
+    if (txnState != TxnState.Initial && txnState != TxnState.Mutated) {
+      // mutation is only allowed when the current state is either Initial or Mutated
+      throw new TxnWrongStateException(txnState);
     }
 
     Mutation request = Mutation.newBuilder(mutation).setStartTs(context.getStartTs()).build();
-
     return client
         .runWithRetries(
             "mutation",
@@ -157,24 +170,14 @@ public class AsyncTransaction implements AutoCloseable {
 
               return bridge
                   .getDelegate()
-                  .thenApply(
-                      (assigned) -> {
-                        mutated = true;
-                        if (mutation.getCommitNow()) {
-                          finished = true;
-                        }
-                        mergeContext(assigned.getContext());
-                        return assigned;
-                      });
-            })
-        .handle(
-            (Assigned assigned, Throwable throwable) -> {
-              if (throwable != null) {
-                discard();
-                throw launderException(throwable);
-              }
-
-              return assigned;
+                  .handle((assigned, throwable) -> {
+                    if (mutation.getCommitNow()) {
+                      handleResponseTxn(assigned.getContext(), throwable, TxnState.Committed);
+                    } else {
+                      handleResponseTxn(assigned.getContext(), throwable, TxnState.Mutated);
+                    }
+                    return assigned;
+                  });
             });
   }
 
@@ -192,14 +195,8 @@ public class AsyncTransaction implements AutoCloseable {
     if (readOnly) {
       throw new TxnReadOnlyException();
     }
-    if (finished) {
-      throw new TxnFinishedException();
-    }
-
-    finished = true;
-
-    if (!mutated) {
-      return CompletableFuture.completedFuture(null);
+    if (txnState != TxnState.Mutated) {
+      throw new TxnWrongStateException(txnState);
     }
 
     return client.runWithRetries(
@@ -208,7 +205,10 @@ public class AsyncTransaction implements AutoCloseable {
           StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
           DgraphStub localStub = client.getStubWithJwt(stub);
           localStub.commitOrAbort(context, bridge);
-          return bridge.getDelegate().thenApply(txnContext -> null);
+          return bridge.getDelegate().handle((txnContext, throwable) -> {
+            handleResponseTxn(txnContext, throwable, TxnState.Committed);
+            return null;
+          });
         });
   }
 
@@ -223,12 +223,7 @@ public class AsyncTransaction implements AutoCloseable {
    * @return CompletableFuture with Void result
    */
   public CompletableFuture<Void> discard() {
-    if (finished) {
-      return CompletableFuture.completedFuture(null);
-    }
-    finished = true;
-
-    if (!mutated) {
+    if (txnState != TxnState.Mutated) {
       return CompletableFuture.completedFuture(null);
     }
 
@@ -239,7 +234,10 @@ public class AsyncTransaction implements AutoCloseable {
           StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
           DgraphStub localStub = client.getStubWithJwt(stub);
           localStub.commitOrAbort(context, bridge);
-          return bridge.getDelegate().thenApply((o) -> null);
+          return bridge.getDelegate().handle((o, throwable) -> {
+            handleResponseTxn(o, throwable, TxnState.Aborted);
+            return null;
+          });
         });
   }
 
@@ -281,5 +279,12 @@ public class AsyncTransaction implements AutoCloseable {
   @Override
   public void close() {
     discard().join();
+  }
+
+  /**
+   * @return whether the current transaction has been aborted
+   */
+  public boolean isAborted() {
+    return context.getAborted();
   }
 }

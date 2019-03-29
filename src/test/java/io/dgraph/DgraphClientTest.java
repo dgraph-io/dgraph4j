@@ -99,7 +99,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     }
   }
 
-  @Test(expectedExceptions = TxnFinishedException.class)
+  @Test(expectedExceptions = TxnWrongStateException.class)
   public void testCommitAfterCommitNow() {
     try (Transaction txn = dgraphClient.newTransaction()) {
 
