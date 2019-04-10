@@ -30,6 +30,7 @@ plugins {
     id 'jacoco'
     id 'com.github.kt3k.coveralls' version '2.8.2'
     id 'com.github.sherter.google-java-format' version '0.8'
+    id 'com.github.johnrengelman.shadow' version '5.0.0'
 }
 // Apply the java plugin to add support for Java
 apply plugin: 'java'
@@ -38,6 +39,7 @@ apply plugin: 'idea'
 apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
+apply plugin: 'com.github.johnrengelman.shadow'
 
 group = 'io.dgraph'
 archivesBaseName = 'dgraph4j'
@@ -49,6 +51,11 @@ def grpcVersion = '1.22.1'
 def dgraph4jVersion = "$version"
 def openCensusVersion = '0.23.0'
 
+// Output to build/libs/shadow.jar
+shadowJar {
+    classifier = 'shadow'
+    relocate 'com.google.common', 'io.dgraph.shaded.com.google.common'
+}
 
 protobuf {
     protoc {
