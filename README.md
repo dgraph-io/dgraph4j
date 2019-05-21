@@ -117,10 +117,10 @@ synchronous client `DgraphClient` and the async client `DgraphAsyncClient` suppo
 of transactions by providing the `newTransaction` and the `newReadOnlyTransaction` APIs. Creating
  a transaction is a local operation and incurs no network overhead.
 
-In most of the cases, the normal read-write transactions should be used, which can have any
-number of query, or mutate operations. However, if a transaction only has queries, you might
+In most of the cases, the normal read-write transactions is used, which can have any
+number of query or mutate operations. However, if a transaction only has queries, you might
 benefit from a read-only transaction, which can share the same read timestamp across multiple
-such read-only transactions, thus, potentially providing better latency.
+such read-only transactions and can result in lower latencies.
 
 For normal read-write transactions, it is a good practise to call `Transaction#discard()` in a
 `finally` block after running the transaction. Calling `Transaction#discard()` after
@@ -129,15 +129,29 @@ side-effects.
 
 ```java
 Transaction txn = dgraphClient.newTransaction();
-  try {
-    // Do something here
-    // ...
-  } finally {
-    txn.discard();
-  }
+try {
+  // Do something here
+  // ...
+} finally {
+  txn.discard();
+}
 ```
+
 For read-only transactions, there is no need to call `Transaction.discard`, which is equivalent
 to a no-op.
+
+```java
+Transaction readOnlyTxn = dgraphClient.newReadOnlyTransaction();
+```
+
+Read-only transactions can be set as best-effort. Best-effort queries relax the requirement of
+linearizible reads. This is useful when running queries that do not require a result from the latest
+timestamp.
+
+```java
+Transaction bestEffortTxn = dgraphClient.newReadOnlyTransaction()
+    .setBestEffort(true);
+```
 
 ### Run a mutation
 `Transaction#mutate` runs a mutation. It takes in a `Mutation` object,
