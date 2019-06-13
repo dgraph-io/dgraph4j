@@ -31,7 +31,7 @@ public class AclTest {
 
   protected static final String TEST_HOSTNAME = "localhost";
   protected static final int TEST_PORT = 9180;
-  private static final String DGRPAH_ENDPOINT = TEST_HOSTNAME + ":" + TEST_PORT;
+  private static final String DGRAPH_ENDPOINT = TEST_HOSTNAME + ":" + TEST_PORT;
   private static ManagedChannel channel;
   protected static DgraphClient dgraphClient;
 
@@ -109,8 +109,8 @@ public class AclTest {
         "dgraph",
         "acl",
         "add",
-        "-d",
-        DGRPAH_ENDPOINT,
+        "-a",
+        DGRAPH_ENDPOINT,
         "-g",
         group,
         "-x",
@@ -122,8 +122,8 @@ public class AclTest {
           "dgraph",
           "acl",
           "mod",
-          "-d",
-          DGRPAH_ENDPOINT,
+          "-a",
+          DGRAPH_ENDPOINT,
           "-u",
           USER_ID,
           "--group_list",
@@ -138,8 +138,8 @@ public class AclTest {
         "dgraph",
         "acl",
         "mod",
-        "-d",
-        DGRPAH_ENDPOINT,
+        "-a",
+        DGRAPH_ENDPOINT,
         "-g",
         group,
         "-p",
@@ -155,8 +155,8 @@ public class AclTest {
         "dgraph",
         "acl",
         "mod",
-        "-d",
-        DGRPAH_ENDPOINT,
+        "-a",
+        DGRAPH_ENDPOINT,
         "-g",
         group,
         "-p",
@@ -171,8 +171,8 @@ public class AclTest {
         "dgraph",
         "acl",
         "mod",
-        "-d",
-        DGRPAH_ENDPOINT,
+        "-a",
+        DGRAPH_ENDPOINT,
         "-g",
         group,
         "-p",
@@ -186,8 +186,8 @@ public class AclTest {
         "dgraph",
         "acl",
         "mod",
-        "-d",
-        DGRPAH_ENDPOINT,
+        "-a",
+        DGRAPH_ENDPOINT,
         "-g",
         group,
         "-p",
@@ -273,7 +273,7 @@ public class AclTest {
   private void resetUser() throws Exception {
     Process deleteUserCmd =
         new ProcessBuilder(
-                "dgraph", "acl", "del", "-d", DGRPAH_ENDPOINT, "-u", USER_ID, "-x", GROOT_PASSWORD)
+                "dgraph", "acl", "del", "-a", DGRAPH_ENDPOINT, "-u", USER_ID, "-x", GROOT_PASSWORD)
             .start();
     deleteUserCmd.waitFor();
 
@@ -282,8 +282,8 @@ public class AclTest {
                 "dgraph",
                 "acl",
                 "add",
-                "-d",
-                DGRPAH_ENDPOINT,
+                "-a",
+                DGRAPH_ENDPOINT,
                 "-u",
                 USER_ID,
                 "-p",
