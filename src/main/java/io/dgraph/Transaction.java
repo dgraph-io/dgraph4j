@@ -110,6 +110,15 @@ public class Transaction implements AutoCloseable {
         });
   }
 
+  /**
+   * Sets the best effort flag for this transaction. The Best effort flag can only be set for
+   * read-only transactions, and setting the best effort flag will enable a read-only transaction to
+   * see mutations made by other transactions even if those mutations have not been committed.
+   */
+  public void setBestEffort(boolean bestEffort) {
+    asyncTransaction.setBestEffort(bestEffort);
+  }
+
   @Override
   public void close() {
     ExceptionUtil.withExceptionUnwrapped(this::discard);
