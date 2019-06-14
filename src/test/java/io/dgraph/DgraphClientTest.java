@@ -87,7 +87,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
 
       mutation =
           Mutation.newBuilder()
-              .setDelNquads(ByteString.copyFromUtf8(String.format("<%s> * * .", bob)))
+              .setDelNquads(ByteString.copyFromUtf8(String.format("<%s> <name> * .", bob)))
               .build();
       txn.mutate(mutation);
 

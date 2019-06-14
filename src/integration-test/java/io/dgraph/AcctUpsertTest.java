@@ -15,7 +15,7 @@
  */
 package io.dgraph;
 
-import static org.junit.Assert.assertTrue;
+import static org.testng.Assert.assertTrue;
 
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
@@ -28,7 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.Test;
+import org.testng.annotations.Test;
 
 public class AcctUpsertTest extends DgraphIntegrationTest {
 

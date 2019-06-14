@@ -66,38 +66,39 @@ public class DgraphAsyncClientTest {
               .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
               .build();
 
-      txn.mutate(mutation)
+      JsonParser parser = new JsonParser();
+      String bobUid =
+          txn.mutate(mutation)
+              .thenCompose(
+                  ag -> {
+                    String bob = ag.getUidsOrThrow("bob");
+                    String query = String.format("{ find_bob(func: uid(%s)) { name } }", bob);
+                    return txn.query(query)
+                        .thenApply(
+                            resp -> {
+                              JsonObject json =
+                                  parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
+                              assertTrue(json.getAsJsonArray("find_bob").size() > 0);
+                              return bob;
+                            });
+                  })
+              .get();
+
+      Mutation mutation1 =
+          Mutation.newBuilder()
+              .setDelNquads(ByteString.copyFromUtf8(String.format("<%s> <name> * .", bobUid)))
+              .build();
+      String query = String.format("{ find_bob(func: uid(%s)) { name } }", bobUid);
+      txn.mutate(mutation1)
           .thenCompose(
-              ag -> {
-                String bob = ag.getUidsOrThrow("bob");
-                JsonParser parser = new JsonParser();
-                String query = String.format("{ find_bob(func: uid(%s)) { name } }", bob);
-                return txn.query(query)
-                    .thenCompose(
-                        resp -> {
-                          JsonObject json =
-                              parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
-                          assertTrue(json.getAsJsonArray("find_bob").size() > 0);
-                          Mutation mutation1 =
-                              Mutation.newBuilder()
-                                  .setDelNquads(
-                                      ByteString.copyFromUtf8(String.format("<%s> * * .", bob)))
-                                  .build();
-                          return txn.mutate(mutation1)
-                              .thenCompose(
-                                  ag1 ->
-                                      txn.query(query)
-                                          .thenAccept(
-                                              resp1 -> {
-                                                JsonObject json1 =
-                                                    parser
-                                                        .parse(resp1.getJson().toStringUtf8())
-                                                        .getAsJsonObject();
-                                                assertTrue(
-                                                    json1.getAsJsonArray("find_bob").size() == 0);
-                                              }));
-                        });
-              })
+              ag1 ->
+                  txn.query(query)
+                      .thenAccept(
+                          resp1 -> {
+                            JsonObject json1 =
+                                parser.parse(resp1.getJson().toStringUtf8()).getAsJsonObject();
+                            assertTrue(json1.getAsJsonArray("find_bob").size() == 0);
+                          }))
           .get();
 
       txn.commit();
