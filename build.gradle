@@ -41,13 +41,13 @@ apply plugin: 'signing'
 
 group = 'io.dgraph'
 archivesBaseName = 'dgraph4j'
-version = '1.7.4'
+version = '1.7.5'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 def grpcVersion = '1.15.1'
 def dgraph4jVersion = "$version"
-def openCensusVersion = '0.17.0'
+def openCensusVersion = '0.23.0'
 
 
 protobuf {
@@ -108,9 +108,9 @@ dependencies {
     compile "io.grpc:grpc-netty:${grpcVersion}"
 	compile "io.grpc:grpc-stub:${grpcVersion}"
 
-    compile "io.opencensus:opencensus-api:${openCensusVersion}"
-    compile "io.opencensus:opencensus-exporter-trace-jaeger:${openCensusVersion}"
-    runtime "io.opencensus:opencensus-impl:${openCensusVersion}"
+    testCompile "io.opencensus:opencensus-api:${openCensusVersion}"
+    testCompile "io.opencensus:opencensus-exporter-trace-jaeger:${openCensusVersion}"
+    testRuntime "io.opencensus:opencensus-impl:${openCensusVersion}"
 
     // Declare the dependency for your favourite test framework you want to use in your tests.
     testCompile 'org.testng:testng:6.8.8'
