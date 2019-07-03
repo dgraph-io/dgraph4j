@@ -292,3 +292,9 @@ def customizePom(pom) {
       }
     }
 }
+
+task version() {
+    doLast {
+        println dgraph4jVersion
+    }
+}
