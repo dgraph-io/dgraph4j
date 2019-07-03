@@ -145,7 +145,7 @@ Transaction readOnlyTxn = dgraphClient.newReadOnlyTransaction();
 ```
 
 Read-only transactions can be set as best-effort. Best-effort queries relax the requirement of
-linearizible reads. This is useful when running queries that do not require a result from the latest
+linearizable reads. This is useful when running queries that do not require a result from the latest
 timestamp.
 
 ```java
