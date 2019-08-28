@@ -17,10 +17,11 @@ package io.dgraph;
 
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
-import io.dgraph.DgraphProto.Assigned;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
+import org.testng.annotations.Test;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,7 +30,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.testng.annotations.Test;
 
 public class BankTest extends DgraphIntegrationTest {
 
@@ -51,10 +51,10 @@ public class BankTest extends DgraphIntegrationTest {
     Transaction txn = dgraphClient.newTransaction();
     Mutation mu =
         Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(gson.toJson(accounts))).build();
-    Assigned ag = txn.mutate(mu);
+    Response response = txn.mutate(mu);
     txn.commit();
 
-    ag.getUidsMap().forEach((key, uid) -> uids.add(uid));
+    response.getUidsMap().forEach((key, uid) -> uids.add(uid));
   }
 
   private void runTotal() {
@@ -111,7 +111,7 @@ public class BankTest extends DgraphIntegrationTest {
 
       Mutation mu =
           Mutation.newBuilder()
-              .setSetJson(ByteString.copyFromUtf8(gson.toJson(accounts).toString()))
+              .setSetJson(ByteString.copyFromUtf8(gson.toJson(accounts)))
               .build();
       txn.mutate(mu);
       txn.commit();

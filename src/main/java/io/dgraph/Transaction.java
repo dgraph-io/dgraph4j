@@ -15,8 +15,8 @@
  */
 package io.dgraph;
 
-import io.dgraph.DgraphProto.Assigned;
 import io.dgraph.DgraphProto.Mutation;
+import io.dgraph.DgraphProto.Request;
 import io.dgraph.DgraphProto.Response;
 import java.util.Collections;
 import java.util.Map;
@@ -37,25 +37,23 @@ public class Transaction implements AutoCloseable {
   }
 
   /**
-   * Sends a query to one of the connected dgraph instances. If no mutations need to be made in the
+   * sends a query to one of the connected dgraph instances. If no mutations need to be made in the
    * same transaction, it's convenient to chain the method: <code>
-   * client.NewTransaction().queryWithVars(...)</code>.
+   * client.NewTransaction().queryWithVars(...) </code>.
    *
-   * @param query Query in GraphQL+-
-   * @param vars variables referred to in the queryWithVars.
+   * @param query query in GraphQL+-
+   * @param vars GraphQL variables used in query
    * @return a Response protocol buffer object.
    */
   public Response queryWithVars(final String query, final Map<String, String> vars) {
     return ExceptionUtil.withExceptionUnwrapped(
-        () -> {
-          return asyncTransaction.queryWithVars(query, vars).join();
-        });
+        () -> asyncTransaction.queryWithVars(query, vars).join());
   }
 
   /**
    * Calls {@code Transcation#queryWithVars} with an empty vars map.
    *
-   * @param query Query in GraphQL+-
+   * @param query query in GraphQL+-
    * @return a Response protocol buffer object
    */
   public Response query(final String query) {
@@ -64,20 +62,26 @@ public class Transaction implements AutoCloseable {
 
   /**
    * Allows data stored on dgraph instances to be modified. The fields in Mutation come in pairs,
-   * set and delete. Mutations can either be encoded as JSON or as RDFs.
-   *
-   * <p>If the commitNow property on the Mutation object is set,
+   * set and delete. Mutations can either be encoded as JSON or as RDFs. If the commitNow property
+   * on the Mutation object is set, this call will result in the transaction being committed. In
+   * this case, an explicit call to AsyncTransaction#commit doesn't need to subsequently be made.
    *
    * @param mutation a Mutation protocol buffer object representing the mutation.
-   * @return an Assigned protocol buffer object. his call will result in the transaction being
-   *     committed. In this case, an explicit call to AsyncTransaction#commit doesn't need to
-   *     subsequently be made.
+   * @return a Response protocol buffer object.
    */
-  public Assigned mutate(Mutation mutation) {
-    return ExceptionUtil.withExceptionUnwrapped(
-        () -> {
-          return asyncTransaction.mutate(mutation).join();
-        });
+  public Response mutate(Mutation mutation) {
+    return ExceptionUtil.withExceptionUnwrapped(() -> asyncTransaction.mutate(mutation).join());
+  }
+
+  /**
+   * Allows performing a query on dgraph instances. It could perform just query or a mutation or an
+   * upsert involving a query and a mutation.
+   *
+   * @param request a Request protocol buffer object.
+   * @return a Response protocol buffer object.
+   */
+  public Response doRequest(Request request) {
+    return ExceptionUtil.withExceptionUnwrapped(() -> asyncTransaction.doRequest(request).join());
   }
 
   /**
@@ -87,6 +91,8 @@ public class Transaction implements AutoCloseable {
    * <p>Errors could be thrown for various reasons. Notably, a StatusRuntimeException could be
    * thrown if transactions that modify the same data are being run concurrently. It's up to the
    * user to decide if they wish to retry. In this case, the user should create a new transaction.
+   *
+   * @return CompletableFuture with Void result
    */
   public void commit() {
     ExceptionUtil.withExceptionUnwrapped(

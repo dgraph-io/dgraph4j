@@ -19,7 +19,6 @@ import static org.testng.Assert.assertNull;
 
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
-import io.dgraph.DgraphProto.Assigned;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
@@ -32,6 +31,7 @@ public class DeleteEdgeTest extends DgraphIntegrationTest {
   public void deleteEdgesTest() {
     // Create Person
     Person alice = new Person();
+    alice.uid = "_:alice";
     alice.name = "Alice";
     alice.age = 26;
     alice.married = true;
@@ -67,9 +67,9 @@ public class DeleteEdgeTest extends DgraphIntegrationTest {
             .setCommitNow(true)
             .build();
 
-    Assigned ag = dgraphClient.newTransaction().mutate(mu);
+    Response resp = dgraphClient.newTransaction().mutate(mu);
 
-    String uid = ag.getUidsOrThrow("blank-0");
+    String uid = resp.getUidsOrThrow("alice");
     String q =
         "{\n"
             + "  me(func: uid(%s)) {\n"
@@ -90,7 +90,7 @@ public class DeleteEdgeTest extends DgraphIntegrationTest {
             + "  }\n"
             + " }";
     q = String.format(q, uid);
-    Response resp = dgraphClient.newTransaction().query(q);
+    resp = dgraphClient.newTransaction().query(q);
     System.out.println(resp.getJson().toStringUtf8());
 
     mu =
@@ -110,6 +110,7 @@ public class DeleteEdgeTest extends DgraphIntegrationTest {
   }
 
   static class Person {
+    String uid;
     String name;
     int age;
     boolean married;

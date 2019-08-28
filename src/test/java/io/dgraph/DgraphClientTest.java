@@ -21,7 +21,9 @@ import static org.testng.Assert.assertTrue;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
-import io.dgraph.DgraphProto.*;
+import io.dgraph.DgraphProto.Mutation;
+import io.dgraph.DgraphProto.Operation;
+import io.dgraph.DgraphProto.Response;
 import java.util.Collections;
 import java.util.Map;
 import org.testng.annotations.BeforeMethod;
@@ -76,12 +78,12 @@ public class DgraphClientTest extends DgraphIntegrationTest {
           Mutation.newBuilder()
               .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
               .build();
-      Assigned ag = txn.mutate(mutation);
-      String bob = ag.getUidsOrThrow("bob");
+      Response resp = txn.mutate(mutation);
+      String bob = resp.getUidsOrThrow("bob");
 
       JsonParser parser = new JsonParser();
       String query = String.format("{ find_bob(func: uid(%s)) { name } }", bob);
-      Response resp = txn.query(query);
+      resp = txn.query(query);
       JsonObject json = parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
       assertTrue(json.getAsJsonArray("find_bob").size() > 0);
 

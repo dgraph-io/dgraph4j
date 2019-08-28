@@ -18,7 +18,6 @@ package io.dgraph;
 import static java.util.Arrays.asList;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import io.dgraph.DgraphProto.LinRead.Sequencing;
 import io.dgraph.DgraphProto.Payload;
 import io.grpc.Metadata;
 import io.grpc.stub.MetadataUtils;
@@ -47,6 +46,7 @@ public class DgraphAsyncClient {
   private final List<DgraphGrpc.DgraphStub> stubs;
   private final ReadWriteLock jwtLock;
   private DgraphProto.Jwt jwt;
+
   /**
    * Creates a new client for interacting with a Dgraph store.
    *
@@ -260,14 +260,5 @@ public class DgraphAsyncClient {
    */
   public AsyncTransaction newReadOnlyTransaction() {
     return new AsyncTransaction(this, this.anyClient(), true);
-  }
-
-  /**
-   * @param sequencing - the Sequencing strategy to be used
-   * @return the new async transaction object
-   * @deprecated the sequencing feature has been deprecated
-   */
-  public AsyncTransaction newTransaction(Sequencing sequencing) {
-    return new AsyncTransaction(this, this.anyClient());
   }
 }
