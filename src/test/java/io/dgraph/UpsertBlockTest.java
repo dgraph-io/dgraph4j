@@ -80,6 +80,7 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     mu =
         Mutation.newBuilder()
             .setDelNquads(ByteString.copyFromUtf8("uid(v) <name> * .\nuid(v) <email> * ."))
+            .setCond("@if(eq(len(v), 1))")
             .build();
     req = Request.newBuilder().addMutations(mu).setQuery(query).build();
 

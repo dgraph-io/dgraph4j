@@ -20,8 +20,6 @@ import com.google.protobuf.ByteString;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
-import org.testng.annotations.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,6 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.testng.annotations.Test;
 
 public class BankTest extends DgraphIntegrationTest {
 
@@ -110,9 +109,7 @@ public class BankTest extends DgraphIntegrationTest {
       accounts.both.get(1).bal -= 5;
 
       Mutation mu =
-          Mutation.newBuilder()
-              .setSetJson(ByteString.copyFromUtf8(gson.toJson(accounts)))
-              .build();
+          Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(gson.toJson(accounts))).build();
       txn.mutate(mu);
       txn.commit();
     } finally {

@@ -19,7 +19,6 @@ import io.dgraph.DgraphGrpc.DgraphStub;
 import io.dgraph.DgraphProto.*;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -60,12 +59,12 @@ public class AsyncTransaction implements AutoCloseable {
   }
 
   /**
-   * sends a query to one of the connected dgraph instances. If no mutations need to be made in the
+   * Sends a query to one of the connected dgraph instances. If no mutations need to be made in the
    * same transaction, it's convenient to chain the method: <code>
    * client.NewTransaction().queryWithVars(...)</code>.
    *
    * @param query query in GraphQL+-
-   * @param vars  GraphQL variables used in query
+   * @param vars GraphQL variables used in query
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> queryWithVars(
@@ -108,9 +107,9 @@ public class AsyncTransaction implements AutoCloseable {
 
   /**
    * Allows data stored on dgraph instances to be modified. The fields in Mutation come in pairs,
-   * set and delete. Mutations can either be encoded as JSON or as RDFs. If the commitNow property
+   * set and delete. Mutations can either be encoded as JSON or as RDFs. If the `commitNow` property
    * on the Mutation object is set, this call will result in the transaction being committed. In
-   * this case, an explicit call to AsyncTransaction#commit doesn't need to subsequently be made.
+   * this case, there is no need to subsequently call AsyncTransaction#commit.
    *
    * @param mutation a Mutation protocol buffer object representing the mutation.
    * @return a Response protocol buffer object.
@@ -127,8 +126,8 @@ public class AsyncTransaction implements AutoCloseable {
   }
 
   /**
-   * Allows performing a query on dgraph instances. It could perform just query or
-   * a mutation or an upsert involving a query and a mutation.
+   * Allows performing a query on dgraph instances. It could perform just query or a mutation or an
+   * upsert involving a query and a mutation.
    *
    * @param request a Request protocol buffer object.
    * @return a Response protocol buffer object.
