@@ -91,8 +91,6 @@ public class Transaction implements AutoCloseable {
    * <p>Errors could be thrown for various reasons. Notably, a StatusRuntimeException could be
    * thrown if transactions that modify the same data are being run concurrently. It's up to the
    * user to decide if they wish to retry. In this case, the user should create a new transaction.
-   *
-   * @return CompletableFuture with Void result
    */
   public void commit() {
     ExceptionUtil.withExceptionUnwrapped(
@@ -120,6 +118,9 @@ public class Transaction implements AutoCloseable {
    * Sets the best effort flag for this transaction. The Best effort flag can only be set for
    * read-only transactions, and setting the best effort flag will enable a read-only transaction to
    * see mutations made by other transactions even if those mutations have not been committed.
+   *
+   * @param bestEffort the boolean value indicating whether we should enable the best effort feature
+   *     or not
    */
   public void setBestEffort(boolean bestEffort) {
     asyncTransaction.setBestEffort(bestEffort);

@@ -134,8 +134,8 @@ public class DgraphAsyncClient {
    * header whose key is accessJwt and value is the access JWT stored in the current
    * DgraphAsyncClient object.
    *
-   * @param stub
-   * @return
+   * @param stub the original stub that we should attach JWT to
+   * @return the augmented stub with JWT
    */
   protected DgraphGrpc.DgraphStub getStubWithJwt(DgraphGrpc.DgraphStub stub) {
     Lock rlock = jwtLock.readLock();
@@ -159,11 +159,12 @@ public class DgraphAsyncClient {
    * handling exceptions caused by access JWT expiration. If such an exception happens,
    * runWithRetries will retry login using the refresh JWT and retry the logic in the supplier.
    *
-   * @param supplier the supplier to the CompletableFuture, which encapsulates the logic to run
-   *     queries, mutations or alter operations
    * @param <T> The type of the supplier's returned CompletableFuture. If the supplier provides
    *     logic to run queries, then the type T will be DgraphProto.Response.
-   * @return
+   * @param operation the name of the operation
+   * @param supplier the supplier to the CompletableFuture, which encapsulates the logic to run
+   *     queries, mutations or alter operations
+   * @return a completable future which can be used to get the result
    */
   protected <T> CompletableFuture<T> runWithRetries(
       String operation, Supplier<CompletableFuture<T>> supplier) {

@@ -56,9 +56,8 @@ public class App {
       String json = gson.toJson(p);
 
       // Run mutation
-      Mutation mutation = Mutation.newBuilder()
-          .setSetJson(ByteString.copyFromUtf8(json.toString()))
-          .build();
+      Mutation mutation =
+          Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(json.toString())).build();
       txn.mutate(mutation);
       txn.commit();
 
