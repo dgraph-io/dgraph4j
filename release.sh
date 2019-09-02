@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-version=$(gradle -q version)
+version=$(./gradlew -q version)
 
-gradle publish && \
+./gradlew publish && \
 git tag "v${version}" master && \
 git push origin --tags
 
