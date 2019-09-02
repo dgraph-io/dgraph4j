@@ -42,11 +42,10 @@ public class App {
 
     // Set schema
     String schema = "name: string @index(exact) .";
-    Operation op = Operation.newBuilder().setSchema(schema).build();
-    dgraphClient.alter(op);
+    Operation operation = Operation.newBuilder().setSchema(schema).build();
+    dgraphClient.alter(operation);
 
     Gson gson = new Gson(); // For JSON encode/decode
-
     Transaction txn = dgraphClient.newTransaction();
     try {
       // Create data
@@ -57,9 +56,10 @@ public class App {
       String json = gson.toJson(p);
 
       // Run mutation
-      Mutation mu =
-          Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(json.toString())).build();
-      txn.mutate(mu);
+      Mutation mutation = Mutation.newBuilder()
+          .setSetJson(ByteString.copyFromUtf8(json.toString()))
+          .build();
+      txn.mutate(mutation);
       txn.commit();
 
     } finally {

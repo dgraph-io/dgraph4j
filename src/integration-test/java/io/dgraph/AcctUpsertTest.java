@@ -19,7 +19,6 @@ import static org.testng.Assert.assertTrue;
 
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
-import io.dgraph.DgraphProto.Assigned;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
@@ -92,8 +91,8 @@ public class AcctUpsertTest extends DgraphIntegrationTest {
                 + "   _:acct <age>   \"%d\"^^<xs:int> .";
         nqs = String.format(nqs, account.first, account.last, account.age);
         Mutation mu = Mutation.newBuilder().setSetNquads(ByteString.copyFromUtf8(nqs)).build();
-        Assigned assigned = txn.mutate(mu);
-        uid = assigned.getUidsOrThrow("acct");
+        Response response = txn.mutate(mu);
+        uid = response.getUidsOrThrow("acct");
       }
 
       String nq = String.format("<%s> <when> \"%d\"^^<xs:int> .", uid, System.nanoTime());

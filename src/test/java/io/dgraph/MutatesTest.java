@@ -51,8 +51,8 @@ public class MutatesTest extends DgraphIntegrationTest {
 
       Mutation mu = Mutation.newBuilder().addSet(quad).build();
 
-      Assigned ag = txn.mutate(mu);
-      uidsMap.put(datum, ag.getUidsOrThrow(datum));
+      Response resp = txn.mutate(mu);
+      uidsMap.put(datum, resp.getUidsOrThrow(datum));
     }
 
     txn.commit();

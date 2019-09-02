@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 
 public class UpsertBlockTest extends DgraphIntegrationTest {
   @Test
-  public void upsertBlockTest() throws Exception {
+  public void upsertBlockTest() {
     DgraphProto.Operation op =
         DgraphProto.Operation.newBuilder()
             .setSchema("email: string @index(exact) @upsert .")
@@ -36,14 +36,11 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     p2.addProperty("uid", "uid(v)");
     jA.add(p2);
 
-    Mutation mu =
-        Mutation.newBuilder()
-            .setQuery(query)
-            .setSetJson(ByteString.copyFromUtf8(jA.toString()))
-            .build();
+    Mutation mu = Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(jA.toString())).build();
+    Request req = Request.newBuilder().addMutations(mu).setQuery(query).build();
 
     Transaction txn = dgraphClient.newTransaction();
-    txn.mutate(mu);
+    txn.doRequest(req);
     txn.commit();
 
     String query2 =
@@ -67,14 +64,11 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     p1.addProperty("name", "ashish");
     jA.add(p1);
 
-    mu =
-        Mutation.newBuilder()
-            .setQuery(query)
-            .setSetJson(ByteString.copyFromUtf8(jA.toString()))
-            .build();
+    mu = Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(jA.toString())).build();
+    req = Request.newBuilder().addMutations(mu).setQuery(query).build();
 
     txn = dgraphClient.newTransaction();
-    txn.mutate(mu);
+    txn.doRequest(req);
     txn.commit();
 
     txn = dgraphClient.newTransaction();
@@ -85,12 +79,13 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
 
     mu =
         Mutation.newBuilder()
-            .setQuery(query)
             .setDelNquads(ByteString.copyFromUtf8("uid(v) <name> * .\nuid(v) <email> * ."))
+            .setCond("@if(eq(len(v), 1))")
             .build();
+    req = Request.newBuilder().addMutations(mu).setQuery(query).build();
 
     txn = dgraphClient.newTransaction();
-    txn.mutate(mu);
+    txn.doRequest(req);
     txn.commit();
 
     txn = dgraphClient.newTransaction();

@@ -17,7 +17,6 @@ package io.dgraph;
 
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
-import io.dgraph.DgraphProto.Assigned;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
@@ -51,10 +50,10 @@ public class BankTest extends DgraphIntegrationTest {
     Transaction txn = dgraphClient.newTransaction();
     Mutation mu =
         Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(gson.toJson(accounts))).build();
-    Assigned ag = txn.mutate(mu);
+    Response response = txn.mutate(mu);
     txn.commit();
 
-    ag.getUidsMap().forEach((key, uid) -> uids.add(uid));
+    response.getUidsMap().forEach((key, uid) -> uids.add(uid));
   }
 
   private void runTotal() {
@@ -110,9 +109,7 @@ public class BankTest extends DgraphIntegrationTest {
       accounts.both.get(1).bal -= 5;
 
       Mutation mu =
-          Mutation.newBuilder()
-              .setSetJson(ByteString.copyFromUtf8(gson.toJson(accounts).toString()))
-              .build();
+          Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(gson.toJson(accounts))).build();
       txn.mutate(mu);
       txn.commit();
     } finally {

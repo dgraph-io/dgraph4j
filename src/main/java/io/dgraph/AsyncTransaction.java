@@ -24,8 +24,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This is the implementation of asynchronous Dgraph transaction. The asynchrony is backed-up by
@@ -36,8 +34,6 @@ import org.slf4j.LoggerFactory;
  * @author Michail Klimenkov
  */
 public class AsyncTransaction implements AutoCloseable {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AsyncTransaction.class);
 
   // these can potentially be set from different threads executing the Stub callback
   private volatile TxnContext context;
@@ -63,51 +59,33 @@ public class AsyncTransaction implements AutoCloseable {
   }
 
   /**
-   * sends a query to one of the connected dgraph instances. If no mutations need to be made in the
+   * Sends a query to one of the connected dgraph instances. If no mutations need to be made in the
    * same transaction, it's convenient to chain the method: <code>
    * client.NewTransaction().queryWithVars(...)</code>.
    *
-   * @param query Query in GraphQL+-
-   * @param vars variables referred to in the queryWithVars.
+   * @param query query in GraphQL+-
+   * @param vars GraphQL variables used in query
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> queryWithVars(
       final String query, final Map<String, String> vars) {
-    LOG.debug("Starting query...");
 
-    LinRead.Builder lr = LinRead.newBuilder(context.getLinRead());
     final Request request =
         Request.newBuilder()
             .setQuery(query)
             .putAllVars(vars)
             .setStartTs(context.getStartTs())
-            .setLinRead(lr.build())
             .setReadOnly(readOnly)
             .setBestEffort(bestEffort)
             .build();
 
-    LOG.debug("Sending request to Dgraph...");
-    return client.runWithRetries(
-        "query",
-        () -> {
-          StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
-          DgraphStub localStub = client.getStubWithJwt(stub);
-          localStub.query(request, bridge);
-          return bridge
-              .getDelegate()
-              .thenApply(
-                  (response) -> {
-                    LOG.debug("Received response from Dgraph!");
-                    mergeContext(response.getTxn());
-                    return response;
-                  });
-        });
+    return this.doRequest(request);
   }
 
   /**
    * Calls {@code Transcation#queryWithVars} with an empty vars map.
    *
-   * @param query Query in GraphQL+-
+   * @param query query in GraphQL+-
    * @return a Response protocol buffer object
    */
   public CompletableFuture<Response> query(final String query) {
@@ -123,58 +101,77 @@ public class AsyncTransaction implements AutoCloseable {
     if (!this.readOnly) {
       throw new RuntimeException("Best effort only works for read-only queries");
     }
+
     this.bestEffort = bestEffort;
   }
 
   /**
    * Allows data stored on dgraph instances to be modified. The fields in Mutation come in pairs,
-   * set and delete. Mutations can either be encoded as JSON or as RDFs.
-   *
-   * <p>If the commitNow property on the Mutation object is set,
+   * set and delete. Mutations can either be encoded as JSON or as RDFs. If the `commitNow` property
+   * on the Mutation object is set, this call will result in the transaction being committed. In
+   * this case, there is no need to subsequently call AsyncTransaction#commit.
    *
    * @param mutation a Mutation protocol buffer object representing the mutation.
-   * @return an Assigned protocol buffer object. his call will result in the transaction being
-   *     committed. In this case, an explicit call to AsyncTransaction#commit doesn't need to
-   *     subsequently be made.
+   * @return a Response protocol buffer object.
    */
-  public CompletableFuture<Assigned> mutate(Mutation mutation) {
-    if (readOnly) {
-      throw new TxnReadOnlyException();
-    }
+  public CompletableFuture<Response> mutate(Mutation mutation) {
+    Request request =
+        Request.newBuilder()
+            .addMutations(mutation)
+            .setCommitNow(mutation.getCommitNow())
+            .setStartTs(context.getStartTs())
+            .build();
+
+    return this.doRequest(request);
+  }
+
+  /**
+   * Allows performing a query on dgraph instances. It could perform just query or a mutation or an
+   * upsert involving a query and a mutation.
+   *
+   * @param request a Request protocol buffer object.
+   * @return a Response protocol buffer object.
+   */
+  public CompletableFuture<Response> doRequest(Request request) {
     if (finished) {
       throw new TxnFinishedException();
     }
 
-    Mutation request = Mutation.newBuilder(mutation).setStartTs(context.getStartTs()).build();
+    if (request.getMutationsCount() > 0) {
+      if (readOnly) {
+        throw new TxnReadOnlyException();
+      }
+
+      mutated = true;
+    }
 
     return client
         .runWithRetries(
-            "mutation",
+            "doRequest",
             () -> {
-              StreamObserverBridge<Assigned> bridge = new StreamObserverBridge<>();
+              StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
               DgraphStub localStub = client.getStubWithJwt(stub);
-              localStub.mutate(request, bridge);
+              localStub.query(request, bridge);
 
               return bridge
                   .getDelegate()
                   .thenApply(
-                      (assigned) -> {
-                        mutated = true;
-                        if (mutation.getCommitNow()) {
+                      (response) -> {
+                        if (request.getCommitNow()) {
                           finished = true;
                         }
-                        mergeContext(assigned.getContext());
-                        return assigned;
+                        mergeContext(response.getTxn());
+                        return response;
                       });
             })
         .handle(
-            (Assigned assigned, Throwable throwable) -> {
+            (Response response, Throwable throwable) -> {
               if (throwable != null) {
                 discard();
                 throw launderException(throwable);
               }
 
-              return assigned;
+              return response;
             });
   }
 
