@@ -16,9 +16,13 @@
 package io.dgraph;
 
 import io.dgraph.DgraphGrpc.DgraphStub;
-import io.dgraph.DgraphProto.*;
+import io.dgraph.DgraphProto.Mutation;
+import io.dgraph.DgraphProto.Request;
+import io.dgraph.DgraphProto.Response;
+import io.dgraph.DgraphProto.TxnContext;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;

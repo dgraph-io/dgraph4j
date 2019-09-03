@@ -40,10 +40,8 @@ public class ExceptionUtil {
 
     if (cause instanceof StatusRuntimeException) {
       StatusRuntimeException runtimeException = (StatusRuntimeException) cause;
-      if (runtimeException.getStatus().getCode().equals(Status.Code.UNAUTHENTICATED)
-          && runtimeException.getMessage().contains("Token is expired")) {
-        return true;
-      }
+      return runtimeException.getStatus().getCode().equals(Status.Code.UNAUTHENTICATED)
+          && runtimeException.getMessage().contains("Token is expired");
     }
     return false;
   }

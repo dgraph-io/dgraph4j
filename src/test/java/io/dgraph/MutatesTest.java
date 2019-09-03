@@ -33,7 +33,7 @@ public class MutatesTest extends DgraphIntegrationTest {
   private static Map<String, String> uidsMap;
 
   @Test
-  public void testInsert3Quads() throws Exception {
+  public void testInsert3Quads() {
     Operation op =
         Operation.newBuilder().setSchema("name: string @index(fulltext) @upsert .").build();
     dgraphClient.alter(op);
@@ -60,7 +60,7 @@ public class MutatesTest extends DgraphIntegrationTest {
   }
 
   @Test
-  public void testQuery3Quads() throws Exception {
+  public void testQuery3Quads() {
     Transaction txn = dgraphClient.newTransaction();
     List<String> uids = Arrays.stream(data).map(d -> uidsMap.get(d)).collect(Collectors.toList());
 

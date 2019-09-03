@@ -18,6 +18,7 @@ package io.dgraph;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Request;
 import io.dgraph.DgraphProto.Response;
+
 import java.util.Collections;
 import java.util.Map;
 
@@ -42,7 +43,7 @@ public class Transaction implements AutoCloseable {
    * client.NewTransaction().queryWithVars(...) </code>.
    *
    * @param query query in GraphQL+-
-   * @param vars GraphQL variables used in query
+   * @param vars  GraphQL variables used in query
    * @return a Response protocol buffer object.
    */
   public Response queryWithVars(final String query, final Map<String, String> vars) {
@@ -120,7 +121,7 @@ public class Transaction implements AutoCloseable {
    * see mutations made by other transactions even if those mutations have not been committed.
    *
    * @param bestEffort the boolean value indicating whether we should enable the best effort feature
-   *     or not
+   *                   or not
    */
   public void setBestEffort(boolean bestEffort) {
     asyncTransaction.setBestEffort(bestEffort);

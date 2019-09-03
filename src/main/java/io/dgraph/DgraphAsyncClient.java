@@ -15,12 +15,13 @@
  */
 package io.dgraph;
 
-import static java.util.Arrays.asList;
-
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.dgraph.DgraphProto.Payload;
 import io.grpc.Metadata;
 import io.grpc.stub.MetadataUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -29,8 +30,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Supplier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static java.util.Arrays.asList;
 
 /**
  * Asynchronous implementation of a Dgraph client using grpc.
@@ -53,7 +54,7 @@ public class DgraphAsyncClient {
    * <p>A single client is thread safe.
    *
    * @param stubs - an array of grpc stubs to be used by this client. The stubs to be used are
-   *     chosen at random per transaction.
+   *              chosen at random per transaction.
    */
   public DgraphAsyncClient(DgraphGrpc.DgraphStub... stubs) {
     this.stubs = asList(stubs);
@@ -66,7 +67,7 @@ public class DgraphAsyncClient {
    * access JWT and a refresh JWT, which will be stored in the jwt field of this class, and used for
    * authorizing all subsequent requests sent to the server.
    *
-   * @param userid the id of the user who is trying to login, e.g. Alice
+   * @param userid   the id of the user who is trying to login, e.g. Alice
    * @param password the password of the user
    * @return a future which can be used to wait for completion of the login request
    */
@@ -159,11 +160,11 @@ public class DgraphAsyncClient {
    * handling exceptions caused by access JWT expiration. If such an exception happens,
    * runWithRetries will retry login using the refresh JWT and retry the logic in the supplier.
    *
-   * @param <T> The type of the supplier's returned CompletableFuture. If the supplier provides
-   *     logic to run queries, then the type T will be DgraphProto.Response.
+   * @param <T>       The type of the supplier's returned CompletableFuture. If the supplier provides
+   *                  logic to run queries, then the type T will be DgraphProto.Response.
    * @param operation the name of the operation
-   * @param supplier the supplier to the CompletableFuture, which encapsulates the logic to run
-   *     queries, mutations or alter operations
+   * @param supplier  the supplier to the CompletableFuture, which encapsulates the logic to run
+   *                  queries, mutations or alter operations
    * @return a completable future which can be used to get the result
    */
   protected <T> CompletableFuture<T> runWithRetries(
