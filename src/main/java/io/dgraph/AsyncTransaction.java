@@ -20,14 +20,9 @@ import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Request;
 import io.dgraph.DgraphProto.Response;
 import io.dgraph.DgraphProto.TxnContext;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.CompletionStage;
 
 /**
  * This is the implementation of asynchronous Dgraph transaction. The asynchrony is backed-up by
@@ -175,7 +170,7 @@ public class AsyncTransaction implements AutoCloseable {
             (Response response, Throwable throwable) -> {
               if (throwable != null) {
                 discard();
-                throw launderException(throwable);
+                throw new RuntimeException(throwable);
               }
 
               return response;
@@ -261,25 +256,6 @@ public class AsyncTransaction implements AutoCloseable {
     builder.addAllPreds(src.getPredsList());
 
     this.context = builder.build();
-  }
-
-  private CompletionException launderException(Throwable ex) {
-    if (ex instanceof CompletionStage) {
-      Throwable cause = ex.getCause();
-
-      if (cause instanceof StatusRuntimeException) {
-        StatusRuntimeException ex1 = (StatusRuntimeException) ex;
-        Status.Code code = ex1.getStatus().getCode();
-        String desc = ex1.getStatus().getDescription();
-
-        if (code.equals(Status.Code.ABORTED) || code.equals(Status.Code.FAILED_PRECONDITION)) {
-          return new CompletionException(new TxnConflictException(desc));
-        }
-      }
-      return (CompletionException) ex;
-    }
-
-    return new CompletionException(ex);
   }
 
   @Override
