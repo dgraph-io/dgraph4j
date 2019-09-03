@@ -15,8 +15,7 @@
  */
 package io.dgraph;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 import io.dgraph.DgraphProto.*;
 import java.util.Arrays;
@@ -74,5 +73,34 @@ public class MutatesTest extends DgraphIntegrationTest {
     assertEquals(res, exp);
     assertTrue(response.getTxn().getStartTs() > 0);
     txn.commit();
+  }
+
+  @Test
+  public void testConflictException() {
+    Operation op =
+        Operation.newBuilder().setSchema("name: string @index(fulltext) @upsert .").build();
+    dgraphClient.alter(op);
+
+    Transaction txn1 = dgraphClient.newTransaction();
+    Transaction txn2 = dgraphClient.newTransaction();
+
+    NQuad quad =
+        NQuad.newBuilder()
+            .setSubject("_:200")
+            .setPredicate("name")
+            .setObjectValue(Value.newBuilder().setStrVal("ok 200").build())
+            .build();
+
+    Mutation mu = Mutation.newBuilder().addSet(quad).build();
+
+    txn1.mutate(mu);
+    txn2.mutate(mu);
+
+    txn1.commit();
+    try {
+      txn2.commit();
+      fail("should not reach here");
+    } catch (TxnConflictException ignored) {
+    }
   }
 }
