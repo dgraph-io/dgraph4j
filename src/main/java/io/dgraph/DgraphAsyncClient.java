@@ -20,9 +20,12 @@ import static java.util.Arrays.asList;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.dgraph.DgraphProto.Payload;
 import io.grpc.Metadata;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.MetadataUtils;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.Lock;
@@ -189,6 +192,15 @@ public class DgraphAsyncClient {
                 LOG.error(
                     "The retried " + operation + " encounters an execution exception:", innerE);
                 throw new RuntimeException(innerE);
+              }
+            } else if (e.getCause() instanceof StatusRuntimeException) {
+              StatusRuntimeException ex1 = (StatusRuntimeException) e.getCause();
+              Status.Code code = ex1.getStatus().getCode();
+              String desc = ex1.getStatus().getDescription();
+
+              if (code.equals(Status.Code.ABORTED)
+                  || code.equals(Status.Code.FAILED_PRECONDITION)) {
+                throw new CompletionException(new TxnConflictException(desc));
               }
             }
 

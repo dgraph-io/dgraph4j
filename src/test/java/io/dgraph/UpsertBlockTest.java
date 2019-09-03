@@ -5,7 +5,9 @@ import static org.testng.Assert.assertEquals;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
-import io.dgraph.DgraphProto.*;
+import io.dgraph.DgraphProto.Mutation;
+import io.dgraph.DgraphProto.Request;
+import io.dgraph.DgraphProto.Response;
 import org.testng.annotations.Test;
 
 public class UpsertBlockTest extends DgraphIntegrationTest {
