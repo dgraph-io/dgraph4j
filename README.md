@@ -31,7 +31,7 @@ and understand how to run and work with Dgraph.
   * [Setting Deadlines](#setting-deadlines)
   * [Setting Metadata Headers](#setting-metadata-headers)
   * [Helper Methods](#helper-methods)
-  * [Close the DB Connection](#close-the-db-connection)
+  * [Closing the DB Connection](#closing-the-db-connection)
 * [Using the Asynchronous Client](#using-the-asynchronous-client)
 * [Checking the request latency](#checking-the-request-latency)
 - [Development](#development)
@@ -366,11 +366,11 @@ with the deletions applied.
  dgraphClient.newTransaction().mutate(mu);
 ```
 
-### Close the DB Connection
+### Closing the DB Connection
 
 To disconnect from Dgraph, call `ManagedChannel#shutdown` on the gRPC
 channel object created when [creating the Dgraph
-client](#create-the-client).
+client](#creating-the-client).
 
 ```
 channel.shutdown();
