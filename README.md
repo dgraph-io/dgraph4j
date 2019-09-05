@@ -31,6 +31,7 @@ and understand how to run and work with Dgraph.
   * [Setting Deadlines](#setting-deadlines)
   * [Setting Metadata Headers](#setting-metadata-headers)
   * [Helper Methods](#helper-methods)
+  * [Closing the DB Connection](#closing-the-db-connection)
 * [Using the Asynchronous Client](#using-the-asynchronous-client)
 * [Checking the request latency](#checking-the-request-latency)
 - [Development](#development)
@@ -75,8 +76,9 @@ be found in the [Using the Asynchronous Client](#using-the-asynchronous-client) 
 The following code snippet shows how to create a synchronous client using just one connection.
 
 ```java
-ManagedChannel channel =
-ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext(true).build();
+ManagedChannel channel = ManagedChannelBuilder
+    .forAddress("localhost", 9080)
+    .usePlaintext(true).build();
 DgraphStub stub = DgraphGrpc.newStub(channel);
 DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(stub));
 ```
@@ -363,6 +365,16 @@ with the deletions applied.
  Mutation mu = Mutation.newBuilder().build()
  mu = Helpers.deleteEdges(mu, uid, "friends", "loc");
  dgraphClient.newTransaction().mutate(mu);
+```
+
+### Closing the DB Connection
+
+To disconnect from Dgraph, call `ManagedChannel#shutdown` on the gRPC
+channel object created when [creating a Dgraph
+client](#creating-a-client).
+
+```
+channel.shutdown();
 ```
 
 ## Using the Asynchronous Client
