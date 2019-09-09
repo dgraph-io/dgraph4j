@@ -46,8 +46,7 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     txn.commit();
 
     String query2 =
-        ""
-            + "{\n"
+        "{\n"
             + "    me(func: eq(email, \"ashish@dgraph.io\")) {\n"
             + "        name\n"
             + "        email\n"
@@ -134,8 +133,7 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     txn.commit();
 
     String query =
-        ""
-            + "{\n"
+        "{\n"
             + "    me(func: eq(email, \"one@dgraph.io\")) {\n"
             + "        v as uid\n"
             + "    }\n"
@@ -155,9 +153,8 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     txn.commit();
 
     String query2 =
-        ""
-            + "{\n"
-            + "    me(func: eq(email, \"two@dgraph.io\")) {\n"
+        "{\n"
+            + "    me(func: eq(email, \"two@dgraph.io\"), orderasc: name) {\n"
             + "        name\n"
             + "        email\n"
             + "    }\n"
@@ -208,9 +205,8 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     txn.commit();
 
     String query =
-        ""
-            + "{\n"
-            + "    me(func: eq(email, \"one@dgraph.io\")) {\n"
+        "{\n"
+            + "    me(func: eq(email, \"one@dgraph.io\"), orderasc: name) {\n"
             + "        name\n"
             + "        email\n"
             + "    }\n"
@@ -226,8 +222,7 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
 
     // DELETE using UPSERT.
     String query2 =
-        ""
-            + "{\n"
+        "{\n"
             + "    me(func: eq(email, \"one@dgraph.io\")) {\n"
             + "        v as uid\n"
             + "    }\n"
