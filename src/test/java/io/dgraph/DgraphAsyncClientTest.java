@@ -36,15 +36,14 @@ import org.testng.annotations.Test;
 
 /** @author Deepak Jois */
 public class DgraphAsyncClientTest {
+  private static final String TEST_HOSTNAME = "localhost";
+  private static final int TEST_PORT = 9180;
+  private DgraphAsyncClient dgraphAsyncClient;
   private ManagedChannel channel;
-  protected DgraphAsyncClient dgraphAsyncClient;
-
-  protected static final String TEST_HOSTNAME = "localhost";
-  protected static final int TEST_PORT = 9180;
 
   @BeforeClass
   public void beforeClass() {
-    channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
+    channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext().build();
     DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
     dgraphAsyncClient = new DgraphAsyncClient(stub);
     dgraphAsyncClient.login("groot", "password").join();
@@ -99,10 +98,9 @@ public class DgraphAsyncClientTest {
                           resp1 -> {
                             JsonObject json1 =
                                 parser.parse(resp1.getJson().toStringUtf8()).getAsJsonObject();
-                            assertTrue(json1.getAsJsonArray("find_bob").size() == 0);
+                            assertEquals(json1.getAsJsonArray("find_bob").size(), 0);
                           }))
           .get();
-
       txn.commit();
     }
   }
@@ -114,7 +112,6 @@ public class DgraphAsyncClientTest {
           Mutation.newBuilder()
               .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
               .build();
-
       txn.mutate(mutation).join();
     }
   }
@@ -124,7 +121,7 @@ public class DgraphAsyncClientTest {
     Operation op = Operation.newBuilder().setSchema("name: string @index(exact) @upsert .").build();
     dgraphAsyncClient.alter(op).join();
 
-    // Add data
+    // Mutation
     JsonObject json = new JsonObject();
     json.addProperty("name", "Alice");
 

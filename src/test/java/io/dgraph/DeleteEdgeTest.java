@@ -15,6 +15,7 @@
  */
 package io.dgraph;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
 import com.google.gson.Gson;
@@ -29,6 +30,23 @@ import org.testng.annotations.Test;
 public class DeleteEdgeTest extends DgraphIntegrationTest {
   @Test
   public void deleteEdgesTest() {
+    School school = new School();
+    school.name = "Crown Public School";
+    List<School> schools = new ArrayList<>();
+    schools.add(school);
+
+    Person bob = new Person();
+    bob.name = "Bob";
+    bob.age = 24;
+
+    Person charlie = new Person();
+    charlie.name = "Charlie";
+    charlie.age = 29;
+
+    List<Person> friends = new ArrayList<>();
+    friends.add(bob);
+    friends.add(charlie);
+
     // Create Person
     Person alice = new Person();
     alice.uid = "_:alice";
@@ -36,28 +54,10 @@ public class DeleteEdgeTest extends DgraphIntegrationTest {
     alice.age = 26;
     alice.married = true;
     alice.location = "Riley Street";
-
-    School school = new School();
-    school.name = "Crown Public School";
-    List<School> schools = new ArrayList<>();
-    schools.add(school);
     alice.schools = schools;
-
-    List<Person> friends = new ArrayList<>();
-    Person bob = new Person();
-    bob.name = "Bob";
-    bob.age = 24;
-    friends.add(bob);
-
-    Person charlie = new Person();
-    charlie.name = "Charlie";
-    charlie.age = 29;
-    friends.add(charlie);
-
     alice.friends = friends;
 
     Operation op = Operation.newBuilder().setSchema("age: int .\nmarried: bool .").build();
-
     dgraphClient.alter(op);
 
     Gson gson = new Gson();
@@ -66,10 +66,9 @@ public class DeleteEdgeTest extends DgraphIntegrationTest {
             .setSetJson(ByteString.copyFromUtf8(gson.toJson(alice)))
             .setCommitNow(true)
             .build();
-
     Response resp = dgraphClient.newTransaction().mutate(mu);
-
     String uid = resp.getUidsOrThrow("alice");
+
     String q =
         "{\n"
             + "  me(func: uid(%s)) {\n"
@@ -91,7 +90,8 @@ public class DeleteEdgeTest extends DgraphIntegrationTest {
             + " }";
     q = String.format(q, uid);
     resp = dgraphClient.newTransaction().query(q);
-    System.out.println(resp.getJson().toStringUtf8());
+    Root r = gson.fromJson(resp.getJson().toStringUtf8(), Root.class);
+    assertEquals(r.me.get(0).friends.size(), 2);
 
     mu =
         Helpers.deleteEdges(
@@ -99,9 +99,7 @@ public class DeleteEdgeTest extends DgraphIntegrationTest {
     dgraphClient.newTransaction().mutate(mu);
 
     resp = dgraphClient.newTransaction().query(q);
-    System.out.println(resp.getJson().toStringUtf8());
-
-    Root r = gson.fromJson(resp.getJson().toStringUtf8(), Root.class);
+    r = gson.fromJson(resp.getJson().toStringUtf8(), Root.class);
     assertNull(r.me.get(0).friends);
   }
 

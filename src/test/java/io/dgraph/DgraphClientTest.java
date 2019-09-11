@@ -34,7 +34,6 @@ import org.testng.annotations.Test;
  * @author Deepak Jois
  */
 public class DgraphClientTest extends DgraphIntegrationTest {
-
   @BeforeMethod
   public void beforeMethod() {
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
@@ -95,8 +94,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
 
       resp = txn.query(query);
       json = parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
-      assertTrue(json.getAsJsonArray("find_bob").size() == 0);
-
+      assertEquals(json.getAsJsonArray("find_bob").size(), 0);
       txn.commit();
     }
   }

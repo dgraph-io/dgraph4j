@@ -3,20 +3,16 @@ package io.dgraph;
 import static org.testng.Assert.*;
 
 import com.google.protobuf.ByteString;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.concurrent.TimeUnit;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class AclTest {
+public class AclTest extends DgraphIntegrationTest {
   private static final String USER_ID = "alice";
   private static final String USER_PASSWORD = "simplepassword";
   private static final String GROOT_PASSWORD = "password";
@@ -27,35 +23,20 @@ public class AclTest {
   private static final String UNUSED_GROUP = "unusedGroup";
   private static final String DEV_GROUP = "dev";
 
-  protected static final String TEST_HOSTNAME = "localhost";
-  protected static final int TEST_PORT = 9180;
   private static final String DGRAPH_ENDPOINT = TEST_HOSTNAME + ":" + TEST_PORT;
-  private static ManagedChannel channel;
-  protected static DgraphClient dgraphClient;
 
   @BeforeClass
-  public void beforeClass() throws IOException, InterruptedException {
-    channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
-    DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
-    dgraphClient = new DgraphClient(stub);
-    dgraphClient.login("groot", GROOT_PASSWORD);
-    dgraphClient.alter(DgraphProto.Operation.newBuilder().setDropAll(true).build());
+  public void setSchema() {
     dgraphClient.alter(
         DgraphProto.Operation.newBuilder()
             .setSchema(PREDICATE_TO_READ + ": string @index(exact) .")
             .build());
   }
 
-  @AfterClass
-  public void afterClass() throws InterruptedException, IOException {
-    if (channel != null) {
-      channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    }
-  }
-
   @Test(groups = {"acl"})
   public void testAuthorization() throws Exception {
     createAccountAndData();
+
     // initially all the operations should succeed when there are no rules
     // defined on the predicates (the fail open approach)
     dgraphClient.login(USER_ID, USER_PASSWORD);
@@ -63,18 +44,17 @@ public class AclTest {
     mutatePredicateWithUserAccount(false);
     alterPredicateWithUserAccount(false);
 
-    createGroupAndAcls(UNUSED_GROUP, false);
+    createGroupAndACLs(UNUSED_GROUP, false);
     System.out.println("Sleep for 6 seconds for acl caches to be refreshed");
     Thread.sleep(6 * 1000);
 
     // now all the operations should fail since there are rules defined on the unusedGroup
     queryPredicateWithUserAccount(true);
     mutatePredicateWithUserAccount(true);
-
     alterPredicateWithUserAccount(true);
 
     // create the dev group and add the user to it
-    createGroupAndAcls(DEV_GROUP, true);
+    createGroupAndACLs(DEV_GROUP, true);
     System.out.println("Sleep for 6 seconds for acl caches to be refreshed");
     Thread.sleep(6 * 1000);
 
@@ -88,6 +68,15 @@ public class AclTest {
     System.out.println("Sleep for 4 seconds for the accessJwt to expire");
     Thread.sleep(4 * 1000);
     alterPredicateWithUserAccount(false);
+
+    // remove the user from dev group
+    removeUserFromAllGroups();
+
+    // now all operations should fail again
+    Thread.sleep(6 * 1000);
+    queryPredicateWithUserAccount(true);
+    mutatePredicateWithUserAccount(true);
+    alterPredicateWithUserAccount(true);
   }
 
   private void createAccountAndData() throws Exception {
@@ -99,7 +88,7 @@ public class AclTest {
             .build());
   }
 
-  private void createGroupAndAcls(String group, boolean addUserToGroup)
+  private void createGroupAndACLs(String group, boolean addUserToGroup)
       throws IOException, InterruptedException {
     // create a new group
     TestUtils.checkCmd(
@@ -179,6 +168,7 @@ public class AclTest {
         "2",
         "-x",
         GROOT_PASSWORD);
+
     TestUtils.checkCmd(
         "unable to add ALTER permission on " + PREDICATE_TO_ALTER + " to the group " + group,
         "dgraph",
@@ -192,6 +182,22 @@ public class AclTest {
         PREDICATE_TO_ALTER,
         "-m",
         "1",
+        "-x",
+        GROOT_PASSWORD);
+  }
+
+  private void removeUserFromAllGroups() throws IOException, InterruptedException {
+    TestUtils.checkCmd(
+        "unable to remove user " + USER_ID + " from all the groups",
+        "dgraph",
+        "acl",
+        "mod",
+        "-a",
+        DGRAPH_ENDPOINT,
+        "-u",
+        USER_ID,
+        "--group_list",
+        "",
         "-x",
         GROOT_PASSWORD);
   }
@@ -229,16 +235,15 @@ public class AclTest {
     verifyOperation(
         shouldFail,
         "alter",
-        () -> {
-          dgraphClient.alter(
-              DgraphProto.Operation.newBuilder()
-                  .setSchema(String.format("%s: int .", PREDICATE_TO_ALTER))
-                  .build());
-        });
+        () ->
+            dgraphClient.alter(
+                DgraphProto.Operation.newBuilder()
+                    .setSchema(String.format("%s: int .", PREDICATE_TO_ALTER))
+                    .build()));
   }
 
   /**
-   * verifyOperitans executes the runnable, and then checks whether the runable runs into any
+   * verifyOperations executes the runnable, and then checks whether the runable runs into any
    * exception. If the shouldFail is true, and the runnable does not encounter any exception, this
    * method will fail the test. On the other hand, if the shouldFail is false, and the runnable
    * encounters an exception, this method will also fail the test.
@@ -299,6 +304,7 @@ public class AclTest {
       while ((line = br.readLine()) != null) {
         System.out.println(line);
       }
+
       throw new Exception("unable to create user");
     }
   }

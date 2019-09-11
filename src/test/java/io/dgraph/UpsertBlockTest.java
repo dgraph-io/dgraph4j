@@ -19,14 +19,6 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
             .build();
     dgraphClient.alter(op);
 
-    String query =
-        ""
-            + "{\n"
-            + "    me(func: eq(email, \"ashish@dgraph.io\")) {\n"
-            + "        v as uid\n"
-            + "    }\n"
-            + "}\n";
-
     JsonArray jA = new JsonArray();
     JsonObject p1 = new JsonObject();
     p1.addProperty("uid", "uid(v)");
@@ -38,12 +30,15 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     p2.addProperty("uid", "uid(v)");
     jA.add(p2);
 
+    String query =
+        "{\n"
+            + "    me(func: eq(email, \"ashish@dgraph.io\")) {\n"
+            + "        v as uid\n"
+            + "    }\n"
+            + "}\n";
     Mutation mu = Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(jA.toString())).build();
-    Request req = Request.newBuilder().addMutations(mu).setQuery(query).build();
-
-    Transaction txn = dgraphClient.newTransaction();
-    txn.doRequest(req);
-    txn.commit();
+    Request req = Request.newBuilder().addMutations(mu).setQuery(query).setCommitNow(true).build();
+    dgraphClient.newTransaction().doRequest(req);
 
     String query2 =
         "{\n"
@@ -53,8 +48,7 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
             + "    }\n"
             + "}\n";
 
-    txn = dgraphClient.newTransaction();
-    Response response = txn.query(query2);
+    Response response = dgraphClient.newTransaction().query(query2);
     String res = response.getJson().toStringUtf8();
     String exp1 = "{\"me\":[{\"name\":\"wrong\",\"email\":\"ashish@dgraph.io\"}]}";
     assertEquals(res, exp1);
@@ -66,14 +60,10 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     jA.add(p1);
 
     mu = Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(jA.toString())).build();
-    req = Request.newBuilder().addMutations(mu).setQuery(query).build();
+    req = Request.newBuilder().addMutations(mu).setQuery(query).setCommitNow(true).build();
+    dgraphClient.newTransaction().doRequest(req);
 
-    txn = dgraphClient.newTransaction();
-    txn.doRequest(req);
-    txn.commit();
-
-    txn = dgraphClient.newTransaction();
-    response = txn.query(query2);
+    response = dgraphClient.newTransaction().query(query2);
     res = response.getJson().toStringUtf8();
     String exp2 = "{\"me\":[{\"name\":\"ashish\",\"email\":\"ashish@dgraph.io\"}]}";
     assertEquals(res, exp2);
@@ -83,14 +73,10 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
             .setDelNquads(ByteString.copyFromUtf8("uid(v) <name> * .\nuid(v) <email> * ."))
             .setCond("@if(eq(len(v), 1))")
             .build();
-    req = Request.newBuilder().addMutations(mu).setQuery(query).build();
+    req = Request.newBuilder().addMutations(mu).setQuery(query).setCommitNow(true).build();
+    dgraphClient.newTransaction().doRequest(req);
 
-    txn = dgraphClient.newTransaction();
-    txn.doRequest(req);
-    txn.commit();
-
-    txn = dgraphClient.newTransaction();
-    response = txn.query(query2);
+    response = dgraphClient.newTransaction().query(query2);
     res = response.getJson().toStringUtf8();
     String exp3 = "{\"me\":[]}";
     assertEquals(res, exp3);
@@ -126,18 +112,8 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     jA.add(p4);
 
     Mutation mu = Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(jA.toString())).build();
-    Request req = Request.newBuilder().addMutations(mu).build();
-
-    Transaction txn = dgraphClient.newTransaction();
-    txn.doRequest(req);
-    txn.commit();
-
-    String query =
-        "{\n"
-            + "    me(func: eq(email, \"one@dgraph.io\")) {\n"
-            + "        v as uid\n"
-            + "    }\n"
-            + "}\n";
+    Request req = Request.newBuilder().addMutations(mu).setCommitNow(true).build();
+    dgraphClient.newTransaction().doRequest(req);
 
     jA = new JsonArray();
     p1 = new JsonObject();
@@ -145,12 +121,15 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     p1.addProperty("email", "two@dgraph.io");
     jA.add(p1);
 
+    String query =
+        "{\n"
+            + "    me(func: eq(email, \"one@dgraph.io\")) {\n"
+            + "        v as uid\n"
+            + "    }\n"
+            + "}\n";
     mu = Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(jA.toString())).build();
-    req = Request.newBuilder().addMutations(mu).setQuery(query).build();
-
-    txn = dgraphClient.newTransaction();
-    txn.doRequest(req);
-    txn.commit();
+    req = Request.newBuilder().addMutations(mu).setQuery(query).setCommitNow(true).build();
+    dgraphClient.newTransaction().doRequest(req);
 
     String query2 =
         "{\n"
@@ -159,9 +138,7 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
             + "        email\n"
             + "    }\n"
             + "}\n";
-
-    txn = dgraphClient.newTransaction();
-    Response response = txn.query(query2);
+    Response response = dgraphClient.newTransaction().query(query2);
     String res = response.getJson().toStringUtf8();
     String exp =
         "{\"me\":[{\"name\":\"alice\",\"email\":\"two@dgraph.io\"},{\"name\":\"bob\",\"email\":\"two@dgraph.io\"}]}";
@@ -198,11 +175,8 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     jA.add(p4);
 
     Mutation mu = Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(jA.toString())).build();
-    Request req = Request.newBuilder().addMutations(mu).build();
-
-    Transaction txn = dgraphClient.newTransaction();
-    txn.doRequest(req);
-    txn.commit();
+    Request req = Request.newBuilder().addMutations(mu).setCommitNow(true).build();
+    dgraphClient.newTransaction().doRequest(req);
 
     String query =
         "{\n"
@@ -213,37 +187,31 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
             + "}\n";
 
     // Verify if records are successfully inserted.
-    txn = dgraphClient.newTransaction();
-    Response response = txn.query(query);
+    Response response = dgraphClient.newTransaction().query(query);
     String res = response.getJson().toStringUtf8();
     String exp =
         "{\"me\":[{\"name\":\"alice\",\"email\":\"one@dgraph.io\"},{\"name\":\"bob\",\"email\":\"one@dgraph.io\"}]}";
     assertEquals(res, exp);
 
     // DELETE using UPSERT.
-    String query2 =
-        "{\n"
-            + "    me(func: eq(email, \"one@dgraph.io\")) {\n"
-            + "        v as uid\n"
-            + "    }\n"
-            + "}\n";
-
     jA = new JsonArray();
     p1 = new JsonObject();
     p1.addProperty("uid", "uid(v)");
     p1.addProperty("email", "one@dgraph.io");
     jA.add(p1);
 
+    String query2 =
+        "{\n"
+            + "    me(func: eq(email, \"one@dgraph.io\")) {\n"
+            + "        v as uid\n"
+            + "    }\n"
+            + "}\n";
     mu = Mutation.newBuilder().setDeleteJson(ByteString.copyFromUtf8(jA.toString())).build();
-    req = Request.newBuilder().addMutations(mu).setQuery(query2).build();
-
-    txn = dgraphClient.newTransaction();
-    txn.doRequest(req);
-    txn.commit();
+    req = Request.newBuilder().addMutations(mu).setQuery(query2).setCommitNow(true).build();
+    dgraphClient.newTransaction().doRequest(req);
 
     // GET again using email.
-    txn = dgraphClient.newTransaction();
-    response = txn.query(query);
+    response = dgraphClient.newTransaction().query(query);
     res = response.getJson().toStringUtf8();
     exp = "{\"me\":[]}";
     assertEquals(res, exp);

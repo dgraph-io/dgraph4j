@@ -22,9 +22,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 
-public class TestUtils {
-  public static void checkCmd(String failureMsg, String... args)
-      throws IOException, InterruptedException {
+class TestUtils {
+  static void checkCmd(String failureMsg, String... args) throws IOException, InterruptedException {
     Process cmd = new ProcessBuilder(args).redirectErrorStream(true).start();
     cmd.waitFor();
     if (cmd.exitValue() != 0) {

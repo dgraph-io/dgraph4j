@@ -26,9 +26,7 @@ import java.util.stream.Collectors;
 import org.testng.annotations.Test;
 
 public class MutatesTest extends DgraphIntegrationTest {
-
   private static String[] data = new String[] {"200", "300", "400"};
-
   private static Map<String, String> uidsMap;
 
   @Test
@@ -38,7 +36,6 @@ public class MutatesTest extends DgraphIntegrationTest {
     dgraphClient.alter(op);
 
     Transaction txn = dgraphClient.newTransaction();
-
     uidsMap = new HashMap<>();
     for (String datum : data) {
       NQuad quad =
@@ -55,16 +52,16 @@ public class MutatesTest extends DgraphIntegrationTest {
     }
 
     txn.commit();
-    logger.debug("Commit Ok");
   }
 
   @Test
   public void testQuery3Quads() {
-    Transaction txn = dgraphClient.newTransaction();
     List<String> uids = Arrays.stream(data).map(d -> uidsMap.get(d)).collect(Collectors.toList());
 
     String query = String.format("{ me(func: uid(%s)) { name }}", String.join(",", uids));
     logger.debug("Query: {}\n", query);
+
+    Transaction txn = dgraphClient.newTransaction();
     Response response = txn.query(query);
     String res = response.getJson().toStringUtf8();
     logger.debug("Response JSON: {}\n", res);
@@ -72,7 +69,7 @@ public class MutatesTest extends DgraphIntegrationTest {
     String exp = "{\"me\":[{\"name\":\"ok 200\"},{\"name\":\"ok 300\"},{\"name\":\"ok 400\"}]}";
     assertEquals(res, exp);
     assertTrue(response.getTxn().getStartTs() > 0);
-    txn.commit();
+    txn.discard();
   }
 
   @Test
@@ -83,7 +80,6 @@ public class MutatesTest extends DgraphIntegrationTest {
 
     Transaction txn1 = dgraphClient.newTransaction();
     Transaction txn2 = dgraphClient.newTransaction();
-
     NQuad quad =
         NQuad.newBuilder()
             .setSubject("_:200")
@@ -92,7 +88,6 @@ public class MutatesTest extends DgraphIntegrationTest {
             .build();
 
     Mutation mu = Mutation.newBuilder().addSet(quad).build();
-
     txn1.mutate(mu);
     txn2.mutate(mu);
 
