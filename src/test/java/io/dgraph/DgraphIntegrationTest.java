@@ -20,7 +20,6 @@ import static org.testng.Assert.fail;
 import io.dgraph.DgraphProto.Operation;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,21 +28,20 @@ import org.testng.annotations.BeforeClass;
 
 public abstract class DgraphIntegrationTest {
   protected static final Logger logger = LoggerFactory.getLogger(DgraphIntegrationTest.class);
-  private static ManagedChannel channel;
+  static final String TEST_HOSTNAME = "localhost";
+  static final int TEST_PORT = 9180;
   protected static DgraphClient dgraphClient;
-
-  protected static final String TEST_HOSTNAME = "localhost";
-  protected static final int TEST_PORT = 9180;
+  private static ManagedChannel channel;
 
   @BeforeClass
-  public static void beforeClass() throws IOException, InterruptedException {
-    channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
+  public static void beforeClass() throws InterruptedException {
+    channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext().build();
     DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
     dgraphClient = new DgraphClient(stub);
     boolean succeed = false;
-    boolean retriable;
+    boolean retry;
     do {
-      retriable = false;
+      retry = false;
 
       try {
         // since the cluster is run with ACL turned on by default,
@@ -51,31 +49,33 @@ public abstract class DgraphIntegrationTest {
         dgraphClient.login("groot", "password");
         succeed = true;
       } catch (RuntimeException e) {
-        // check if the error is retriable
-        Throwable t = e;
-        while (t != null) {
-          if (t.getMessage().contains("Please retry")) {
-            retriable = true;
+        // check if the error can be retried
+        Throwable exception = e;
+        while (exception != null) {
+          if (exception.getMessage().contains("Please retry")) {
+            retry = true;
             break;
           }
-          t = t.getCause();
+          exception = exception.getCause();
         }
       }
 
-      if (retriable) {
-        System.out.println("Receiveb retriable error, will retry after 1s");
+      if (retry) {
+        System.out.println("Received error, will retry after 1s");
         Thread.sleep(1000);
       }
-    } while (retriable);
+    } while (retry);
 
     if (!succeed) {
       fail("Unable to perform the DropAll operation");
     }
+
+    // clean up database
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
   }
 
   @AfterClass
-  public static void afterClass() throws InterruptedException, IOException {
+  public static void afterClass() throws InterruptedException {
     channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
   }
 }

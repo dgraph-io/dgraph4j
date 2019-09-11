@@ -34,7 +34,6 @@ import org.testng.annotations.Test;
  * @author Deepak Jois
  */
 public class DgraphClientTest extends DgraphIntegrationTest {
-
   @BeforeMethod
   public void beforeMethod() {
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
@@ -47,26 +46,26 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     dgraphClient.alter(op);
 
     // Add data
-    JsonObject json = new JsonObject();
-    json.addProperty("name", "Alice");
+    JsonObject data = new JsonObject();
+    data.addProperty("name", "Alice");
 
     Mutation mu =
         Mutation.newBuilder()
             .setCommitNow(true)
-            .setSetJson(ByteString.copyFromUtf8(json.toString()))
+            .setSetJson(ByteString.copyFromUtf8(data.toString()))
             .build();
     dgraphClient.newTransaction().mutate(mu);
 
     // Query
     String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
     Map<String, String> vars = Collections.singletonMap("$a", "Alice");
-    Response res = dgraphClient.newTransaction().queryWithVars(query, vars);
+    Response response = dgraphClient.newTransaction().queryWithVars(query, vars);
 
     // Verify data as expected
     JsonParser parser = new JsonParser();
-    json = parser.parse(res.getJson().toStringUtf8()).getAsJsonObject();
-    assertTrue(json.has("me"));
-    String name = json.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
+    data = parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
+    assertTrue(data.has("me"));
+    String name = data.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
     assertEquals("Alice", name);
   }
 
@@ -74,29 +73,28 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   public void testDelete() {
     try (Transaction txn = dgraphClient.newTransaction()) {
 
-      Mutation mutation =
+      Mutation mu =
           Mutation.newBuilder()
               .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
               .build();
-      Response resp = txn.mutate(mutation);
-      String bob = resp.getUidsOrThrow("bob");
+      Response response = txn.mutate(mu);
+      String bob = response.getUidsOrThrow("bob");
 
       JsonParser parser = new JsonParser();
       String query = String.format("{ find_bob(func: uid(%s)) { name } }", bob);
-      resp = txn.query(query);
-      JsonObject json = parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
-      assertTrue(json.getAsJsonArray("find_bob").size() > 0);
+      response = txn.query(query);
+      JsonObject jsonData = parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
+      assertTrue(jsonData.getAsJsonArray("find_bob").size() > 0);
 
-      mutation =
+      mu =
           Mutation.newBuilder()
               .setDelNquads(ByteString.copyFromUtf8(String.format("<%s> <name> * .", bob)))
               .build();
-      txn.mutate(mutation);
+      txn.mutate(mu);
 
-      resp = txn.query(query);
-      json = parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
-      assertTrue(json.getAsJsonArray("find_bob").size() == 0);
-
+      response = txn.query(query);
+      jsonData = parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
+      assertEquals(jsonData.getAsJsonArray("find_bob").size(), 0);
       txn.commit();
     }
   }
