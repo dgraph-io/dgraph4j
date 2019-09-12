@@ -36,15 +36,14 @@ import org.testng.annotations.Test;
 
 /** @author Deepak Jois */
 public class DgraphAsyncClientTest {
+  private static final String TEST_HOSTNAME = "localhost";
+  private static final int TEST_PORT = 9180;
+  private DgraphAsyncClient dgraphAsyncClient;
   private ManagedChannel channel;
-  protected DgraphAsyncClient dgraphAsyncClient;
-
-  protected static final String TEST_HOSTNAME = "localhost";
-  protected static final int TEST_PORT = 9180;
 
   @BeforeClass
   public void beforeClass() {
-    channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
+    channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext().build();
     DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
     dgraphAsyncClient = new DgraphAsyncClient(stub);
     dgraphAsyncClient.login("groot", "password").join();
@@ -63,46 +62,45 @@ public class DgraphAsyncClientTest {
   @Test
   public void testDelete() throws Exception {
     try (AsyncTransaction txn = dgraphAsyncClient.newTransaction()) {
-      Mutation mutation =
+      Mutation setMutation =
           Mutation.newBuilder()
               .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
               .build();
 
       JsonParser parser = new JsonParser();
       String bobUid =
-          txn.mutate(mutation)
+          txn.mutate(setMutation)
               .thenCompose(
                   ag -> {
                     String bob = ag.getUidsOrThrow("bob");
                     String query = String.format("{ find_bob(func: uid(%s)) { name } }", bob);
                     return txn.query(query)
                         .thenApply(
-                            resp -> {
-                              JsonObject json =
-                                  parser.parse(resp.getJson().toStringUtf8()).getAsJsonObject();
-                              assertTrue(json.getAsJsonArray("find_bob").size() > 0);
+                            response -> {
+                              JsonObject jsonData =
+                                  parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
+                              assertTrue(jsonData.getAsJsonArray("find_bob").size() > 0);
                               return bob;
                             });
                   })
               .get();
 
-      Mutation mutation1 =
+      Mutation delMutation =
           Mutation.newBuilder()
               .setDelNquads(ByteString.copyFromUtf8(String.format("<%s> <name> * .", bobUid)))
               .build();
       String query = String.format("{ find_bob(func: uid(%s)) { name } }", bobUid);
-      txn.mutate(mutation1)
+      txn.mutate(delMutation)
           .thenCompose(
               ag1 ->
                   txn.query(query)
                       .thenAccept(
-                          resp1 -> {
-                            JsonObject json1 =
-                                parser.parse(resp1.getJson().toStringUtf8()).getAsJsonObject();
-                            assertTrue(json1.getAsJsonArray("find_bob").size() == 0);
+                          response -> {
+                            JsonObject jsonData =
+                                parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
+                            assertEquals(jsonData.getAsJsonArray("find_bob").size(), 0);
                           }))
           .get();
-
       txn.commit();
     }
   }
@@ -110,12 +108,11 @@ public class DgraphAsyncClientTest {
   @Test(expectedExceptions = TxnReadOnlyException.class)
   public void testMutationsInReadOnlyTransactions() {
     try (AsyncTransaction txn = dgraphAsyncClient.newReadOnlyTransaction()) {
-      Mutation mutation =
+      Mutation mu =
           Mutation.newBuilder()
               .setSetNquads(ByteString.copyFromUtf8("<_:bob> <name> \"Bob\" ."))
               .build();
-
-      txn.mutate(mutation).join();
+      txn.mutate(mu).join();
     }
   }
 
@@ -124,27 +121,28 @@ public class DgraphAsyncClientTest {
     Operation op = Operation.newBuilder().setSchema("name: string @index(exact) @upsert .").build();
     dgraphAsyncClient.alter(op).join();
 
-    // Add data
-    JsonObject json = new JsonObject();
-    json.addProperty("name", "Alice");
+    // Mutation
+    JsonObject jsonData = new JsonObject();
+    jsonData.addProperty("name", "Alice");
 
     Mutation mu =
         Mutation.newBuilder()
             .setCommitNow(true)
-            .setSetJson(ByteString.copyFromUtf8(json.toString()))
+            .setSetJson(ByteString.copyFromUtf8(jsonData.toString()))
             .build();
     dgraphAsyncClient.newTransaction().mutate(mu).join();
 
     // Query
     String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
     Map<String, String> vars = Collections.singletonMap("$a", "Alice");
-    Response res = dgraphAsyncClient.newReadOnlyTransaction().queryWithVars(query, vars).join();
+    Response response =
+        dgraphAsyncClient.newReadOnlyTransaction().queryWithVars(query, vars).join();
 
     // Verify data as expected
     JsonParser parser = new JsonParser();
-    json = parser.parse(res.getJson().toStringUtf8()).getAsJsonObject();
-    assertTrue(json.has("me"));
-    String name = json.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
+    jsonData = parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
+    assertTrue(jsonData.has("me"));
+    String name = jsonData.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
     assertEquals(name, "Alice");
   }
 }

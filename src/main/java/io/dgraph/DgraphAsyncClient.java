@@ -90,9 +90,9 @@ public class DgraphAsyncClient {
                   // set the jwt field
                   jwt = DgraphProto.Jwt.parseFrom(response.getJson());
                 } catch (InvalidProtocolBufferException e) {
-                  String errMsg = "error while parsing jwt from the response: ";
-                  LOG.error(errMsg, e);
-                  throw new RuntimeException(errMsg, e);
+                  String errmsg = "error while parsing jwt from the response: ";
+                  LOG.error(errmsg, e);
+                  throw new RuntimeException(errmsg, e);
                 }
               });
     } finally {
@@ -141,8 +141,8 @@ public class DgraphAsyncClient {
    * @return the augmented stub with JWT
    */
   protected DgraphGrpc.DgraphStub getStubWithJwt(DgraphGrpc.DgraphStub stub) {
-    Lock rlock = jwtLock.readLock();
-    rlock.lock();
+    Lock readLock = jwtLock.readLock();
+    readLock.lock();
     try {
       if (jwt != null && !jwt.getAccessJwt().isEmpty()) {
         Metadata metadata = new Metadata();
@@ -153,7 +153,7 @@ public class DgraphAsyncClient {
 
       return stub;
     } finally {
-      rlock.unlock();
+      readLock.unlock();
     }
   }
 
@@ -185,13 +185,12 @@ public class DgraphAsyncClient {
                 retryLogin().get();
                 // retry the supplied logic
                 return supplier.get().get();
-              } catch (InterruptedException innerE) {
-                LOG.error("The retried " + operation + " got interrupted:", innerE);
-                throw new RuntimeException(innerE);
-              } catch (ExecutionException innerE) {
-                LOG.error(
-                    "The retried " + operation + " encounters an execution exception:", innerE);
-                throw new RuntimeException(innerE);
+              } catch (InterruptedException ie) {
+                LOG.error("The retried " + operation + " got interrupted:", ie);
+                throw new RuntimeException(ie);
+              } catch (ExecutionException ie) {
+                LOG.error("The retried " + operation + " encounters an execution exception:", ie);
+                throw new RuntimeException(ie);
               }
             } else if (e.getCause() instanceof StatusRuntimeException) {
               StatusRuntimeException ex1 = (StatusRuntimeException) e.getCause();
