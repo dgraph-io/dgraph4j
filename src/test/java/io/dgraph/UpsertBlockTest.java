@@ -1,13 +1,16 @@
 package io.dgraph;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Request;
 import io.dgraph.DgraphProto.Response;
+import java.util.List;
 import org.testng.annotations.Test;
 
 public class UpsertBlockTest extends DgraphIntegrationTest {
@@ -49,7 +52,8 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
             + "        email\n"
             + "    }\n"
             + "}\n";
-    Response response2 = dgraphClient.newTransaction().query(query2);
+    Request request2 = Request.newBuilder().setQuery(query2).build();
+    Response response2 = dgraphClient.newTransaction().doRequest(request2);
     String actual2 = response2.getJson().toStringUtf8();
     String expected2 = "{\"me\":[{\"name\":\"wrong\",\"email\":\"ashish@dgraph.io\"}]}";
     assertEquals(actual2, expected2);
@@ -225,5 +229,89 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
     String actual3 = response3.getJson().toStringUtf8();
     String expected3 = "{\"me\":[]}";
     assertEquals(actual3, expected3);
+  }
+
+  @Test
+  public void upsertBlockTestBulkUpdate() {
+    DgraphProto.Operation op =
+        DgraphProto.Operation.newBuilder()
+            .setSchema("name: string @index(exact) .\n" + "branch: string .\n" + "amount: float .")
+            .build();
+    dgraphClient.alter(op);
+
+    String muStr1 =
+        ""
+            + "_:user1 <name> \"user1\" .\n"
+            + "_:user1 <branch> \"Fuller Street, San Francisco\" .\n"
+            + "_:user1 <amount> \"10\" .\n"
+            + "_:user2 <name> \"user2\" .\n"
+            + "_:user2 <branch> \"Fuller Street, San Francisco\" .\n"
+            + "_:user2 <amount> \"100\" .\n"
+            + "_:user3 <name> \"user3\" .\n"
+            + "_:user3 <branch> \"Fuller Street, San Francisco\" .\n"
+            + "_:user3 <amount> \"1000\" .";
+
+    Mutation mu1 = Mutation.newBuilder().setSetNquads(ByteString.copyFromUtf8(muStr1)).build();
+    Request request1 = Request.newBuilder().addMutations(mu1).setCommitNow(true).build();
+    dgraphClient.newTransaction().doRequest(request1);
+
+    String query1 =
+        "{\n"
+            + "  users(func: has(branch)) {\n"
+            + "    name\n"
+            + "    branch\n"
+            + "    amount\n"
+            + "  }\n"
+            + "}";
+
+    // Verify if records are successfully inserted.
+    Response response1 = dgraphClient.newTransaction().query(query1);
+    Root root1 = new Gson().fromJson(response1.getJson().toStringUtf8(), Root.class);
+    assertEquals(root1.users.size(), 3);
+    for (User user : root1.users) {
+      assertEquals(user.branch, "Fuller Street, San Francisco");
+    }
+
+    // Update using UPSERT
+    String muStr2 = "uid(u) <branch> \"Fuller Street, SF\" .";
+    String query2 = "{\n" + "    u as var(func: has(branch))\n" + "  }";
+    Mutation mu2 = Mutation.newBuilder().setSetNquads(ByteString.copyFromUtf8(muStr2)).build();
+    Request request2 =
+        Request.newBuilder().addMutations(mu2).setQuery(query2).setCommitNow(true).build();
+    dgraphClient.newTransaction().doRequest(request2);
+
+    // GET again using email.
+    Response response3 = dgraphClient.newTransaction().query(query1);
+    Root root3 = new Gson().fromJson(response3.getJson().toStringUtf8(), Root.class);
+    assertEquals(root3.users.size(), 3);
+    for (User user : root3.users) {
+      assertEquals(user.branch, "Fuller Street, SF");
+    }
+  }
+
+  @Test
+  public void upsertZeroMutations() {
+    Request request1 = Request.newBuilder().setCommitNow(true).build();
+
+    try {
+      dgraphClient.newTransaction().doRequest(request1);
+    } catch (RuntimeException e) {
+      Throwable cause = e;
+      Throwable child = cause.getCause();
+      while (child != null) {
+        cause = child;
+        child = cause.getCause();
+      }
+
+      assertTrue(cause.getMessage().contains("Empty query"));
+    }
+  }
+
+  static class User {
+    String branch;
+  }
+
+  static class Root {
+    List<User> users;
   }
 }

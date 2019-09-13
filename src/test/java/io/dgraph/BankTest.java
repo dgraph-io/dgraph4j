@@ -32,9 +32,9 @@ import org.testng.annotations.Test;
 
 public class BankTest extends DgraphIntegrationTest {
 
-  final ArrayList<String> uids = new ArrayList<>();
-  final AtomicInteger runs = new AtomicInteger();
-  final AtomicInteger aborts = new AtomicInteger();
+  private final ArrayList<String> uids = new ArrayList<>();
+  private final AtomicInteger runs = new AtomicInteger();
+  private final AtomicInteger aborts = new AtomicInteger();
 
   private void createAccounts() {
     String schema = "bal: int .";
@@ -45,19 +45,20 @@ public class BankTest extends DgraphIntegrationTest {
       acc.bal = 100;
       accounts.add(acc);
     }
+
     Gson gson = new Gson();
     logger.debug(gson.toJson(accounts));
+
     Transaction txn = dgraphClient.newTransaction();
     Mutation mu =
         Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(gson.toJson(accounts))).build();
     Response response = txn.mutate(mu);
     txn.commit();
-
     response.getUidsMap().forEach((key, uid) -> uids.add(uid));
   }
 
   private void runTotal() {
-    String q =
+    String query =
         " {\n"
             + "   var(func: uid(%s)) {\n"
             + "    b as bal\n"
@@ -66,9 +67,9 @@ public class BankTest extends DgraphIntegrationTest {
             + "    bal: sum(val(b))\n"
             + "   }\n"
             + "  }";
-    q = String.format(q, String.join(",", uids));
+    query = String.format(query, String.join(",", uids));
     Transaction txn = dgraphClient.newTransaction();
-    Response resp = txn.query(q);
+    Response resp = txn.query(query);
     logger.debug("\nresponse json: {}\n", resp.getJson().toStringUtf8());
     logger.debug("Runs: {}. Aborts: {}\n", runs.get(), aborts.get());
   }
@@ -76,10 +77,10 @@ public class BankTest extends DgraphIntegrationTest {
   private void runTotalInLoop() {
     while (true) {
       runTotal();
+
       try {
         TimeUnit.SECONDS.sleep(1);
-      } catch (InterruptedException e) {
-        // logger.debug(("runTotalInLoop interrupted"));
+      } catch (InterruptedException ignored) {
       }
     }
   }
@@ -88,13 +89,10 @@ public class BankTest extends DgraphIntegrationTest {
     String from, to;
     Random rand = new Random();
     Gson gson = new Gson();
-    while (true) {
+    do {
       from = uids.get(rand.nextInt(uids.size()));
       to = uids.get(rand.nextInt(uids.size()));
-      if (from != to) {
-        break;
-      }
-    }
+    } while (from.equals(to));
 
     Transaction txn = dgraphClient.newTransaction();
     try {
@@ -126,7 +124,6 @@ public class BankTest extends DgraphIntegrationTest {
           return;
         }
       } catch (TxnConflictException e) {
-        // logger.debug(e.getMessage());
         aborts.addAndGet(1);
       }
     }
@@ -138,12 +135,12 @@ public class BankTest extends DgraphIntegrationTest {
     logger.debug(Arrays.toString(uids.toArray()));
 
     ExecutorService totalEx = Executors.newSingleThreadExecutor();
-    totalEx.execute(() -> runTotalInLoop());
+    totalEx.execute(this::runTotalInLoop);
     totalEx.shutdown();
 
     ExecutorService txnEx = Executors.newCachedThreadPool();
     for (int i = 0; i < 10; i++) {
-      txnEx.execute(() -> txnLoop());
+      txnEx.execute(this::txnLoop);
     }
     txnEx.shutdown();
 
@@ -154,7 +151,6 @@ public class BankTest extends DgraphIntegrationTest {
   }
 
   static class Account {
-    String uid;
     int bal;
   }
 

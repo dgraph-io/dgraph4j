@@ -211,7 +211,8 @@ public class AclTest extends DgraphIntegrationTest {
         () -> {
           String query =
               String.format(
-                  "	{" + "q(func: eq(%s, \"SF\")) {" + "%s" + "}}", PREDICATE_TO_READ, QUERY_ATTR);
+                  "	{" + "users(func: eq(%s, \"SF\")) {" + "%s" + "}}",
+                  PREDICATE_TO_READ, QUERY_ATTR);
           Transaction txn = dgraphClient.newTransaction();
           txn.query(query);
         });
