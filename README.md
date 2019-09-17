@@ -28,6 +28,7 @@ and understand how to run and work with Dgraph.
   * [Committing a transaction](#committing-a-transaction)
   * [Running a query](#running-a-query)
   * [Running an Upsert: Query + Mutation](#running-an-upsert-query--mutation)
+  * [Running a Conditional Upsert](#running-a-conditional-upsert)
   * [Setting Deadlines](#setting-deadlines)
   * [Setting Metadata Headers](#setting-metadata-headers)
   * [Helper Methods](#helper-methods)
@@ -184,11 +185,11 @@ person.name = "Alice";
 Gson gson = new Gson();
 String json = gson.toJson(p);
 // Run mutation
-Mutation mutation =
+Mutation mu =
   Mutation.newBuilder()
   .setSetJson(ByteString.copyFromUtf8(json.toString()))
   .build();
-txn.mutate(mutation);
+txn.mutate(mu);
 ```
 
 Sometimes, you only want to commit mutation, without querying anything further.
@@ -308,7 +309,7 @@ https://docs.dgraph.io/mutations/#upsert-block.
 String query = "query {\n" +
   "user as var(func: eq(email, \"wrong_email@dgraph.io\"))\n" +
   "}\n";
-Mutation mutation =
+Mutation mu =
   Mutation.newBuilder()
   .setSetNquads(ByteString.copyFromUtf8("uid(user) <email> \"correct_email@dgraph.io\" ."))
   .build();
@@ -317,6 +318,30 @@ Request request = Request.newBuilder()
   .addMutations(mu)
   .setCommitNow(true)
   .build();
+txn.doRequest(request);
+```
+
+### Running a Conditional Upsert
+
+The upsert block also allows specifying a conditional mutation block using an `@if` directive. The mutation is executed
+only when the specified condition is true. If the condition is false, the mutation is silently ignored.
+
+See more about Conditional Upsert [Here](https://docs.dgraph.io/mutations/#conditional-upsert).
+
+```java
+String query = "query {\n" +
+    "user as var(func: eq(email, \"wrong_email@dgraph.io\"))\n" +
+    "}\n";
+Mutation mu =
+    Mutation.newBuilder()
+        .setSetNquads(ByteString.copyFromUtf8("uid(user) <email> \"correct_email@dgraph.io\" ."))
+        .setCond("@if(eq(len(user), 1))")
+        .build();
+Request request = Request.newBuilder()
+    .setQuery(query)
+    .addMutations(mu)
+    .setCommitNow(true)
+    .build();
 txn.doRequest(request);
 ```
 
