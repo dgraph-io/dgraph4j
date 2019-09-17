@@ -1,7 +1,5 @@
 package io.dgraph;
 
-import static org.testng.Assert.fail;
-
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.NQuad;
 import io.dgraph.DgraphProto.Value;
@@ -16,40 +14,27 @@ public class ExceptionTest extends DgraphIntegrationTest {
           .build();
   private Mutation mu = Mutation.newBuilder().addSet(quad).build();
 
-  @Test
+  @Test(expectedExceptions = TxnConflictException.class)
   public void testConflictException() {
     Transaction txn1 = dgraphClient.newTransaction();
     Transaction txn2 = dgraphClient.newTransaction();
     txn1.mutate(mu);
     txn2.mutate(mu);
-
     txn1.commit();
-    try {
-      txn2.commit();
-      fail("should not reach here");
-    } catch (TxnConflictException ignored) {
-    }
+    txn2.commit();
   }
 
-  @Test
+  @Test(expectedExceptions = TxnFinishedException.class)
   public void testFinishedException() {
     Transaction txn = dgraphClient.newTransaction();
     txn.mutate(mu);
     txn.commit();
-    try {
-      txn.commit();
-      fail("should not reach here");
-    } catch (TxnFinishedException ignored) {
-    }
+    txn.commit();
   }
 
-  @Test
+  @Test(expectedExceptions = TxnReadOnlyException.class)
   public void testReadOnlyException() {
     Transaction txn = dgraphClient.newReadOnlyTransaction();
-    try {
-      txn.mutate(mu);
-      fail("should not reach here");
-    } catch (TxnReadOnlyException ignored) {
-    }
+    txn.mutate(mu);
   }
 }

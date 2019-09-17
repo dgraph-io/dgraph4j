@@ -68,13 +68,14 @@ public class TypeSystemTest extends DgraphIntegrationTest {
             .build();
     dgraphClient.newTransaction().doRequest(deleteRequest);
 
+    // This shouldn't work because no type is associated to the node.
     String verifyQuery =
         "" + "{\n" + "    me(func: eq(name, \"Animesh\")) {\n" + "        name\n" + "    }\n" + "}";
     Response beforeResponse = dgraphClient.newTransaction().query(verifyQuery);
     Root beforeRoot = new Gson().fromJson(beforeResponse.getJson().toStringUtf8(), Root.class);
     assertEquals(beforeRoot.me.size(), 1);
 
-    // Associate type with the user
+    // Associate type with the node so that the mutation works now.
     Mutation typeMutation =
         Mutation.newBuilder()
             .setSetNquads(ByteString.copyFromUtf8("uid(u) <dgraph.type> \"Person\" ."))
