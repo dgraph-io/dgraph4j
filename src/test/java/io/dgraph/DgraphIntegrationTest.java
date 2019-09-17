@@ -27,7 +27,7 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
 public abstract class DgraphIntegrationTest {
-  protected static final Logger logger = LoggerFactory.getLogger(DgraphIntegrationTest.class);
+  static final Logger logger = LoggerFactory.getLogger(DgraphIntegrationTest.class);
   static final String TEST_HOSTNAME = "localhost";
   static final int TEST_PORT = 9180;
   protected static DgraphClient dgraphClient;
