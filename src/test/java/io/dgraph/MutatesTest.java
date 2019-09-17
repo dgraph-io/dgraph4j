@@ -15,7 +15,8 @@
  */
 package io.dgraph;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 import io.dgraph.DgraphProto.*;
 import java.util.Arrays;
