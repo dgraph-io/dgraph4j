@@ -41,16 +41,18 @@ and understand how to run and work with Dgraph.
 
 ## Download
 grab via Maven:
+
 ```xml
 <dependency>
   <groupId>io.dgraph</groupId>
   <artifactId>dgraph4j</artifactId>
-  <version>1.7.3</version>
+  <version>2.0.1</version>
 </dependency>
+
 ```
 or Gradle:
 ```groovy
-compile 'io.dgraph:dgraph4j:1.7.3'
+compile 'io.dgraph:dgraph4j:2.0.1'
 ```
 
 ## Quickstart

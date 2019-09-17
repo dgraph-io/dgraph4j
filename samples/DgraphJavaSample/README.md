@@ -5,7 +5,7 @@ for Dgraph.
 
 ## Running
 ### Start Dgraph Server
-You will need to install [Dgraph v1.0.0 or above][releases] and run it.
+You will need to install [Dgraph v1.1.0 or above][releases] and run it.
 
 [releases]: https://github.com/dgraph-io/dgraph/releases
 
@@ -23,14 +23,14 @@ Then start `dgraph zero`:
 
 ```
 cd dgraphdata/zero
-rm -r zw; dgraph zero
+rm -rf zw; dgraph zero
 ```
 
 Finally, start the `dgraph alpha` server:
 
 ```
 cd dgraphdata/data
-rm -r p w; dgraph alpha --lru_mb=1024 --zero localhost:5080 -o 100
+rm -rf p w; dgraph alpha --lru_mb=1024 --zero localhost:5080 -o 100
 ```
 
 Notice that in the command above, we shifted the ports by 100 from the default ports of 7080 for
