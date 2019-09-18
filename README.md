@@ -74,7 +74,7 @@ be found in the [Using the Asynchronous Client](#using-the-asynchronous-client) 
 
 ## Using the Synchronous Client
 
-### Creating a client
+### Creating a Client
 
 The following code snippet shows how to create a synchronous client using just one connection.
 
@@ -93,7 +93,7 @@ making requests to the server.
 DgraphClient dgraphClient = new DgraphClient(stub);
 ```
 
-### Altering the database
+### Altering the Database
 
 To set the schema, create an `Operation` object, set the schema and pass it to
 `DgraphClient#alter` method.
@@ -115,7 +115,7 @@ a clean slate, without bringing the instance down.
 dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
 ```
 
-### Creating a transaction
+### Creating a Transaction
 
 There are two types of transactions in dgraph, i.e. the read-only transactions that only include
 queries and the transactions that change data in dgraph with mutate operations. Both the
@@ -159,7 +159,7 @@ Transaction bestEffortTxn = dgraphClient.newReadOnlyTransaction()
     .setBestEffort(true);
 ```
 
-### Running a mutation
+### Running a Mutation
 `Transaction#mutate` runs a mutation. It takes in a `Mutation` object,
 which provides two main ways to set data: JSON and RDF N-Quad. You can choose
 whichever way is convenient.
@@ -205,7 +205,7 @@ Request request = Request.newBuilder()
 txn.doRequest(request);
 ```
 
-### Committing a transaction
+### Committing a Transaction
 A transaction can be committed using the `Transaction#commit()` method. If your transaction
 consisted solely of calls to `Transaction#query()`, and no calls to `Transaction#mutate()`,
 then calling `Transaction#commit()` is not necessary.
@@ -231,7 +231,7 @@ try {
 }
 ```
 
-### Running a query
+### Running a Query
 You can run a query by calling `Transaction#query()`. You will need to pass in a GraphQL+-
 query string, and a map (optional, could be empty) of any variables that you might want to
 set in the query.
@@ -294,7 +294,6 @@ Request request = Request.newBuilder()
   .build();
 txn.doRequest(request);
 ```
-
 
 ### Running an Upsert: Query + Mutation
 
