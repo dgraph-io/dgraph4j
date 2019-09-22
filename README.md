@@ -165,7 +165,7 @@ which provides two main ways to set data: JSON and RDF N-Quad. You can choose
 whichever way is convenient.
 
 We're going to use JSON. First we define a `Person` class to represent a person.
-This data will be seralized into JSON.
+This data will be serialized into JSON.
 
 ```java
 class Person {
@@ -416,7 +416,7 @@ instantiating the `DgraphAsyncClient` class. The usage is almost exactly the
 same as the `DgraphClient` (show in previous section) class. The main
 differences is that the `DgraphAsyncClient#newTransacation()` returns an
 `AsyncTransaction` class. The API for `AsyncTransaction` is exactly
-`Transcation`. The only difference is that instead of returning the results
+`Transaction`. The only difference is that instead of returning the results
 directly, it returns immediately with a corresponding `CompletableFuture<T>`
 object. This object represents the computation which runs asynchronously to
 yield the result in the future. Read more about `CompletableFuture<T>` in the
@@ -428,11 +428,11 @@ Here is the asynchronous version of the code above, which runs a query.
 
 ```java
 // Query
-String query =
+String query = 
 "query all($a: string){\n" +
 "  all(func: eq(name, $a)) {\n" +
 "    name\n" +
-  }\n" +
+ "}\n" +
 "}\n";
 
 Map<String, String> vars = Collections.singletonMap("$a", "Alice");
