@@ -76,21 +76,25 @@ be found in the [Using the Asynchronous Client](#using-the-asynchronous-client) 
 
 ### Creating a Client
 
-The following code snippet shows how to create a synchronous client using just one connection.
+The following code snippet shows how to create a synchronous client using three connections.
 
 ```java
-ManagedChannel channel = ManagedChannelBuilder
+ManagedChannel channel1 = ManagedChannelBuilder
     .forAddress("localhost", 9080)
-    .usePlaintext(true).build();
-DgraphStub stub = DgraphGrpc.newStub(channel);
-DgraphClient dgraphClient = new DgraphClient(Collections.singletonList(stub));
-```
+    .usePlaintext().build();
+DgraphStub stub1 = DgraphGrpc.newStub(channel1);
 
-Alternatively, you can specify a deadline (in seconds) after which the client will time out when
-making requests to the server.
+ManagedChannel channel2 = ManagedChannelBuilder
+    .forAddress("localhost", 9080)
+    .usePlaintext().build();
+DgraphStub stub2 = DgraphGrpc.newStub(channel2);
 
-```java
-DgraphClient dgraphClient = new DgraphClient(stub);
+ManagedChannel channel3 = ManagedChannelBuilder
+    .forAddress("localhost", 9080)
+    .usePlaintext().build();
+DgraphStub stub3 = DgraphGrpc.newStub(channel3);
+
+DgraphClient dgraphClient = new DgraphClient(stub1, stub2, stub3);
 ```
 
 ### Altering the Database
