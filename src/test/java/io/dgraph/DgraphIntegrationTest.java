@@ -31,13 +31,21 @@ public abstract class DgraphIntegrationTest {
   static final String TEST_HOSTNAME = "localhost";
   static final int TEST_PORT = 9180;
   protected static DgraphClient dgraphClient;
-  private static ManagedChannel channel;
+  private static ManagedChannel channel1, channel2, channel3;
 
   @BeforeClass
   public static void beforeClass() throws InterruptedException {
-    channel = ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext().build();
-    DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
-    dgraphClient = new DgraphClient(stub);
+    channel1 = ManagedChannelBuilder.forAddress("localhost", 9180).usePlaintext().build();
+    DgraphGrpc.DgraphStub stub1 = DgraphGrpc.newStub(channel1);
+
+    channel2 = ManagedChannelBuilder.forAddress("localhost", 9182).usePlaintext().build();
+    DgraphGrpc.DgraphStub stub2 = DgraphGrpc.newStub(channel2);
+
+    channel3 = ManagedChannelBuilder.forAddress("localhost", 9183).usePlaintext().build();
+    DgraphGrpc.DgraphStub stub3 = DgraphGrpc.newStub(channel3);
+
+    dgraphClient = new DgraphClient(stub1, stub2, stub3);
+
     boolean succeed = false;
     boolean retry;
     do {
@@ -76,6 +84,8 @@ public abstract class DgraphIntegrationTest {
 
   @AfterClass
   public static void afterClass() throws InterruptedException {
-    channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    channel1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    channel2.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    channel3.shutdown().awaitTermination(5, TimeUnit.SECONDS);
   }
 }
