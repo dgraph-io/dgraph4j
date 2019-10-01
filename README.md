@@ -85,12 +85,12 @@ ManagedChannel channel1 = ManagedChannelBuilder
 DgraphStub stub1 = DgraphGrpc.newStub(channel1);
 
 ManagedChannel channel2 = ManagedChannelBuilder
-    .forAddress("localhost", 9080)
+    .forAddress("localhost", 9082)
     .usePlaintext().build();
 DgraphStub stub2 = DgraphGrpc.newStub(channel2);
 
 ManagedChannel channel3 = ManagedChannelBuilder
-    .forAddress("localhost", 9080)
+    .forAddress("localhost", 9083)
     .usePlaintext().build();
 DgraphStub stub3 = DgraphGrpc.newStub(channel3);
 
