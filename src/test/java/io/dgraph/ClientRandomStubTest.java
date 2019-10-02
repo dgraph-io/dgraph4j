@@ -1,11 +1,14 @@
 package io.dgraph;
 
-import static org.testng.Assert.assertEquals;
-
 import io.grpc.Channel;
+import org.testng.annotations.Test;
+
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import org.testng.annotations.Test;
+import java.util.Map;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 public class ClientRandomStubTest extends DgraphIntegrationTest {
   private Field asyncTransactionField, stubField, channelField;
@@ -36,5 +39,8 @@ public class ClientRandomStubTest extends DgraphIntegrationTest {
 
     // Ensure that we got all the clients
     assertEquals(counts.size(), 3);
+    for (Map.Entry<String, Integer> ep : counts.entrySet()) {
+      assertTrue(ep.getValue() > 25);
+    }
   }
 }
