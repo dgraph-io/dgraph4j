@@ -14,11 +14,13 @@ import org.testng.annotations.Test;
 public class TypeSystemTest extends DgraphIntegrationTest {
   private String schema =
       ""
+          + "name: string @index(term, exact) .\n"
+          + "age: int .\n"
+          + ""
           + "type Person {\n"
-          + "    name: string\n"
-          + "    age: int\n"
-          + "}\n"
-          + "name: string @index(term, exact) .";
+          + "    name\n"
+          + "    age\n"
+          + "}\n";
 
   @Test
   public void testTypeFunction() {
