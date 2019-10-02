@@ -1,11 +1,14 @@
 package io.dgraph;
 
-import static org.testng.Assert.assertEquals;
-
 import io.grpc.Channel;
+import org.testng.annotations.Test;
+
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import org.testng.annotations.Test;
+import java.util.Map;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 public class ClientRandomStubTest extends DgraphIntegrationTest {
   private Field asyncTransactionField, stubField, channelField;
@@ -22,8 +25,9 @@ public class ClientRandomStubTest extends DgraphIntegrationTest {
 
   @Test
   public void testClientRandomStubTest() throws IllegalAccessException {
+    int NUM_ITER = 1000;
     HashMap<String, Integer> counts = new HashMap<>();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < NUM_ITER; i++) {
       Transaction txn = dgraphClient.newTransaction();
       Channel channel = (Channel) channelField.get(stubField.get(asyncTransactionField.get(txn)));
       String endpoint = channel.authority();
@@ -36,5 +40,12 @@ public class ClientRandomStubTest extends DgraphIntegrationTest {
 
     // Ensure that we got all the clients
     assertEquals(counts.size(), 3);
+    int sum = 0;
+    for (Map.Entry<String, Integer> ep : counts.entrySet()) {
+      assertTrue(ep.getValue() > 300);
+      sum += ep.getValue();
+    }
+
+    assertEquals(sum, NUM_ITER);
   }
 }
