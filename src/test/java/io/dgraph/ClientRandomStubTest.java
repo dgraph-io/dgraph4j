@@ -1,14 +1,13 @@
 package io.dgraph;
 
-import io.grpc.Channel;
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
+import io.grpc.Channel;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import org.testng.annotations.Test;
 
 public class ClientRandomStubTest extends DgraphIntegrationTest {
   private Field asyncTransactionField, stubField, channelField;
@@ -31,11 +30,7 @@ public class ClientRandomStubTest extends DgraphIntegrationTest {
       Transaction txn = dgraphClient.newTransaction();
       Channel channel = (Channel) channelField.get(stubField.get(asyncTransactionField.get(txn)));
       String endpoint = channel.authority();
-      if (counts.containsKey(endpoint)) {
-        counts.put(endpoint, counts.get(endpoint) + 1);
-      } else {
-        counts.put(endpoint, 1);
-      }
+      counts.put(endpoint, counts.getOrDefault(endpoint, 0) + 1);
     }
 
     // Ensure that we got all the clients
