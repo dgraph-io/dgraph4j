@@ -166,7 +166,7 @@ public class DgraphAsyncClient {
    * @param <T> The type of the supplier's returned CompletableFuture. If the supplier provides
    *     logic to run queries, then the type T will be DgraphProto.Response.
    * @param operation the name of the operation
-   * @param supplier the supplier to the CompletableFuture, which encapsulates the logic to run
+   * @param callable the callable returning a CompletableFuture, which encapsulates the logic to run
    *     queries, mutations or alter operations
    * @return a completable future which can be used to get the result
    */
