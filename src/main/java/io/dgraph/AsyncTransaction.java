@@ -20,9 +20,12 @@ import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Request;
 import io.dgraph.DgraphProto.Response;
 import io.dgraph.DgraphProto.TxnContext;
+import io.grpc.Context;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 /**
  * This is the implementation of asynchronous Dgraph transaction. The asynchrony is backed-up by
@@ -147,24 +150,35 @@ public class AsyncTransaction implements AutoCloseable {
       mutated = true;
     }
 
+    final Callable<CompletableFuture<Response>> callable =
+        Context.current()
+            .wrap(
+                () -> {
+                  StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
+                  DgraphStub localStub = client.getStubWithJwt(stub);
+                  localStub.query(request, bridge);
+
+                  return bridge
+                      .getDelegate()
+                      .thenApply(
+                          (response) -> {
+                            if (request.getCommitNow()) {
+                              finished = true;
+                            }
+                            mergeContext(response.getTxn());
+                            return response;
+                          });
+                });
+
     return client
         .runWithRetries(
             "doRequest",
             () -> {
-              StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
-              DgraphStub localStub = client.getStubWithJwt(stub);
-              localStub.query(request, bridge);
-
-              return bridge
-                  .getDelegate()
-                  .thenApply(
-                      (response) -> {
-                        if (request.getCommitNow()) {
-                          finished = true;
-                        }
-                        mergeContext(response.getTxn());
-                        return response;
-                      });
+              try {
+                return callable.call();
+              } catch (Exception e) {
+                throw new CompletionException(e);
+              }
             })
         .handle(
             (Response response, Throwable throwable) -> {
@@ -201,13 +215,24 @@ public class AsyncTransaction implements AutoCloseable {
       return CompletableFuture.completedFuture(null);
     }
 
+    final Callable<CompletableFuture<Void>> callable =
+        Context.current()
+            .wrap(
+                () -> {
+                  StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
+                  DgraphStub localStub = client.getStubWithJwt(stub);
+                  localStub.commitOrAbort(context, bridge);
+                  return bridge.getDelegate().thenApply(txnContext -> null);
+                });
+
     return client.runWithRetries(
         "commit",
         () -> {
-          StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
-          DgraphStub localStub = client.getStubWithJwt(stub);
-          localStub.commitOrAbort(context, bridge);
-          return bridge.getDelegate().thenApply(txnContext -> null);
+          try {
+            return callable.call();
+          } catch (Exception e) {
+            throw new CompletionException(e);
+          }
         });
   }
 
@@ -232,13 +257,24 @@ public class AsyncTransaction implements AutoCloseable {
     }
 
     context = TxnContext.newBuilder(context).setAborted(true).build();
+    final Callable<CompletableFuture<Void>> callable =
+        Context.current()
+            .wrap(
+                () -> {
+                  StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
+                  DgraphStub localStub = client.getStubWithJwt(stub);
+                  localStub.commitOrAbort(context, bridge);
+                  return bridge.getDelegate().thenApply((o) -> null);
+                });
+
     return client.runWithRetries(
         "discard",
         () -> {
-          StreamObserverBridge<TxnContext> bridge = new StreamObserverBridge<>();
-          DgraphStub localStub = client.getStubWithJwt(stub);
-          localStub.commitOrAbort(context, bridge);
-          return bridge.getDelegate().thenApply((o) -> null);
+          try {
+            return callable.call();
+          } catch (Exception e) {
+            throw new CompletionException(e);
+          }
         });
   }
 

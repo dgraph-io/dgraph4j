@@ -19,11 +19,13 @@ import static java.util.Arrays.asList;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.dgraph.DgraphProto.Payload;
+import io.grpc.Context;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.MetadataUtils;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -226,13 +228,24 @@ public class DgraphAsyncClient {
   public CompletableFuture<Payload> alter(DgraphProto.Operation op) {
     final DgraphGrpc.DgraphStub stub = anyClient();
 
+    final Callable<CompletableFuture<Payload>> callable =
+        Context.current()
+            .wrap(
+                () -> {
+                  StreamObserverBridge<Payload> observerBridge = new StreamObserverBridge<>();
+                  DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+                  localStub.alter(op, observerBridge);
+                  return observerBridge.getDelegate();
+                });
+
     return runWithRetries(
         "alter",
         () -> {
-          StreamObserverBridge<Payload> observerBridge = new StreamObserverBridge<>();
-          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
-          localStub.alter(op, observerBridge);
-          return observerBridge.getDelegate();
+          try {
+            return callable.call();
+          } catch (Exception e) {
+            throw new CompletionException(e);
+          }
         });
   }
 
