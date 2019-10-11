@@ -33,7 +33,6 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -172,11 +171,13 @@ public class DgraphAsyncClient {
    * @return a completable future which can be used to get the result
    */
   protected <T> CompletableFuture<T> runWithRetries(
-      String operation, Supplier<CompletableFuture<T>> supplier) {
+      String operation, Callable<CompletableFuture<T>> callable) {
+    final Callable<CompletableFuture<T>> ctxCallable = Context.current().wrap(callable);
+
     return CompletableFuture.supplyAsync(
         () -> {
           try {
-            return supplier.get().get();
+            return ctxCallable.call().get();
           } catch (InterruptedException e) {
             LOG.error("The " + operation + " got interrupted:", e);
             throw new RuntimeException(e);
@@ -186,13 +187,16 @@ public class DgraphAsyncClient {
                 // retry the login
                 retryLogin().get();
                 // retry the supplied logic
-                return supplier.get().get();
+                return ctxCallable.call().get();
               } catch (InterruptedException ie) {
                 LOG.error("The retried " + operation + " got interrupted:", ie);
                 throw new RuntimeException(ie);
               } catch (ExecutionException ie) {
                 LOG.error("The retried " + operation + " encounters an execution exception:", ie);
                 throw new RuntimeException(ie);
+              } catch (Exception ie) {
+                LOG.error("The retried " + operation + " encounters a completion exception:", ie);
+                throw new CompletionException(ie);
               }
             } else if (e.getCause() instanceof StatusRuntimeException) {
               StatusRuntimeException ex1 = (StatusRuntimeException) e.getCause();
@@ -204,10 +208,11 @@ public class DgraphAsyncClient {
                 throw new CompletionException(new TxnConflictException(desc));
               }
             }
-
             // Handle the case when the outer exception is not caused by JWT expiration
             throw new RuntimeException(
                 "The " + operation + " encountered an execution exception:", e);
+          } catch (Exception e) {
+            throw new CompletionException(e);
           }
         });
   }
@@ -228,24 +233,13 @@ public class DgraphAsyncClient {
   public CompletableFuture<Payload> alter(DgraphProto.Operation op) {
     final DgraphGrpc.DgraphStub stub = anyClient();
 
-    final Callable<CompletableFuture<Payload>> callable =
-        Context.current()
-            .wrap(
-                () -> {
-                  StreamObserverBridge<Payload> observerBridge = new StreamObserverBridge<>();
-                  DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
-                  localStub.alter(op, observerBridge);
-                  return observerBridge.getDelegate();
-                });
-
     return runWithRetries(
         "alter",
         () -> {
-          try {
-            return callable.call();
-          } catch (Exception e) {
-            throw new CompletionException(e);
-          }
+          StreamObserverBridge<Payload> observerBridge = new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.alter(op, observerBridge);
+          return observerBridge.getDelegate();
         });
   }
 
