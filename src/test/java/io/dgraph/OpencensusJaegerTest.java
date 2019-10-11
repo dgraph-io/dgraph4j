@@ -30,10 +30,15 @@ public class OpencensusJaegerTest extends DgraphIntegrationTest {
 
     DgraphProto.Mutation mu =
         DgraphProto.Mutation.newBuilder()
-            .setCommitNow(true)
+            .setCommitNow(false)
             .setSetJson(ByteString.copyFromUtf8(jsonData.toString()))
             .build();
-    dgraphClient.newTransaction().mutate(mu);
+    Transaction txn = dgraphClient.newTransaction();
+    txn.mutate(mu);
+    txn.commit();
+
+    String query = "{\n q(func: eq(name, \"Alice\")) {\n name\n uid\n}\n}";
+    dgraphClient.newTransaction().query(query);
   }
 
   @Test
@@ -52,7 +57,8 @@ public class OpencensusJaegerTest extends DgraphIntegrationTest {
 
     // 4. Create a scoped span, a scoped span will automatically end when closed.
     // It implements AutoClosable, so it'll be closed when the try block ends.
-    try (Scope ignored = tracer.spanBuilder("query").startScopedSpan()) {
+    try (Scope ignored = tracer.spanBuilder("test-span").startScopedSpan()) {
+      tracer.getCurrentSpan().addAnnotation("test annotation");
       runTransactions();
     }
 
