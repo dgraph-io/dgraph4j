@@ -303,7 +303,7 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
         child = cause.getCause();
       }
 
-      assertTrue(cause.getMessage().contains("Empty query"));
+      assertTrue(cause.getMessage().contains("empty request"));
     }
   }
 
