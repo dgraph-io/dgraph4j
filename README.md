@@ -49,7 +49,6 @@ grab via Maven:
   <artifactId>dgraph4j</artifactId>
   <version>2.0.1</version>
 </dependency>
-
 ```
 or Gradle:
 ```groovy
@@ -140,10 +139,10 @@ side-effects.
 ```java
 Transaction txn = dgraphClient.newTransaction();
 try {
-  // Do something here
-  // ...
+    // Do something here
+    // ...
 } finally {
-  txn.discard();
+    txn.discard();
 }
 ```
 
@@ -173,8 +172,8 @@ This data will be serialized into JSON.
 
 ```java
 class Person {
-        String name
-        Person() {}
+    String name
+    Person() {}
 }
 ```
 
@@ -189,10 +188,9 @@ person.name = "Alice";
 Gson gson = new Gson();
 String json = gson.toJson(p);
 // Run mutation
-Mutation mu =
-  Mutation.newBuilder()
-  .setSetJson(ByteString.copyFromUtf8(json.toString()))
-  .build();
+Mutation mu = Mutation.newBuilder()
+    .setSetJson(ByteString.copyFromUtf8(json.toString()))
+    .build();
 txn.mutate(mu);
 ```
 
@@ -204,8 +202,8 @@ Mutation can be run using the `doRequest` function as well.
 
 ```java
 Request request = Request.newBuilder()
-  .addMutations(mu)
-  .build();
+    .addMutations(mu)
+    .build();
 txn.doRequest(request);
 ```
 
@@ -221,17 +219,17 @@ modified in this transaction. It is up to the user to retry transactions when th
 Transaction txn = dgraphClient.newTransaction();
 
 try {
-  // …
-  // Perform any number of queries and mutations
-  // …
-  // and finally …
-  txn.commit()
+    // …
+    // Perform any number of queries and mutations
+    // …
+    // and finally …
+    txn.commit()
 } catch (TxnConflictException ex) {
-   // Retry or handle exception.
+    // Retry or handle exception.
 } finally {
-   // Clean up. Calling this after txn.commit() is a no-op
-   // and hence safe.
-   txn.discard();
+    // Clean up. Calling this after txn.commit() is a no-op
+    // and hence safe.
+    txn.discard();
 }
 ```
 
@@ -257,8 +255,8 @@ First we must create a `People` class that will help us deserialize the JSON res
 
 ```java
 class People {
-  List<Person> all;
-  People() {}
+    List<Person> all;
+    People() {}
 }
 ```
 
@@ -294,8 +292,8 @@ You can also use `doRequest` function to run the query.
 
 ```java
 Request request = Request.newBuilder()
-  .setQuery(query)
-  .build();
+    .setQuery(query)
+    .build();
 txn.doRequest(request);
 ```
 
@@ -312,15 +310,14 @@ https://docs.dgraph.io/mutations/#upsert-block.
 String query = "query {\n" +
   "user as var(func: eq(email, \"wrong_email@dgraph.io\"))\n" +
   "}\n";
-Mutation mu =
-  Mutation.newBuilder()
-  .setSetNquads(ByteString.copyFromUtf8("uid(user) <email> \"correct_email@dgraph.io\" ."))
-  .build();
+Mutation mu = Mutation.newBuilder()
+    .setSetNquads(ByteString.copyFromUtf8("uid(user) <email> \"correct_email@dgraph.io\" ."))
+    .build();
 Request request = Request.newBuilder()
-  .setQuery(query)
-  .addMutations(mu)
-  .setCommitNow(true)
-  .build();
+    .setQuery(query)
+    .addMutations(mu)
+    .setCommitNow(true)
+    .build();
 txn.doRequest(request);
 ```
 
@@ -335,11 +332,10 @@ See more about Conditional Upsert [Here](https://docs.dgraph.io/mutations/#condi
 String query = "query {\n" +
     "user as var(func: eq(email, \"wrong_email@dgraph.io\"))\n" +
     "}\n";
-Mutation mu =
-    Mutation.newBuilder()
-        .setSetNquads(ByteString.copyFromUtf8("uid(user) <email> \"correct_email@dgraph.io\" ."))
-        .setCond("@if(eq(len(user), 1))")
-        .build();
+Mutation mu = Mutation.newBuilder()
+    .setSetNquads(ByteString.copyFromUtf8("uid(user) <email> \"correct_email@dgraph.io\" ."))
+    .setCond("@if(eq(len(user), 1))")
+    .build();
 Request request = Request.newBuilder()
     .setQuery(query)
     .addMutations(mu)
@@ -357,11 +353,11 @@ Read [this forum post][deadline-post] for more details.
 channel = ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext(true).build();
 DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
 ClientInterceptor timeoutInterceptor = new ClientInterceptor(){
-  @Override
-  public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-      MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
-    return next.newCall(method, callOptions.withDeadlineAfter(500, TimeUnit.MILLISECONDS));
-  }
+    @Override
+    public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+            MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+        return next.newCall(method, callOptions.withDeadlineAfter(500, TimeUnit.MILLISECONDS));
+    }
 };
 stub.withInterceptors(timeoutInterceptor);
 DgraphClient dgraphClient = new DgraphClient(stub);
@@ -381,7 +377,7 @@ DgraphStub stub = DgraphGrpc.newStub(channel);
 // use MetadataUtils to augment the stub with headers
 Metadata metadata = new Metadata();
 metadata.put(
-  Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
+        Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
 stub = MetadataUtils.attachHeaders(stub, metadata);
 
 // create the DgraphClient wrapper around the stub
@@ -399,9 +395,9 @@ The helper method takes an existing mutation, and returns a new mutation
 with the deletions applied.
 
 ```java
- Mutation mu = Mutation.newBuilder().build()
- mu = Helpers.deleteEdges(mu, uid, "friends", "loc");
- dgraphClient.newTransaction().mutate(mu);
+Mutation mu = Mutation.newBuilder().build()
+mu = Helpers.deleteEdges(mu, uid, "friends", "loc");
+dgraphClient.newTransaction().mutate(mu);
 ```
 
 ### Closing the DB Connection
@@ -456,16 +452,16 @@ If you would like to see the latency for either a mutation or
 query request, the latency field in the returned result can be helpful. Here is an example to log
  the latency of a query request:
 ```java
-      Response resp = txn.query(query);
-      Latency latency = resp.getLatency();
-      logger.info("parsing latency:" + latency.getParsingNs());
-      logger.info("processing latency:" + latency.getProcessingNs());
-      logger.info("encoding latency:" + latency.getEncodingNs());
+Response resp = txn.query(query);
+Latency latency = resp.getLatency();
+logger.info("parsing latency:" + latency.getParsingNs());
+logger.info("processing latency:" + latency.getProcessingNs());
+logger.info("encoding latency:" + latency.getEncodingNs());
 ```
 Similarly you can get the latency of a mutation request:
 ```java
-    Assigned assignedIds = dgraphClient.newTransaction().mutate(mu);
-    Latency latency = assignedIds.getLatency();
+Assigned assignedIds = dgraphClient.newTransaction().mutate(mu);
+Latency latency = assignedIds.getLatency();
 ```
 
 ## Development
