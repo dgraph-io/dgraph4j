@@ -38,8 +38,7 @@ public class AclTest extends DgraphIntegrationTest {
   public void testAuthorization() throws Exception {
     createAccountAndData();
 
-    // initially all the operations should succeed when there are no rules
-    // defined on the predicates (the fail open approach)
+    // initially all the operations should fail
     dgraphClient.login(USER_ID, USER_PASSWORD);
     queryPredicateWithUserAccount(true);
     mutatePredicateWithUserAccount(true);
@@ -211,7 +210,7 @@ public class AclTest extends DgraphIntegrationTest {
     Transaction txn = dgraphClient.newTransaction();
     DgraphProto.Response response = txn.query(query);
 
-    // Queries do not fail due to ACL, they just do not return
+    // Queries do not fail due to ACL because they just do not return
     // the predicates that the user do not have access to.
     if (shouldFail) {
       String result = response.getJson().toStringUtf8();
