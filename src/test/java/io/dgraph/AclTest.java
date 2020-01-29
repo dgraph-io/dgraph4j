@@ -41,15 +41,15 @@ public class AclTest extends DgraphIntegrationTest {
     // initially all the operations should succeed when there are no rules
     // defined on the predicates (the fail open approach)
     dgraphClient.login(USER_ID, USER_PASSWORD);
-    queryPredicateWithUserAccount(false);
-    mutatePredicateWithUserAccount(false);
-    alterPredicateWithUserAccount(false);
+    queryPredicateWithUserAccount(true);
+    mutatePredicateWithUserAccount(true);
+    alterPredicateWithUserAccount(true);
 
     createGroupAndACLs(UNUSED_GROUP, false);
     System.out.println("Sleep for 6 seconds for acl caches to be refreshed");
     Thread.sleep(6 * 1000);
 
-    // now all the operations should fail since there are rules defined on the unusedGroup
+    // now all the operations should still fail
     queryPredicateWithUserAccount(true);
     mutatePredicateWithUserAccount(true);
     alterPredicateWithUserAccount(true);
@@ -205,17 +205,19 @@ public class AclTest extends DgraphIntegrationTest {
   }
 
   private void queryPredicateWithUserAccount(boolean shouldFail) {
-    verifyOperation(
-        shouldFail,
-        "query",
-        () -> {
-          String query =
-              String.format(
-                  "	{" + "users(func: eq(%s, \"SF\")) {" + "%s" + "}}",
-                  PREDICATE_TO_READ, QUERY_ATTR);
-          Transaction txn = dgraphClient.newTransaction();
-          txn.query(query);
-        });
+    String query =
+        String.format(
+            "	{" + "users(func: eq(%s, \"SF\")) {" + "%s" + "}}", PREDICATE_TO_READ, QUERY_ATTR);
+    Transaction txn = dgraphClient.newTransaction();
+    DgraphProto.Response response = txn.query(query);
+
+    // Queries do not fail due to ACL, they just do not return
+    // the predicates that the user do not have access to.
+    if (shouldFail) {
+      String result = response.getJson().toStringUtf8();
+      assertEquals(result, "{}", "the operation should have failed");
+    }
+    txn.discard();
   }
 
   private void mutatePredicateWithUserAccount(boolean shouldFail) {
