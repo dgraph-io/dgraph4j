@@ -18,6 +18,7 @@ and understand how to run and work with Dgraph.
 
 ## Table of Contents
 - [Download](#download)
+- [Supported Versions](#supported-versions)
 - [Quickstart](#quickstart)
 - [Intro](#intro)
 - [Using the Synchronous Client](#using-the-synchronous-client)
@@ -56,6 +57,17 @@ or Gradle:
 ```groovy
 compile 'io.dgraph:dgraph4j:2.0.1'
 ```
+
+## Supported Versions
+
+Depending on the version of Dgraph that you are connecting to, you will have to
+use a different version of this client.
+
+| Dgraph version | dgraph4j version  | java version |
+|:--------------:|:-----------------:|:------------:|
+|     1.0.X      |        *??*       |     *??*     |
+|     1.1.X      |        *??*       |     *??*     |
+|     1.2.X      |        *??*       |     *??*     |
 
 ## Quickstart
 Build and run the [DgraphJavaSample] project in the `samples` folder, which
