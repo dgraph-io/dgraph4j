@@ -22,6 +22,7 @@ and understand how to run and work with Dgraph.
 - [Intro](#intro)
 - [Using the Synchronous Client](#using-the-synchronous-client)
   * [Creating a Client](#creating-a-client)
+  * [Creating a Secure Client Using TLS](#creating-a-secure-client-using-tls)
   * [Altering the Database](#altering-the-database)
   * [Creating a Transaction](#creating-a-transaction)
   * [Running a Mutation](#running-a-mutation)
@@ -94,6 +95,19 @@ ManagedChannel channel3 = ManagedChannelBuilder
 DgraphStub stub3 = DgraphGrpc.newStub(channel3);
 
 DgraphClient dgraphClient = new DgraphClient(stub1, stub2, stub3);
+```
+
+### Creating a Secure Client using TLS
+```java
+SslContextBuilder builder = GrpcSslContexts.forClient();
+builder.trustManager(new File("<path to ca.crt>"));
+SslContext sslContext = builder.build();
+
+channel = NettyChannelBuilder.forAddress("localhost", 9080)
+    .sslContext(sslContext)
+    .useTransportSecurity()
+    .build();
+DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
 ```
 
 ### Altering the Database
