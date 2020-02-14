@@ -100,6 +100,9 @@ DgraphClient dgraphClient = new DgraphClient(stub1, stub2, stub3);
 
 ### Creating a Secure Client using TLS
 
+To setup a client using TLS, you could use the following code snippet. The server needs to be
+setup using the instructions provided [here](https://docs.dgraph.io/deploy/#tls-configuration).
+
 ```java
 SslContextBuilder builder = GrpcSslContexts.forClient();
 builder.trustManager(new File("<path to ca.crt>"));
