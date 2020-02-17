@@ -22,6 +22,8 @@ and understand how to run and work with Dgraph.
 - [Intro](#intro)
 - [Using the Synchronous Client](#using-the-synchronous-client)
   * [Creating a Client](#creating-a-client)
+  * [Creating a Secure Client Using TLS](#creating-a-secure-client-using-tls)
+  * [Login Using ACL](#login-using-acl)
   * [Altering the Database](#altering-the-database)
   * [Creating a Transaction](#creating-a-transaction)
   * [Running a Mutation](#running-a-mutation)
@@ -94,6 +96,47 @@ ManagedChannel channel3 = ManagedChannelBuilder
 DgraphStub stub3 = DgraphGrpc.newStub(channel3);
 
 DgraphClient dgraphClient = new DgraphClient(stub1, stub2, stub3);
+```
+
+### Creating a Secure Client using TLS
+
+To setup a client using TLS, you could use the following code snippet. The server needs to be
+setup using the instructions provided [here](https://docs.dgraph.io/deploy/#tls-configuration).
+
+If you are doing client verification, you need to convert the client key from PKCS#1 format to
+PKCS#8 format. By default, grpc doesn't support reading PKCS#1 format keys. To convert the
+format, you could use the `openssl` tool.
+
+First, let's install the `openssl` tool:
+```sh
+apt install openssl
+```
+
+Now, use the following command to convert the key:
+```sh
+openssl pkcs8 -in client.name.key -topk8 -nocrypt -out client.name.java.key
+```
+
+Now, you can use the following code snippet to connect to Alpha over TLS:
+
+```java
+SslContextBuilder builder = GrpcSslContexts.forClient();
+builder.trustManager(new File("<path to ca.crt>"));
+// Skip the next line if you are not performing client verification.
+builder.keyManager(new File("<path to client.name.crt>"), new File("<path to client.name.java.key>"));
+SslContext sslContext = builder.build();
+
+ManagedChannel channel = NettyChannelBuilder.forAddress("localhost", 9080)
+    .sslContext(sslContext)
+    .build();
+DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
+DgraphClient dgraphClient = new DgraphClient(stub);
+```
+
+### Login Using ACL
+
+```java
+dgraphClient.login(USER_ID, USER_PASSWORD);
 ```
 
 ### Altering the Database
