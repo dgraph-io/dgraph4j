@@ -110,6 +110,9 @@ dependencies {
     compile "io.grpc:grpc-netty:${grpcVersion}"
     compile "io.grpc:grpc-stub:${grpcVersion}"
 
+    testRuntime 'org.bouncycastle:bcprov-jdk15on:1.58'
+    testCompile 'com.github.martinpaljak:esteid:17.11.26.1'
+    testRuntime 'io.netty:netty-tcnative-boringssl-static:2.0.28.Final'
     testCompile "io.opencensus:opencensus-api:${openCensusVersion}"
     testCompile "io.opencensus:opencensus-exporter-trace-jaeger:${openCensusVersion}"
     testRuntime "io.opencensus:opencensus-impl:${openCensusVersion}"
