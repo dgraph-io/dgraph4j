@@ -103,10 +103,12 @@ configurations {
 dependencies {
     // The production code uses the SLF4J logging API at compile time
     compile "org.slf4j:slf4j-api:1.7.21"
-    compile "org.slf4j:slf4j-simple:1.7.21"
-	compile "io.grpc:grpc-protobuf:${grpcVersion}"
+    // Specific slf4j bindings should not be included in the default (compile) scope.
+    // See http://www.slf4j.org/faq.html#maven2.
+    testCompile "org.slf4j:slf4j-simple:1.7.21"
+    compile "io.grpc:grpc-protobuf:${grpcVersion}"
     compile "io.grpc:grpc-netty:${grpcVersion}"
-	compile "io.grpc:grpc-stub:${grpcVersion}"
+    compile "io.grpc:grpc-stub:${grpcVersion}"
 
     testCompile "io.opencensus:opencensus-api:${openCensusVersion}"
     testCompile "io.opencensus:opencensus-exporter-trace-jaeger:${openCensusVersion}"
