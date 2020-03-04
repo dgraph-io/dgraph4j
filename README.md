@@ -65,9 +65,8 @@ use a different version of this client.
 
 | Dgraph version | dgraph4j version  | java version |
 |:--------------:|:-----------------:|:------------:|
-|     1.0.X      |        *??*       |     *??*     |
-|     1.1.X      |        *??*       |     *??*     |
-|     1.2.X      |        *??*       |     *??*     |
+|     1.0.X      |       1.X.X       |     1.8.X    |
+|     1.X.X      |       2.X.X       |     1.8.X    |
 
 ## Quickstart
 Build and run the [DgraphJavaSample] project in the `samples` folder, which
