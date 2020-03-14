@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collections;
 import java.util.stream.Collectors;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -32,6 +33,8 @@ public class AclTest extends DgraphIntegrationTest {
         DgraphProto.Operation.newBuilder()
             .setSchema(PREDICATE_TO_READ + ": string @index(exact) .")
             .build());
+    AlterUtils.waitForIndexing(
+        dgraphClient, PREDICATE_TO_READ, Collections.singletonList("exact"), false, false);
   }
 
   @Test(groups = {"acl"})

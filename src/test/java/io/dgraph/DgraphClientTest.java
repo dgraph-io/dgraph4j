@@ -44,6 +44,8 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     // Set schema
     Operation op = Operation.newBuilder().setSchema("name: string @index(exact) @upsert .").build();
     dgraphClient.alter(op);
+    AlterUtils.waitForIndexing(
+        dgraphClient, "name", Collections.singletonList("exact"), false, false);
 
     // Add data
     JsonObject data = new JsonObject();
