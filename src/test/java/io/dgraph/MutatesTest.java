@@ -19,10 +19,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import io.dgraph.DgraphProto.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.testng.annotations.Test;
 
@@ -35,6 +32,8 @@ public class MutatesTest extends DgraphIntegrationTest {
     Operation op =
         Operation.newBuilder().setSchema("name: string @index(fulltext) @upsert .").build();
     dgraphClient.alter(op);
+    AlterUtils.waitForIndexing(
+        dgraphClient, "name", Collections.singletonList("fulltext"), false, false);
 
     Transaction txn = dgraphClient.newTransaction();
     uidsMap = new HashMap<>();

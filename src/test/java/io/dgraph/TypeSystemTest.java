@@ -8,6 +8,7 @@ import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Request;
 import io.dgraph.DgraphProto.Response;
+import java.util.Arrays;
 import java.util.List;
 import org.testng.annotations.Test;
 
@@ -26,6 +27,7 @@ public class TypeSystemTest extends DgraphIntegrationTest {
   public void testTypeFunction() {
     Operation op = Operation.newBuilder().setSchema(schema).build();
     dgraphClient.alter(op);
+    AlterUtils.waitForIndexing(dgraphClient, "name", Arrays.asList("term", "exact"), false, false);
 
     String muStr =
         "_:animesh <name> \"Animesh\" .\n"
@@ -49,6 +51,7 @@ public class TypeSystemTest extends DgraphIntegrationTest {
   public void testTypeDeletion() {
     Operation op = Operation.newBuilder().setSchema(schema).build();
     dgraphClient.alter(op);
+    AlterUtils.waitForIndexing(dgraphClient, "name", Arrays.asList("term", "exact"), false, false);
 
     String muStr = "" + "_:animesh <name> \"Animesh\" .\n" + "_:animesh <age> \"24\" .";
     Mutation mu =

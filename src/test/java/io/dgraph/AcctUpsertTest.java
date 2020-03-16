@@ -60,6 +60,11 @@ public class AcctUpsertTest extends DgraphIntegrationTest {
             + "   when:   int                   .\n";
     Operation op = Operation.newBuilder().setSchema(schema).build();
     dgraphClient.alter(op);
+    AlterUtils.waitForIndexing(
+        dgraphClient, "first", Collections.singletonList("term"), false, false);
+    AlterUtils.waitForIndexing(
+        dgraphClient, "last", Collections.singletonList("hash"), false, false);
+    AlterUtils.waitForIndexing(dgraphClient, "age", Collections.singletonList("int"), false, false);
   }
 
   private void tryUpsert(Account account) {

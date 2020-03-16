@@ -161,6 +161,14 @@ Operation operation = Operation.newBuilder().setSchema(schema).build();
 dgraphClient.alter(operation);
 ```
 
+Starting Dgraph version `20.3.0`, indexes are computed in the background.
+This requires that you wait for indexing to complete before running queries.
+You could do that using following code.
+
+```java
+AlterUtils.waitForIndexing(dgraphClient, "name", Collections.singletonList("exact"), false, false);
+```
+
 `Operation` contains other fields as well, including drop predicate and
 drop all. Drop all is useful if you wish to discard all the data, and start from
 a clean slate, without bringing the instance down.
