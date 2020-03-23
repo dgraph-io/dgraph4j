@@ -2,6 +2,7 @@ package io.dgraph;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -318,6 +319,47 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
 
       assertTrue(cause.getMessage().contains("empty request"));
     }
+  }
+
+  @Test
+  public void upsertMultipleWithinSingleTransactionTest() {
+    DgraphProto.Operation op =
+        DgraphProto.Operation.newBuilder()
+            .setSchema("email: string @index(exact) @upsert .")
+            .build();
+    dgraphClient.alter(op);
+
+    JsonArray jsonData = new JsonArray();
+    JsonObject person = new JsonObject();
+    person.addProperty("uid", "uid(v)");
+    person.addProperty("name", "wrong");
+    jsonData.add(person);
+
+    JsonObject person2 = new JsonObject();
+    person2.addProperty("email", "ashish@dgraph.io");
+    person2.addProperty("uid", "uid(v)");
+    jsonData.add(person2);
+
+    String query =
+        "{\n"
+            + "    me(func: eq(email, \"ashish@dgraph.io\")) {\n"
+            + "        v as uid\n"
+            + "    }\n"
+            + "}\n";
+    Mutation mu =
+        Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(jsonData.toString())).build();
+    Request request = Request.newBuilder().addMutations(mu).setQuery(query).build();
+
+    Transaction transaction = dgraphClient.newTransaction();
+    transaction.doRequest(request);
+
+    try {
+      transaction.doRequest(request);
+    } catch (RuntimeException e) {
+      fail(e.getMessage());
+    }
+
+    transaction.discard();
   }
 
   static class User {

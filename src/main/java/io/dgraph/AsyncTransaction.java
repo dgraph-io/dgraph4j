@@ -78,7 +78,7 @@ public class AsyncTransaction implements AutoCloseable {
             .setBestEffort(bestEffort)
             .build();
 
-    return this.doRequest(request);
+    return this.request(request);
   }
 
   /**
@@ -124,7 +124,7 @@ public class AsyncTransaction implements AutoCloseable {
             .setStartTs(context.getStartTs())
             .build();
 
-    return this.doRequest(request);
+    return this.request(request);
   }
 
   /**
@@ -135,6 +135,12 @@ public class AsyncTransaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> doRequest(Request request) {
+    Request repackagedRequest =
+        Request.newBuilder(request).setStartTs(context.getStartTs()).build();
+    return request(repackagedRequest);
+  }
+
+  private CompletableFuture<Response> request(Request request) {
     if (finished) {
       throw new TxnFinishedException();
     }
