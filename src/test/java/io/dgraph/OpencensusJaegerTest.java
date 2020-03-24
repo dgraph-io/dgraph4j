@@ -9,7 +9,6 @@ import io.opencensus.trace.Tracing;
 import io.opencensus.trace.config.TraceConfig;
 import io.opencensus.trace.config.TraceParams;
 import io.opencensus.trace.samplers.Samplers;
-import java.util.Collections;
 import java.util.concurrent.*;
 import org.testng.annotations.Test;
 
@@ -24,8 +23,6 @@ public class OpencensusJaegerTest extends DgraphIntegrationTest {
             .setSchema("name: string @index(fulltext) @upsert .")
             .build();
     dgraphClient.alter(op);
-    AlterUtils.waitForIndexing(
-        dgraphClient, "name", Collections.singletonList("fulltext"), false, false);
 
     // Add data
     JsonObject jsonData = new JsonObject();

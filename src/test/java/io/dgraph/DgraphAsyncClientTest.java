@@ -120,8 +120,6 @@ public class DgraphAsyncClientTest {
   public void testQueryInReadOnlyTransactions() {
     Operation op = Operation.newBuilder().setSchema("name: string @index(exact) @upsert .").build();
     dgraphAsyncClient.alter(op).join();
-    AlterUtils.waitForIndexing(
-        dgraphAsyncClient, "name", Collections.singletonList("exact"), false, false);
 
     // Mutation
     JsonObject jsonData = new JsonObject();
