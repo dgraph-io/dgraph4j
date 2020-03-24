@@ -10,7 +10,6 @@ import com.google.protobuf.ByteString;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Request;
 import io.dgraph.DgraphProto.Response;
-import java.util.Collections;
 import java.util.List;
 import org.testng.annotations.Test;
 
@@ -22,8 +21,6 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
             .setSchema("email: string @index(exact) @upsert .")
             .build();
     dgraphClient.alter(op);
-    AlterUtils.waitForIndexing(
-        dgraphClient, "email", Collections.singletonList("exact"), false, false);
 
     JsonArray jsonData1 = new JsonArray();
     JsonObject person1 = new JsonObject();
@@ -100,10 +97,6 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
             .setSchema("email: string @index(exact) @upsert .\nname: string @index(exact) .")
             .build();
     dgraphClient.alter(op);
-    AlterUtils.waitForIndexing(
-        dgraphClient, "email", Collections.singletonList("exact"), false, false);
-    AlterUtils.waitForIndexing(
-        dgraphClient, "name", Collections.singletonList("exact"), false, false);
 
     JsonArray jsonData1 = new JsonArray();
     JsonObject person1 = new JsonObject();
@@ -170,10 +163,6 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
             .setSchema("email: string @index(exact) @upsert .\nname: string @index(exact) .")
             .build();
     dgraphClient.alter(op);
-    AlterUtils.waitForIndexing(
-        dgraphClient, "email", Collections.singletonList("exact"), false, false);
-    AlterUtils.waitForIndexing(
-        dgraphClient, "name", Collections.singletonList("exact"), false, false);
 
     JsonArray jsonData1 = new JsonArray();
     JsonObject person1 = new JsonObject();
@@ -249,8 +238,6 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
             .setSchema("name: string @index(exact) .\n" + "branch: string .\n" + "amount: float .")
             .build();
     dgraphClient.alter(op);
-    AlterUtils.waitForIndexing(
-        dgraphClient, "name", Collections.singletonList("exact"), false, false);
 
     String muStr1 =
         ""

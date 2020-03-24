@@ -44,8 +44,6 @@ public class App {
     String schema = "name: string @index(exact) .";
     Operation operation = Operation.newBuilder().setSchema(schema).build();
     dgraphClient.alter(operation);
-    // AlterUtils.waitForIndexing(
-    //    dgraphClient, "name", Collections.singletonList("exact"), false, false);
 
     Gson gson = new Gson(); // For JSON encode/decode
     Transaction txn = dgraphClient.newTransaction();

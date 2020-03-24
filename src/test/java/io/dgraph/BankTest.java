@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.testng.annotations.Test;
 
 public class BankTest extends DgraphIntegrationTest {
+
   private final ArrayList<String> uids = new ArrayList<>();
   private final AtomicInteger runs = new AtomicInteger();
   private final AtomicInteger aborts = new AtomicInteger();
