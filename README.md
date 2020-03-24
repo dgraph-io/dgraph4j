@@ -161,6 +161,20 @@ Operation operation = Operation.newBuilder().setSchema(schema).build();
 dgraphClient.alter(operation);
 ```
 
+Starting Dgraph version 20.03.0, indexes can be computed in the background.
+You can call the function `setRunInBackground(true)` as shown below before
+calling `alter`. You can find more details
+[here](https://docs.dgraph.io/master/query-language/#indexes-in-background).
+
+```java
+String schema = "name: string @index(exact) .";
+Operation op = Operation.newBuilder()
+        .setSchema(schema)
+        .setRunInBackground(true)
+        .build();
+dgraphClient.alter(operation);
+```
+
 `Operation` contains other fields as well, including drop predicate and
 drop all. Drop all is useful if you wish to discard all the data, and start from
 a clean slate, without bringing the instance down.
