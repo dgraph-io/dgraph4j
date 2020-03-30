@@ -147,19 +147,21 @@ public class AsyncTransaction implements AutoCloseable {
       mutated = true;
     }
 
+    Request requestStartTs = Request.newBuilder(request).setStartTs(context.getStartTs()).build();
+
     return client
         .runWithRetries(
             "doRequest",
             () -> {
               StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
               DgraphStub localStub = client.getStubWithJwt(stub);
-              localStub.query(request, bridge);
+              localStub.query(requestStartTs, bridge);
 
               return bridge
                   .getDelegate()
                   .thenApply(
                       (response) -> {
-                        if (request.getCommitNow()) {
+                        if (requestStartTs.getCommitNow()) {
                           finished = true;
                         }
                         mergeContext(response.getTxn());
