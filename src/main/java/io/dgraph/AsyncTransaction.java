@@ -78,7 +78,7 @@ public class AsyncTransaction implements AutoCloseable {
             .setBestEffort(bestEffort)
             .build();
 
-    return this.request(request);
+    return this.doRequest(request);
   }
 
   /**
@@ -124,7 +124,7 @@ public class AsyncTransaction implements AutoCloseable {
             .setStartTs(context.getStartTs())
             .build();
 
-    return this.request(request);
+    return this.doRequest(request);
   }
 
   /**
@@ -135,12 +135,6 @@ public class AsyncTransaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> doRequest(Request request) {
-    Request repackagedRequest =
-        Request.newBuilder(request).setStartTs(context.getStartTs()).build();
-    return request(repackagedRequest);
-  }
-
-  private CompletableFuture<Response> request(Request request) {
     if (finished) {
       throw new TxnFinishedException();
     }
@@ -153,19 +147,21 @@ public class AsyncTransaction implements AutoCloseable {
       mutated = true;
     }
 
+    Request requestStartTs = Request.newBuilder(request).setStartTs(context.getStartTs()).build();
+
     return client
         .runWithRetries(
             "doRequest",
             () -> {
               StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
               DgraphStub localStub = client.getStubWithJwt(stub);
-              localStub.query(request, bridge);
+              localStub.query(requestStartTs, bridge);
 
               return bridge
                   .getDelegate()
                   .thenApply(
                       (response) -> {
-                        if (request.getCommitNow()) {
+                        if (requestStartTs.getCommitNow()) {
                           finished = true;
                         }
                         mergeContext(response.getTxn());
