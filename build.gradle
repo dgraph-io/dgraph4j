@@ -36,12 +36,12 @@ apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'idea'
 apply plugin: 'com.github.sherter.google-java-format'
-apply plugin: 'maven-publish'
+apply plugin: 'maven'
 apply plugin: 'signing'
 
 group = 'io.dgraph'
 archivesBaseName = 'dgraph4j'
-version = '2.1.0'
+version = '20.03.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -196,83 +196,37 @@ if(project.hasProperty("ossrhUsername")) {
     sign configurations.archives
   }
 
-  publishing {
-    publications {
-      mavenJava(MavenPublication) {
-        customizePom(pom)
-        groupId 'io.dgraph'
-        artifactId 'dgraph4j'
-        version "${dgraph4jVersion}"
-
-        from components.java
-
-        pom.withXml {
-          def pomFile = file("${project.buildDir}/generated-pom.xml")
-          writeTo(pomFile)
-          def pomAscFile = signing.sign(pomFile).signatureFiles[0]
-          artifact(pomAscFile) {
-            classifier = null
-            extension = 'pom.asc'
-          }
-        }
-
-        artifact(sourceJar) {
-            classifier = 'sources'
-        }
-
-        artifact(javadocJar) {
-          classifier = 'javadoc'
-        }
-
-        // create the signed artifacts
-        project.tasks.signArchives.signatureFiles.each {
-          artifact(it) {
-            def matcher = it.file =~ /-(sources|javadoc)\.jar\.asc$/
-              if (matcher.find()) {
-                classifier = matcher.group(1)
-              } else {
-                classifier = null
-              }
-            extension = 'jar.asc'
-          }
-        }
-      }
-    }
+  uploadArchives {
     repositories {
-      maven {
-        url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
-        credentials {
-          username ossrhUsername
-          password ossrhPassword
+      mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+          authentication(userName: ossrhUsername, password: ossrhPassword)
         }
-      }
-    }
-  }
-}
 
-def customizePom(pom) {
-    pom.withXml {
-        def root = asNode()
+        snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+          authentication(userName: ossrhUsername, password: ossrhPassword)
+        }
 
-        // add all items necessary for maven central publication
-        root.children().last() + {
-            resolveStrategy = Closure.DELEGATE_FIRST
-
-            description 'Dgraph Java Client'
-            name 'dgraph4'
-            url 'https://github.com/dgraph-io/dgraph4'
-            licenses {
-                license {
-                    name 'Apache License 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
-                }
-            }
+        pom.project {
+          name 'dgraph4j'
+          packaging 'jar'
+          artifactId 'dgraph4j'
+          description 'Dgraph Java Client'
+          url 'https://github.com/dgraph-io/dgraph4j'
 
           scm {
             connection 'https://github.com/dgraph-io/dgraph4j.git'
-              url 'https://github.com/dgraph-io/dgraph4j'
+            url 'https://github.com/dgraph-io/dgraph4j'
+          }
 
+          licenses {
+            license {
+              name 'Apache License 2.0'
+              url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+              distribution 'repo'
+            }
           }
 
           developers {
@@ -281,19 +235,11 @@ def customizePom(pom) {
             }
           }
         }
-    }
-    model {
-      tasks.generatePomFileForMavenJavaPublication {
-        destination = file("$buildDir/generated-pom.xml")
-      }
-      tasks.publishMavenJavaPublicationToMavenLocal {
-        dependsOn project.tasks.signArchives
-      }
-      tasks.publishMavenJavaPublicationToMavenRepository {
-        dependsOn project.tasks.signArchives
       }
     }
+  }
 }
+
 
 task version() {
     doLast {
