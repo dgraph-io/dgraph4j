@@ -254,7 +254,7 @@ person.name = "Alice";
 
 // Serialize it
 Gson gson = new Gson();
-String json = gson.toJson(p);
+String json = gson.toJson(person);
 // Run mutation
 Mutation mu = Mutation.newBuilder()
     .setSetJson(ByteString.copyFromUtf8(json.toString()))
