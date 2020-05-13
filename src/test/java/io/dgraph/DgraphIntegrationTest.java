@@ -15,12 +15,15 @@
  */
 package io.dgraph;
 
-import static org.testng.Assert.fail;
-
 import io.dgraph.DgraphProto.Operation;
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
+import io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.NettyChannelBuilder;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import java.io.File;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
@@ -31,52 +34,18 @@ public abstract class DgraphIntegrationTest {
   static final String TEST_HOSTNAME = "localhost";
   static final int TEST_PORT = 9180;
   protected static DgraphClient dgraphClient;
-  private static ManagedChannel channel1, channel2, channel3;
+  private static ManagedChannel channel1;
 
   @BeforeClass
-  public static void beforeClass() throws InterruptedException {
-    channel1 = ManagedChannelBuilder.forAddress("localhost", 9180).usePlaintext().build();
+  public static void beforeClass() throws InterruptedException, SSLException {
+    SslContextBuilder builder = GrpcSslContexts.forClient();
+    builder.trustManager(new File("/home/dmai/dgraph/tls/ca.crt"));
+    SslContext sslContext = builder.build();
+
+    channel1 = NettyChannelBuilder.forAddress("localhost", 9180).sslContext(sslContext).build();
     DgraphGrpc.DgraphStub stub1 = DgraphGrpc.newStub(channel1);
 
-    channel2 = ManagedChannelBuilder.forAddress("localhost", 9182).usePlaintext().build();
-    DgraphGrpc.DgraphStub stub2 = DgraphGrpc.newStub(channel2);
-
-    channel3 = ManagedChannelBuilder.forAddress("localhost", 9183).usePlaintext().build();
-    DgraphGrpc.DgraphStub stub3 = DgraphGrpc.newStub(channel3);
-
-    dgraphClient = new DgraphClient(stub1, stub2, stub3);
-
-    boolean succeed = false;
-    boolean retry;
-    do {
-      retry = false;
-
-      try {
-        // since the cluster is run with ACL turned on by default,
-        // we need to login as groot to perform arbitrary operations
-        dgraphClient.login("groot", "password");
-        succeed = true;
-      } catch (RuntimeException e) {
-        // check if the error can be retried
-        Throwable exception = e;
-        while (exception != null) {
-          if (exception.getMessage().contains("Please retry")) {
-            retry = true;
-            break;
-          }
-          exception = exception.getCause();
-        }
-      }
-
-      if (retry) {
-        System.out.println("Received error, will retry after 1s");
-        Thread.sleep(1000);
-      }
-    } while (retry);
-
-    if (!succeed) {
-      fail("Unable to perform the DropAll operation");
-    }
+    dgraphClient = new DgraphClient(stub1);
 
     // clean up database
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
@@ -85,7 +54,5 @@ public abstract class DgraphIntegrationTest {
   @AfterClass
   public static void afterClass() throws InterruptedException {
     channel1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    channel2.shutdown().awaitTermination(5, TimeUnit.SECONDS);
-    channel3.shutdown().awaitTermination(5, TimeUnit.SECONDS);
   }
 }
