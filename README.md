@@ -76,7 +76,7 @@ use a different version of this client.
  will require you to add the following dependency in your app with correct version for the 
  corresponding `grpc-netty` version used by `dgraph4j`. You can find out the correct version of 
  the dependency to use from the version combination table in [this section] in `grpc-netty` docs.
- <br>
+  
   For maven:
   
   ```xml
