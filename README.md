@@ -68,7 +68,7 @@ use a different version of this client.
 |     1.0.X      |       1.X.X       |     1.9.X    |
 |    >= 1.1.0    |       2.X.X       |     1.9.X    |
 
-##### Note regarding Java 1.8.x support:
+#### Note regarding Java 1.8.x support:
 * If you aren't using gRPC with TLS, then the above version table will work for you with Java
  1.8.x too.
 * If you're using gRPC with TLS on Java 1.8.x, then you will need to follow gRPC docs [here
@@ -93,7 +93,7 @@ use a different version of this client.
   compile 'io.netty:netty-tcnative-boringssl-static:<See table in gRPC docs for correct version>'
   ```
   
-  The following table lists the `grpc-netty` versions used by different `dgraph4j` versions over time:
+  The following table lists the `grpc-netty` versions used by different `dgraph4j` versions over time, along with the supported versions of `netty-tcnative-boringssl-static` for the corresponding `grpc-netty` version:
   
   | dgraph4j version  | grpc-netty version | netty-tcnative-boringssl-static version |
   |:-----------------:|:------------------:|:---------------------------------------:|
