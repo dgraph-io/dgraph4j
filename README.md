@@ -68,6 +68,48 @@ use a different version of this client.
 |     1.0.X      |       1.X.X       |     1.9.X    |
 |    >= 1.1.0    |       2.X.X       |     1.9.X    |
 
+#### Note regarding Java 1.8.x support:
+* If you aren't using gRPC with TLS, then the above version table will work for you with Java
+ 1.8.x too.
+* If you're using gRPC with TLS on Java 1.8.x, then you will need to follow gRPC docs [here
+](https://github.com/grpc/grpc-java/blob/master/SECURITY.md#tls-on-non-android). Basically, it
+ will require you to add the following dependency in your app with correct version for the 
+ corresponding `grpc-netty` version used by `dgraph4j`. You can find out the correct version of 
+ the dependency to use from the version combination table in [this section] in `grpc-netty` docs.
+  
+  For maven:
+  
+  ```xml
+  <dependency>
+    <groupId>io.netty</groupId>
+    <artifactId>netty-tcnative-boringssl-static</artifactId>
+    <version><!-- See table in gRPC docs for correct version --></version>
+  </dependency>
+  ```
+  
+  For Gradle:
+  
+  ```groovy
+  compile 'io.netty:netty-tcnative-boringssl-static:<See table in gRPC docs for correct version>'
+  ```
+  
+  The following table lists the `grpc-netty` versions used by different `dgraph4j` versions over time, along with the supported versions of `netty-tcnative-boringssl-static` for the corresponding `grpc-netty` version:
+  
+  | dgraph4j version  | grpc-netty version | netty-tcnative-boringssl-static version |
+  |:-----------------:|:------------------:|:---------------------------------------:|
+  |    1.0.0-1.2.0    |        1.7.0       |               2.0.6.Final               |
+  |    1.4.0-1.6.0    |        1.10.0      |               2.0.7.Final               |
+  |       1.7.0       |        1.15.0      |               2.0.12.Final              |
+  |    1.7.3-1.7.5    |        1.15.1      |               2.0.12.Final              |
+  |    2.0.0-2.1.0    |        1.22.1      |               2.0.25.Final              |
+  |      20.03.0      |        1.26.0      |               2.0.26.Final              |
+  
+  So, for example, if you were using `dgraph4j v20.03.0`, then you would need to use `2.0.26-Final` 
+  as the version for `netty-tcnative-boringssl-static` dependency as suggested by gRPC docs for 
+  `grpc-netty v1.26.0`.
+
+[this section]: https://github.com/grpc/grpc-java/blob/master/SECURITY.md#netty
+
 ## Quickstart
 Build and run the [DgraphJavaSample] project in the `samples` folder, which
 contains an end-to-end example of using the Dgraph Java client. Follow the
