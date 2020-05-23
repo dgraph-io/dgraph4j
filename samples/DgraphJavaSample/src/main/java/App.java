@@ -21,7 +21,7 @@ public class App {
 
   private static DgraphClient createDgraphClient(boolean withAuthHeader) {
     ManagedChannel channel =
-        ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext(true).build();
+        ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext().build();
     DgraphStub stub = DgraphGrpc.newStub(channel);
 
     if (withAuthHeader) {
