@@ -19,6 +19,7 @@ import static java.util.Arrays.asList;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.dgraph.DgraphProto.Payload;
+import io.dgraph.DgraphProto.TxnContext;
 import io.grpc.Context;
 import io.grpc.Metadata;
 import io.grpc.Status;
@@ -271,6 +272,27 @@ public class DgraphAsyncClient {
   }
 
   /**
+   * Creates a new AsyncTransaction object from a TxnContext. All operations performed by this
+   * transaction are asynchronous.
+   *
+   * <p>A transaction lifecycle is as follows:
+   *
+   * <p>- Created using AsyncTransaction#newTransaction()
+   *
+   * <p>- Various AsyncTransaction#query() and AsyncTransaction#mutate() calls made.
+   *
+   * <p>- Commit using AsyncTransacation#commit() or Discard using AsyncTransaction#discard(). If
+   * any mutations have been made, It's important that at least one of these methods is called to
+   * clean up resources. Discard is a no-op if Commit has already been called, so it's safe to call
+   * it after Commit.
+   *
+   * @return a new AsyncTransaction object.
+   */
+  public AsyncTransaction newTransaction(TxnContext context) {
+    return new AsyncTransaction(this, this.anyClient(), context);
+  }
+
+  /**
    * Creates a new AsyncTransaction object that only allows queries. Any AsyncTransaction#mutate()
    * or AsyncTransaction#commit() call made to the read only transaction will result in
    * TxnReadOnlyException. All operations performed by this transaction are asynchronous.
@@ -279,5 +301,17 @@ public class DgraphAsyncClient {
    */
   public AsyncTransaction newReadOnlyTransaction() {
     return new AsyncTransaction(this, this.anyClient(), true);
+  }
+
+  /**
+   * Creates a new AsyncTransaction object from a TnxContext that only allows queries. Any
+   * AsyncTransaction#mutate() or AsyncTransaction#commit() call made to the read only transaction
+   * will result in TxnReadOnlyException. All operations performed by this transaction are
+   * asynchronous.
+   *
+   * @return a new AsyncTransaction object
+   */
+  public AsyncTransaction newReadOnlyTransaction(TxnContext context) {
+    return new AsyncTransaction(this, this.anyClient(), context, true);
   }
 }

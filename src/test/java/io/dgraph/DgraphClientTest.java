@@ -24,6 +24,7 @@ import com.google.protobuf.ByteString;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
+import io.dgraph.DgraphProto.TxnContext;
 import java.util.Collections;
 import java.util.Map;
 import org.testng.annotations.BeforeMethod;
@@ -96,6 +97,24 @@ public class DgraphClientTest extends DgraphIntegrationTest {
       jsonData = parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
       assertEquals(jsonData.getAsJsonArray("find_bob").size(), 0);
       txn.commit();
+    }
+  }
+
+  @Test
+  public void testNewTransactionFromContext() {
+    TxnContext ctx = TxnContext.newBuilder().setStartTs(1234L).build();
+    try (Transaction txn = dgraphClient.newTransaction(ctx)) {
+      Response response = txn.query("{ result(func: uid(0x0)) { } }");
+      assertEquals(response.getTxn().getStartTs(), 1234L);
+    }
+  }
+
+  @Test
+  public void testNewReadOnlyTransactionFromContext() {
+    TxnContext ctx = TxnContext.newBuilder().setStartTs(1234L).build();
+    try (Transaction txn = dgraphClient.newReadOnlyTransaction(ctx)) {
+      Response response = txn.query("{ result(func: uid(0x0)) { } }");
+      assertEquals(response.getTxn().getStartTs(), 1234L);
     }
   }
 

@@ -105,6 +105,24 @@ public class DgraphAsyncClientTest {
     }
   }
 
+  @Test
+  public void testNewTransactionFromContext() throws Exception {
+    DgraphProto.TxnContext ctx = DgraphProto.TxnContext.newBuilder().setStartTs(1234L).build();
+    try (AsyncTransaction txn = dgraphAsyncClient.newTransaction(ctx)) {
+      Response response = txn.query("{ result(func: uid(0x0)) { } }").get();
+      assertEquals(response.getTxn().getStartTs(), 1234L);
+    }
+  }
+
+  @Test
+  public void testNewReadOnlyTransactionFromContext() throws Exception {
+    DgraphProto.TxnContext ctx = DgraphProto.TxnContext.newBuilder().setStartTs(1234L).build();
+    try (AsyncTransaction txn = dgraphAsyncClient.newReadOnlyTransaction(ctx)) {
+      Response response = txn.query("{ result(func: uid(0x0)) { } }").get();
+      assertEquals(response.getTxn().getStartTs(), 1234L);
+    }
+  }
+
   @Test(expectedExceptions = TxnReadOnlyException.class)
   public void testMutationsInReadOnlyTransactions() {
     try (AsyncTransaction txn = dgraphAsyncClient.newReadOnlyTransaction()) {

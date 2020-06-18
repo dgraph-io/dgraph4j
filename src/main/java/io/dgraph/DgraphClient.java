@@ -16,6 +16,7 @@
 package io.dgraph;
 
 import io.dgraph.DgraphProto.Operation;
+import io.dgraph.DgraphProto.TxnContext;
 
 /**
  * Implementation of a DgraphClient using grpc.
@@ -63,6 +64,27 @@ public class DgraphClient {
   }
 
   /**
+   * Creates a new Transaction object from a TxnContext. All operations performed by this
+   * transaction are synchronous.
+   *
+   * <p>A transaction lifecycle is as follows:
+   *
+   * <p>- Created using AsyncTransaction#newTransaction()
+   *
+   * <p>- Various AsyncTransaction#query() and AsyncTransaction#mutate() calls made.
+   *
+   * <p>- Commit using Transacation#commit() or Discard using AsyncTransaction#discard(). If any
+   * mutations have been made, It's important that at least one of these methods is called to clean
+   * up resources. Discard is a no-op if Commit has already been called, so it's safe to call it
+   * after Commit.
+   *
+   * @return a new Transaction object.
+   */
+  public Transaction newTransaction(TxnContext context) {
+    return new Transaction(asyncClient.newTransaction(context));
+  }
+
+  /**
    * Creates a new AsyncTransaction object that only allows queries. Any Transaction#mutate() or
    * Transaction#commit() call made to the read only transaction will result in
    * TxnReadOnlyException. All operations performed by this transaction are synchronous.
@@ -71,6 +93,17 @@ public class DgraphClient {
    */
   public Transaction newReadOnlyTransaction() {
     return new Transaction(asyncClient.newReadOnlyTransaction());
+  }
+
+  /**
+   * Creates a new AsyncTransaction object from a TnxContext that only allows queries. Any
+   * Transaction#mutate() or Transaction#commit() call made to the read only transaction will result
+   * in TxnReadOnlyException. All operations performed by this transaction are synchronous.
+   *
+   * @return a new AsyncTransaction object
+   */
+  public Transaction newReadOnlyTransaction(TxnContext context) {
+    return new Transaction(asyncClient.newReadOnlyTransaction(context));
   }
 
   /**
