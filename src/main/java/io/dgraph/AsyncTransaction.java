@@ -52,6 +52,11 @@ public class AsyncTransaction implements AutoCloseable {
     this.bestEffort = false;
   }
 
+  AsyncTransaction(DgraphAsyncClient client, DgraphStub stub, final boolean readOnly) {
+    this(client, stub);
+    this.readOnly = readOnly;
+  }
+
   AsyncTransaction(DgraphAsyncClient client, DgraphStub stub, TxnContext context) {
     this(client, stub);
     this.context = context;
@@ -61,11 +66,6 @@ public class AsyncTransaction implements AutoCloseable {
       DgraphAsyncClient client, DgraphStub stub, TxnContext context, final boolean readOnly) {
     this(client, stub, context);
     this.context = context;
-    this.readOnly = readOnly;
-  }
-
-  AsyncTransaction(DgraphAsyncClient client, DgraphStub stub, final boolean readOnly) {
-    this(client, stub);
     this.readOnly = readOnly;
   }
 

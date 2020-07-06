@@ -109,7 +109,7 @@ public class DgraphAsyncClientTest {
   public void testNewTransactionFromContext() throws Exception {
     DgraphProto.TxnContext ctx = DgraphProto.TxnContext.newBuilder().setStartTs(1234L).build();
     try (AsyncTransaction txn = dgraphAsyncClient.newTransaction(ctx)) {
-      Response response = txn.query("{ result(func: uid(0x0)) { } }").get();
+      Response response = txn.query("{ result(func: uid(0x1)) { } }").join();
       assertEquals(response.getTxn().getStartTs(), 1234L);
     }
   }
@@ -118,7 +118,7 @@ public class DgraphAsyncClientTest {
   public void testNewReadOnlyTransactionFromContext() throws Exception {
     DgraphProto.TxnContext ctx = DgraphProto.TxnContext.newBuilder().setStartTs(1234L).build();
     try (AsyncTransaction txn = dgraphAsyncClient.newReadOnlyTransaction(ctx)) {
-      Response response = txn.query("{ result(func: uid(0x0)) { } }").get();
+      Response response = txn.query("{ result(func: uid(0x1)) { } }").join();
       assertEquals(response.getTxn().getStartTs(), 1234L);
     }
   }
