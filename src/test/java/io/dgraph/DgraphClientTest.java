@@ -104,7 +104,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   public void testNewTransactionFromContext() {
     TxnContext ctx = TxnContext.newBuilder().setStartTs(1234L).build();
     try (Transaction txn = dgraphClient.newTransaction(ctx)) {
-      Response response = txn.query("{ result(func: uid(0x0)) { } }");
+      Response response = txn.query("{ result(func: uid(0x1)) { } }");
       assertEquals(response.getTxn().getStartTs(), 1234L);
     }
   }
@@ -113,7 +113,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   public void testNewReadOnlyTransactionFromContext() {
     TxnContext ctx = TxnContext.newBuilder().setStartTs(1234L).build();
     try (Transaction txn = dgraphClient.newReadOnlyTransaction(ctx)) {
-      Response response = txn.query("{ result(func: uid(0x0)) { } }");
+      Response response = txn.query("{ result(func: uid(0x1)) { } }");
       assertEquals(response.getTxn().getStartTs(), 1234L);
     }
   }
