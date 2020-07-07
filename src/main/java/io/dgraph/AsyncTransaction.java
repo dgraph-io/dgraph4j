@@ -57,6 +57,18 @@ public class AsyncTransaction implements AutoCloseable {
     this.readOnly = readOnly;
   }
 
+  AsyncTransaction(DgraphAsyncClient client, DgraphStub stub, TxnContext context) {
+    this(client, stub);
+    this.context = context;
+  }
+
+  AsyncTransaction(
+      DgraphAsyncClient client, DgraphStub stub, TxnContext context, final boolean readOnly) {
+    this(client, stub, context);
+    this.context = context;
+    this.readOnly = readOnly;
+  }
+
   /**
    * Sends a query to one of the connected dgraph instances. If no mutations need to be made in the
    * same transaction, it's convenient to chain the method: <code>
