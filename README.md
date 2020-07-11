@@ -16,6 +16,8 @@ and understand how to run and work with Dgraph.
 
 [docs.dgraph.io]:https://docs.dgraph.io
 
+**Use [Discuss Issues](https://discuss.dgraph.io/c/issues/35) for reporting issues about this repository.**
+
 ## Table of Contents
 - [Download](#download)
 - [Supported Versions](#supported-versions)
