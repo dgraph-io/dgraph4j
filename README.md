@@ -216,7 +216,7 @@ Operation op = Operation.newBuilder()
         .setSchema(schema)
         .setRunInBackground(true)
         .build();
-dgraphClient.alter(operation);
+dgraphClient.alter(op);
 ```
 
 `Operation` contains other fields as well, including drop predicate and
