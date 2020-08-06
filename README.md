@@ -188,6 +188,18 @@ DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
 DgraphClient dgraphClient = new DgraphClient(stub);
 ```
 
+### Check Dgraph version
+
+Checking the version of Dgraph server the client is interacting with is as easy as:
+```java
+Version v = dgraphClient.checkVersion();
+System.out.println(v.getTag());
+```
+Checking the version, before doing anything else can be used as a test to find out if the client
+is able to communicate with the Dgraph server. This will also help reduce the latency of the first
+query/mutation which results from some dynamic library loading and linking that happens in JVM
+(see [this issue](https://github.com/dgraph-io/dgraph4j/issues/108) for more details).
+
 ### Login Using ACL
 
 ```java
