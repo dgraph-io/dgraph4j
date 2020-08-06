@@ -17,6 +17,7 @@ package io.dgraph;
 
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.TxnContext;
+import io.dgraph.DgraphProto.Version;
 
 /**
  * Implementation of a DgraphClient using grpc.
@@ -123,6 +124,16 @@ public class DgraphClient {
         () -> {
           asyncClient.alter(op).join();
         });
+  }
+
+  /**
+   * checkVersion can be used to find out the version of the Dgraph instance this client is
+   * interacting with.
+   *
+   * @return A Version object which represents the version of Dgraph instance.
+   * */
+  public Version checkVersion() {
+    return asyncClient.checkVersion().join();
   }
 
   /**

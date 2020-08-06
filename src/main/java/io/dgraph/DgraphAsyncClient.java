@@ -20,6 +20,7 @@ import static java.util.Arrays.asList;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.dgraph.DgraphProto.Payload;
 import io.dgraph.DgraphProto.TxnContext;
+import io.dgraph.DgraphProto.Version;
 import io.grpc.Context;
 import io.grpc.Metadata;
 import io.grpc.Status;
@@ -240,6 +241,27 @@ public class DgraphAsyncClient {
           StreamObserverBridge<Payload> observerBridge = new StreamObserverBridge<>();
           DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
           localStub.alter(op, observerBridge);
+          return observerBridge.getDelegate();
+        });
+  }
+
+  /**
+   * checkVersion can be used to find out the version of the Dgraph instance this client is
+   * interacting with.
+   *
+   * @return A CompletableFuture containing the Version object which represents the version of
+   * Dgraph instance.
+   * */
+  public CompletableFuture<Version> checkVersion() {
+    final DgraphGrpc.DgraphStub stub = anyClient();
+    final DgraphProto.Check checkRequest = DgraphProto.Check.newBuilder().build();
+
+    return runWithRetries(
+        "checkVersion",
+        () -> {
+          StreamObserverBridge<Version> observerBridge = new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.checkVersion(checkRequest, observerBridge);
           return observerBridge.getDelegate();
         });
   }
