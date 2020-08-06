@@ -26,6 +26,7 @@ and understand how to run and work with Dgraph.
 - [Using the Synchronous Client](#using-the-synchronous-client)
   * [Creating a Client](#creating-a-client)
   * [Creating a Secure Client Using TLS](#creating-a-secure-client-using-tls)
+  * [Check Dgraph Version](#check-dgraph-version)
   * [Login Using ACL](#login-using-acl)
   * [Altering the Database](#altering-the-database)
   * [Creating a Transaction](#creating-a-transaction)
@@ -190,7 +191,7 @@ DgraphClient dgraphClient = new DgraphClient(stub);
 
 ### Check Dgraph version
 
-Checking the version of Dgraph server the client is interacting with is as easy as:
+Checking the version of the Dgraph server this client is interacting with is as easy as:
 ```java
 Version v = dgraphClient.checkVersion();
 System.out.println(v.getTag());
