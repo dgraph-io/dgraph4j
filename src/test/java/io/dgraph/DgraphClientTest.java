@@ -143,4 +143,11 @@ public class DgraphClientTest extends DgraphIntegrationTest {
       txn.mutate(mu);
     }
   }
+
+  @Test
+  public void testCheckVersion() {
+    DgraphProto.Version v = dgraphClient.checkVersion();
+    assertTrue(v.getTag().length() > 0);
+    assertEquals(v.getTag().charAt(0), 'v');
+  }
 }

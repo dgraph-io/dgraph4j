@@ -15,8 +15,7 @@
  */
 package io.dgraph;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -162,5 +161,12 @@ public class DgraphAsyncClientTest {
     assertTrue(jsonData.has("me"));
     String name = jsonData.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
     assertEquals(name, "Alice");
+  }
+
+  @Test
+  public void testCheckVersion() {
+    DgraphProto.Version v = dgraphAsyncClient.checkVersion().join();
+    assertTrue(v.getTag().length() > 0);
+    assertEquals(v.getTag().charAt(0), 'v');
   }
 }

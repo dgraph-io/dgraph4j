@@ -26,6 +26,7 @@ and understand how to run and work with Dgraph.
 - [Using the Synchronous Client](#using-the-synchronous-client)
   * [Creating a Client](#creating-a-client)
   * [Creating a Secure Client Using TLS](#creating-a-secure-client-using-tls)
+  * [Check Dgraph Version](#check-dgraph-version)
   * [Login Using ACL](#login-using-acl)
   * [Altering the Database](#altering-the-database)
   * [Creating a Transaction](#creating-a-transaction)
@@ -187,6 +188,18 @@ ManagedChannel channel = NettyChannelBuilder.forAddress("localhost", 9080)
 DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
 DgraphClient dgraphClient = new DgraphClient(stub);
 ```
+
+### Check Dgraph version
+
+Checking the version of the Dgraph server this client is interacting with is as easy as:
+```java
+Version v = dgraphClient.checkVersion();
+System.out.println(v.getTag());
+```
+Checking the version, before doing anything else can be used as a test to find out if the client
+is able to communicate with the Dgraph server. This will also help reduce the latency of the first
+query/mutation which results from some dynamic library loading and linking that happens in JVM
+(see [this issue](https://github.com/dgraph-io/dgraph4j/issues/108) for more details).
 
 ### Login Using ACL
 
