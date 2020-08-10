@@ -26,6 +26,7 @@ ossrhPassword=<…password…>
 ### Deploying
 * Build and test the code that needs to be published.
 * Bump version by modifying the `version` variable in `build.gradle` file.
+* Update download version in README for both Maven and Gradle.
 * Run `./gradlew uploadArchives`.
 * Release the deployment by following the steps on the page _Releasing the Deployment_ (link in references below).
 

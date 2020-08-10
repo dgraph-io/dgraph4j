@@ -250,8 +250,8 @@ public class DgraphAsyncClient {
    * interacting with.
    *
    * @return A CompletableFuture containing the Version object which represents the version of
-   * Dgraph instance.
-   * */
+   *     Dgraph instance.
+   */
   public CompletableFuture<Version> checkVersion() {
     final DgraphGrpc.DgraphStub stub = anyClient();
     final DgraphProto.Check checkRequest = DgraphProto.Check.newBuilder().build();
