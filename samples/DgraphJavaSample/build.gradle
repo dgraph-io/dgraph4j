@@ -17,7 +17,7 @@ repositories {
 
 dependencies {
  	// Use Dgraph Java client
-    compile 'io.dgraph:dgraph4j:20.07.0'
+    compile 'io.dgraph:dgraph4j:20.03.1'
 
     // Use JUnit test framework
     testCompile 'junit:junit:4.12'
