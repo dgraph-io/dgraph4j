@@ -131,7 +131,7 @@ public class DgraphClient {
    * interacting with.
    *
    * @return A Version object which represents the version of Dgraph instance.
-   * */
+   */
   public Version checkVersion() {
     return asyncClient.checkVersion().join();
   }
