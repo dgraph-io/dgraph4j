@@ -7,6 +7,9 @@ public class Person {
   String externalid = "";
   int clickCount = 0;
 
+  /*
+   * Empty constructor
+   */
   public Person() {
   }
 }

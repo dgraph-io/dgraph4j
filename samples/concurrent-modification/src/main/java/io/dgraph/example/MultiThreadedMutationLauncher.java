@@ -17,30 +17,36 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
 public class MultiThreadedMutationLauncher {
-
-	DgraphClient dgraphClient = null;
+	private static final String HOST="localhost";
+	private static final int PORT=9080;
+	private DgraphClient dgraphClient = null;
 
 	public static void main(String[] args) {
-
-		System.out.println("in main");
-
 		new MultiThreadedMutationLauncher().doProcess();
-
 	}
 
+	/*
+	 * Initialize Dgraph client in the constructor
+	 */
 	public MultiThreadedMutationLauncher() {
-		//
-		ManagedChannel channel1 = ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext().build();
+		//initialize client
+		ManagedChannel channel1 = ManagedChannelBuilder.forAddress(HOST, PORT).usePlaintext().build();
 		DgraphStub stub1 = DgraphGrpc.newStub(channel1);
-		//
 		dgraphClient = new DgraphClient(stub1);
 	}
 
+	/*
+	 * Sequence of processing steps in this example
+	 */
 	private void doProcess() {
+		//drops schema and data
 		dropAll();
+		//create a new schema
 		createSchema();
+		//initialize "Alice" with a clickCount of 1
 		doSetupTransaction();
-		//
+
+		// fire concurrent mutations
 		doQueryAndMutation();
 
 	}
@@ -52,57 +58,52 @@ public class MultiThreadedMutationLauncher {
 			MultiThreadedMutation mtMutation=new MultiThreadedMutation(dgraphClient);
 			mutations.add(mtMutation);
 		}
-		
-		//launch threads		
+
+		//launch threads
 		for(MultiThreadedMutation mutation:mutations) {
 			Thread t=new Thread(mutation);
 			t.start();
 		}
-		
+
 	}
 
+	/*
+	 * Initialize a user "Alice" and "clickCount" attribute
+	 */
 	private void doSetupTransaction() {
 		Transaction txn = dgraphClient.newTransaction();
 		Gson gson = new Gson();
 		try {
-			// Create data
+			// Create Alice with a clickCount of 1
 			Person personAlice = new Person();
 			personAlice.name = "Alice";
 			personAlice.clickCount = 1;
-			//
-			Person personJohn = new Person();
-			personJohn.name = "John";
-			personJohn.clickCount = 1;
 
 			String json = gson.toJson(personAlice);
-			Mutation mu = Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(json.toString())).build();		
+			Mutation mu = Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(json.toString())).build();
 			txn.mutate(mu);
-			
-			json = gson.toJson(personJohn);
-			Mutation mu1 = Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(json.toString())).build();		
-			txn.mutate(mu1);
-			
 			txn.commit();
-			
+
 		} catch (TxnConflictException ex) {
 			System.out.println(ex);
 		} finally {
-			// Clean up. Calling this after txn.commit() is a no-op
-			// and hence safe.
 			txn.discard();
 		}
-
-
 	}
-	
+
+	/*
+	 * The schema for this example
+	 */
 	private void createSchema() {
 		String schema = "name: string @index(exact) .\n " + "email: string @index(exact) .\n"
-	            + "clickCount: int  .\n"; 
-				
+				+ "clickCount: int  .\n";
+
 		Operation operation = Operation.newBuilder().setSchema(schema).setRunInBackground(true).build();
 		dgraphClient.alter(operation);
 	}
-
+	/*
+	 * Drop schema and data in the Dgraph instance
+	 */
 	private void dropAll() {
 		dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
 		System.out.println("existing schema dropped");

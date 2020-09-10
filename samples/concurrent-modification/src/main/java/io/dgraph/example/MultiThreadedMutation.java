@@ -12,13 +12,16 @@ import java.util.Collections;
 import java.util.Map;
 
 public class MultiThreadedMutation implements Runnable {
+	// maximum retries
+	static final int MAX_RETRY_COUNT = 5;
 	static Integer globalThreadNumberCount = 1;
 	int threadNumber = 0;
+	//
 	private DgraphClient dgraphClient;
 	private Transaction txn;
-	static final int MAX_RETRY_COUNT = 5;
 
 	public MultiThreadedMutation(DgraphClient dgraphClient) {
+		//assign a thread number
 		synchronized (globalThreadNumberCount) {
 			this.threadNumber = globalThreadNumberCount++;
 			this.dgraphClient = dgraphClient;
@@ -31,6 +34,7 @@ public class MultiThreadedMutation implements Runnable {
 		int retryCount = 0;
 		while (retryCount < MAX_RETRY_COUNT) {
 			try {
+				//fire the mutation and check for exceptions
 				doMutation();
 				successFlag = true;
 				System.out.println(System.currentTimeMillis() + " Thread #" + threadNumber + " succeeded after "
@@ -47,11 +51,12 @@ public class MultiThreadedMutation implements Runnable {
 				}
 				retryCount++;
 			} catch (Exception e) {
-				// No retryable exception
+				// cannot retry
 				e.printStackTrace();
 				break;
 			}
 		}
+		//check if maximum retries has been crossed
 		if (!successFlag && retryCount >= MAX_RETRY_COUNT) {
 			System.out.println(System.currentTimeMillis() + " Thread #" + threadNumber + " giving up transaction after "
 					+ (retryCount - 1) + " retries");
@@ -68,24 +73,21 @@ public class MultiThreadedMutation implements Runnable {
 		Map<String, String> vars = Collections.singletonMap("$a", "Alice");
 
 		Response response = dgraphClient.newReadOnlyTransaction().queryWithVars(query, vars);
-
-		// Deserialize
 		People ppl = gson.fromJson(response.getJson().toStringUtf8(), People.class);
+		//
 		for (Person person : ppl.all) {
 			System.out.println(System.currentTimeMillis() + " Thread #" + threadNumber
 					+ " increasing clickCount for uid" + person.uid + " ,Name: " + person.name);
-			// do mutation
+			//increment clickCount
 			person.clickCount = person.clickCount + 1;
 
 			try {
-
+				//find and update alice's clickCount in a transaction
 				String upsertQuery = "query {\n" + "user as var(func: eq(name, \"" + person.name + "\"))\n" + "}\n";
-
 				Mutation mu2 = Mutation.newBuilder()
 						.setSetNquads(ByteString.copyFromUtf8("uid(user) <clickCount> \"" + person.clickCount + "\" ."))
 						.build();
 
-//				System.out.println(mu2.toString() + " for key " + person.name);
 				Request request = Request.newBuilder().setQuery(upsertQuery).addMutations(mu2).setCommitNow(true)
 						.build();
 				txn.doRequest(request);
