@@ -1,4 +1,4 @@
-This example shows how to handle concurrent modifications using a multi-threaded Java Program.  The example demonstrates [transaction]("https://dgraph.io/docs/clients/overview/#transactions") conflicts in Dgraph.
+This example shows how to handle concurrent modifications using a multi-threaded Java Program.  The example demonstrates [transaction](https://dgraph.io/docs/clients/overview/#transactions) conflicts in Dgraph.
 
 [dgraph4j]:https://github.com/dgraph-io/dgraph4j
 
@@ -35,7 +35,7 @@ Step 4: The program also initializes user "Alice" with a 'clickCount' of value '
 ```
 Step 5: Please note that the final value of clickCount is 3 (initial value was 1), which is correct. 
 Query:
-```json
+```
 {
   Alice(func: has(<name>)) @filter(eq(name,"Alice" )) {        
     uid
