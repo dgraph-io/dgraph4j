@@ -95,8 +95,8 @@ public class MultiThreadedMutationLauncher {
 	 * The schema for this example
 	 */
 	private void createSchema() {
-		String schema = "name: string @index(exact) .\n " + "email: string @index(exact) .\n"
-				+ "clickCount: int  .\n";
+		String schema = "name: string @index(exact) .\n "
+				        + "clickCount: int  .\n";
 
 		Operation operation = Operation.newBuilder().setSchema(schema).setRunInBackground(true).build();
 		dgraphClient.alter(operation);

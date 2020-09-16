@@ -2,8 +2,8 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.dgraph</groupId>
-	<artifactId>conflict-runner</artifactId>
+	<groupId>io.dgraph</groupId>
+	<artifactId>concurrent-modification</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 	<build>
@@ -33,7 +33,7 @@
 		<dependency>
 			<groupId>io.dgraph</groupId>
 			<artifactId>dgraph4j</artifactId>
-			<version>20.03.0</version>
+			<version>20.03.1</version>
 		</dependency>
 	</dependencies>
 </project>

@@ -77,7 +77,7 @@ public class MultiThreadedMutation implements Runnable {
 		//
 		for (Person person : ppl.all) {
 			System.out.println(System.currentTimeMillis() + " Thread #" + threadNumber
-					+ " increasing clickCount for uid" + person.uid + " ,Name: " + person.name);
+					+ " increasing clickCount for uid " + person.uid + ", Name: " + person.name);
 			//increment clickCount
 			person.clickCount = person.clickCount + 1;
 
