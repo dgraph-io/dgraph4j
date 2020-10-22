@@ -154,6 +154,16 @@ DgraphStub stub3 = DgraphGrpc.newStub(channel3);
 DgraphClient dgraphClient = new DgraphClient(stub1, stub2, stub3);
 ```
 
+### Creating a Client for Slash Graphql Endpoint
+
+The following code snippet shows how to create a synchronous client using three connections.
+
+```java
+DgraphStub stub = DgraphClientStub.fromSlashEndpoint(channel1);
+
+DgraphClient dgraphClient = new DgraphClient(stub);
+```
+
 ### Creating a Secure Client using TLS
 
 To setup a client using TLS, you could use the following code snippet. The server needs to be
