@@ -1,11 +1,36 @@
+/*
+ * Copyright (C) 2018 Dgraph Labs, Inc. and Contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.dgraph;
 
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.stub.MetadataUtils;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 
+/**
+ * Implementation of a DgraphClientStub using grpc.
+ *
+ * Returns DgraphClientStub, that can be used to query/mutate Slash GraphQL endpoints
+ *
+ * Takes the Slash GraphQL Endpoint and and apiKey as input.
+ * 
+ * @author Neeraj Battan
+ */
 public class DgraphClientStub {
   public static DgraphGrpc.DgraphStub fromSlashEndpoint(String slashEndpoint, String apiKey)
       throws MalformedURLException {
