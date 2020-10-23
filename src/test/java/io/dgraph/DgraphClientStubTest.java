@@ -27,7 +27,7 @@ public class DgraphClientStubTest {
     public void testFromSlashEndpoint_ValidURL() {
         try {
             DgraphGrpc.DgraphStub stub =
-                    DgraphClientStub.fromSlashEndpoint(
+                    DgraphClient.clientStubFromSlashEndpoint(
                             "https://your-slash" + "-instance.cloud.dgraph.io/graphql", "");
         } catch (MalformedURLException e) {
             fail(e.getMessage());
@@ -37,7 +37,7 @@ public class DgraphClientStubTest {
     @Test
     public void testFromSlashEndpoint_InValidURL() {
         try {
-            DgraphGrpc.DgraphStub stub = DgraphClientStub.fromSlashEndpoint("https://a-bad-url", "");
+            DgraphGrpc.DgraphStub stub = DgraphClient.clientStubFromSlashEndpoint("https://a-bad-url", "");
             fail("Invalid Slash URL should not be accepted.");
         } catch (MalformedURLException e) {
         }
