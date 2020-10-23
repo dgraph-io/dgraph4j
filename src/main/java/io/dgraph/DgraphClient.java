@@ -19,6 +19,13 @@ import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.TxnContext;
 import io.dgraph.DgraphProto.Version;
 
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+
 /**
  * Implementation of a DgraphClient using grpc.
  *
@@ -27,10 +34,36 @@ import io.dgraph.DgraphProto.Version;
  * @author Edgar Rodriguez-Diaz
  * @author Deepak Jois
  * @author Michail Klimenkov
+ * @author Neeraj Battan
+ * @author Abhimanyu Singh Gaur
  */
 public class DgraphClient {
 
   private final DgraphAsyncClient asyncClient;
+
+  /**
+   * Implementation of a DgraphClientStub using grpc.
+   *
+   * <p>Returns DgraphClientStub, that can be used to query/mutate Slash GraphQL endpoints
+   *
+   * <p>Takes the Slash GraphQL Endpoint and and apiKey as input.
+   */
+  public static DgraphGrpc.DgraphStub clientStubFromSlashEndpoint(
+      String slashEndpoint, String apiKey) throws MalformedURLException {
+    URL url = new URL(slashEndpoint);
+    String[] parts = url.getHost().split("[.]", 2);
+    if (parts.length < 2) {
+      throw new MalformedURLException("Invalid Slash URL.");
+    }
+    String grpcAddress = parts[0] + ".grpc." + parts[1];
+
+    Metadata metadata = new Metadata();
+    metadata.put(Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER), apiKey);
+    return MetadataUtils.attachHeaders(
+        DgraphGrpc.newStub(
+            ManagedChannelBuilder.forAddress(grpcAddress, 443).useTransportSecurity().build()),
+        metadata);
+  }
 
   /**
    * Creates a new client for interacting with a Dgraph store.

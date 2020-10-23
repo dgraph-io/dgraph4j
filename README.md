@@ -160,7 +160,7 @@ DgraphClient dgraphClient = new DgraphClient(stub1, stub2, stub3);
 If you want to connect to Dgraph running on your [Slash GraphQL](https://slash.dgraph.io) instance, then all you need is the URL of your Slash GraphQL endpoint and the API key. You can get a client using them as follows :
 
 ```java
-DgraphStub stub = DgraphClientStub.fromSlashEndpoint("https://your-slash-instance.cloud.dgraph.io/graphql", "your-api-key");
+DgraphStub stub = DgraphClient.clientStubFromSlashEndpoint("https://your-slash-instance.cloud.dgraph.io/graphql", "your-api-key");
 DgraphClient dgraphClient = new DgraphClient(stub);
 ```
 
