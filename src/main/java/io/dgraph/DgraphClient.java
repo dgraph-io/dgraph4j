@@ -19,6 +19,13 @@ import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.TxnContext;
 import io.dgraph.DgraphProto.Version;
 
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+
 /**
  * Implementation of a DgraphClient using grpc.
  *
@@ -27,10 +34,38 @@ import io.dgraph.DgraphProto.Version;
  * @author Edgar Rodriguez-Diaz
  * @author Deepak Jois
  * @author Michail Klimenkov
+ * @author Neeraj Battan
+ * @author Abhimanyu Singh Gaur
  */
 public class DgraphClient {
+  private static final String gRPC_AUTHORIZATION_HEADER_NAME = "authorization";
 
   private final DgraphAsyncClient asyncClient;
+
+  /**
+   * Creates a gRPC stub that can be used to construct clients to connect with Slash GraphQL.
+   *
+   * @param slashEndpoint The url of the Slash GraphQL endpoint. Example:
+   *                      https://your-slash-instance.cloud.dgraph.io/graphql
+   * @param apiKey        The API key used to connect to your Slash GraphQL instance.
+   * @return A new DgraphGrpc.DgraphStub object to be used with DgraphClient/DgraphAsyncClient.
+   */
+  public static DgraphGrpc.DgraphStub clientStubFromSlashEndpoint(
+      String slashEndpoint, String apiKey) throws MalformedURLException {
+    String[] parts = new URL(slashEndpoint).getHost().split("[.]", 2);
+    if (parts.length < 2) {
+      throw new MalformedURLException("Invalid Slash URL.");
+    }
+    String gRPCAddress = parts[0] + ".grpc." + parts[1];
+
+    Metadata metadata = new Metadata();
+    metadata.put(Metadata.Key.of(gRPC_AUTHORIZATION_HEADER_NAME,
+        Metadata.ASCII_STRING_MARSHALLER), apiKey);
+    return MetadataUtils.attachHeaders(
+        DgraphGrpc.newStub(
+            ManagedChannelBuilder.forAddress(gRPCAddress, 443).useTransportSecurity().build()),
+        metadata);
+  }
 
   /**
    * Creates a new client for interacting with a Dgraph store.
@@ -38,7 +73,7 @@ public class DgraphClient {
    * <p>A single client is thread safe.
    *
    * @param stubs - an array of grpc stubs to be used by this client. The stubs to be used are
-   *     chosen at random per transaction.
+   *              chosen at random per transaction.
    */
   public DgraphClient(DgraphGrpc.DgraphStub... stubs) {
     this.asyncClient = new DgraphAsyncClient(stubs);
@@ -142,7 +177,7 @@ public class DgraphClient {
    * access JWT and a refresh JWT, which will be stored in the jwt field of this class, and used for
    * authorizing all subsequent requests sent to the server.
    *
-   * @param userid the id of the user who is trying to login, e.g. Alice
+   * @param userid   the id of the user who is trying to login, e.g. Alice
    * @param password the password of the user
    */
   public void login(String userid, String password) {
