@@ -29,6 +29,7 @@ import java.net.URL;
  *
  * Takes the Slash GraphQL Endpoint and and apiKey as input.
  * 
+ * @author Abhimanyu Singh Gaur
  * @author Neeraj Battan
  */
 public class DgraphClientStub {
