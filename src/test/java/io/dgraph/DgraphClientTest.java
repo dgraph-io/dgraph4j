@@ -15,6 +15,9 @@
  */
 package io.dgraph;
 
+import static org.testng.Assert.*;
+import static org.testng.Assert.fail;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.ByteString;
@@ -22,16 +25,11 @@ import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
 import io.dgraph.DgraphProto.TxnContext;
-
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.Map;
-
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import static org.testng.Assert.*;
-import static org.testng.Assert.fail;
 
 /**
  * @author Edgar Rodriguez-Diaz
@@ -157,8 +155,8 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   @Test
   public void testFromSlashEndpoint_ValidURL() {
     try {
-      DgraphClient.clientStubFromSlashEndpoint("https://your-slash-instance.cloud.dgraph" +
-          ".io/graphql", "");
+      DgraphClient.clientStubFromSlashEndpoint(
+          "https://your-slash-instance.cloud.dgraph.io/graphql", "");
     } catch (MalformedURLException e) {
       fail(e.getMessage());
     }

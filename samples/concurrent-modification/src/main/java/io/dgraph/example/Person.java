@@ -8,6 +8,5 @@ public class Person {
   /*
    * Empty constructor
    */
-  public Person() {
-  }
+  public Person() {}
 }
