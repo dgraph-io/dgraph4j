@@ -54,12 +54,12 @@ grab via Maven:
 <dependency>
   <groupId>io.dgraph</groupId>
   <artifactId>dgraph4j</artifactId>
-  <version>20.03.1</version>
+  <version>20.03.2</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'io.dgraph:dgraph4j:20.03.1'
+compile 'io.dgraph:dgraph4j:20.03.2'
 ```
 
 ## Supported Versions
@@ -106,7 +106,7 @@ use a different version of this client.
   |       1.7.0       |        1.15.0      |               2.0.12.Final              |
   |    1.7.3-1.7.5    |        1.15.1      |               2.0.12.Final              |
   |    2.0.0-2.1.0    |        1.22.1      |               2.0.25.Final              |
-  |      20.03.0      |        1.26.0      |               2.0.26.Final              |
+  |  20.03.0-20.03.2  |        1.26.0      |               2.0.26.Final              |
   
   So, for example, if you were using `dgraph4j v20.03.0`, then you would need to use `2.0.26-Final` 
   as the version for `netty-tcnative-boringssl-static` dependency as suggested by gRPC docs for 
