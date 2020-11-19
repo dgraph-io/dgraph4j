@@ -72,6 +72,34 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   }
 
   @Test
+  public void testTxnQueryRDFWithVariables() {
+    // Set schema
+    Operation op = Operation.newBuilder().setSchema("name: string @index(exact) @upsert .").build();
+    dgraphClient.alter(op);
+
+    // Add data
+    JsonObject data = new JsonObject();
+    data.addProperty("name", "Alice");
+
+    Mutation mu =
+        Mutation.newBuilder()
+            .setCommitNow(true)
+            .setSetJson(ByteString.copyFromUtf8(data.toString()))
+            .build();
+    Response muRes = dgraphClient.newTransaction().mutate(mu);
+
+    // Query
+    String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
+    Map<String, String> vars = Collections.singletonMap("$a", "Alice");
+    Response response = dgraphClient.newTransaction().queryRDFWithVars(query, vars);
+
+    // Verify data as expected
+    assertEquals(muRes.getUidsMap().values().size(), 1);
+    String uid = (String) muRes.getUidsMap().values().toArray()[0];
+    assertEquals(response.getRdf().toStringUtf8(), "<"+uid+"> <name> \"Alice\" .\n");
+  }
+
+  @Test
   public void testDelete() {
     try (Transaction txn = dgraphClient.newTransaction()) {
 

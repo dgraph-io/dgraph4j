@@ -74,8 +74,8 @@ public class AsyncTransaction implements AutoCloseable {
    * same transaction, it's convenient to chain the method: <code>
    * client.NewTransaction().queryWithVars(...)</code>.
    *
-   * @param query query in GraphQL+-
-   * @param vars GraphQL variables used in query
+   * @param query query in DQL
+   * @param vars DQL variables used in query
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> queryWithVars(
@@ -96,11 +96,46 @@ public class AsyncTransaction implements AutoCloseable {
   /**
    * Calls {@code Transcation#queryWithVars} with an empty vars map.
    *
-   * @param query query in GraphQL+-
+   * @param query query in DQL
    * @return a Response protocol buffer object
    */
   public CompletableFuture<Response> query(final String query) {
     return queryWithVars(query, Collections.emptyMap());
+  }
+
+  /**
+   * Sends a query to one of the connected dgraph instances and returns RDF response. If no
+   * mutations need to be made in the same transaction, it's convenient to chain the method: <code>
+   * client.NewTransaction().queryRDFWithVars(...)</code>.
+   *
+   * @param query query in DQL
+   * @param vars DQL variables used in query
+   * @return a Response protocol buffer object.
+   */
+  public CompletableFuture<Response> queryRDFWithVars(
+      final String query, final Map<String, String> vars) {
+
+    final Request request =
+        Request.newBuilder()
+            .setQuery(query)
+            .putAllVars(vars)
+            .setStartTs(context.getStartTs())
+            .setReadOnly(readOnly)
+            .setBestEffort(bestEffort)
+            .setRespFormat(Request.RespFormat.RDF)
+            .build();
+
+    return this.doRequest(request);
+  }
+
+  /**
+   * Calls {@code Transcation#queryRDFWithVars} with an empty vars map.
+   *
+   * @param query query in DQL
+   * @return a Response protocol buffer object
+   */
+  public CompletableFuture<Response> queryRDF(final String query) {
+    return queryRDFWithVars(query, Collections.emptyMap());
   }
 
   /**

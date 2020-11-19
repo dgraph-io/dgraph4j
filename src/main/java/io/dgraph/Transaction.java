@@ -41,8 +41,8 @@ public class Transaction implements AutoCloseable {
    * same transaction, it's convenient to chain the method: <code>
    * client.NewTransaction().queryWithVars(...) </code>.
    *
-   * @param query query in GraphQL+-
-   * @param vars GraphQL variables used in query
+   * @param query query in DQL
+   * @param vars DQL variables used in query
    * @return a Response protocol buffer object.
    */
   public Response queryWithVars(final String query, final Map<String, String> vars) {
@@ -53,11 +53,35 @@ public class Transaction implements AutoCloseable {
   /**
    * Calls {@code Transcation#queryWithVars} with an empty vars map.
    *
-   * @param query query in GraphQL+-
+   * @param query query in DQL
    * @return a Response protocol buffer object
    */
   public Response query(final String query) {
     return queryWithVars(query, Collections.emptyMap());
+  }
+
+  /**
+   * Sends a query to one of the connected dgraph instances and returns RDF response. If no
+   * mutations need to be made in the same transaction, it's convenient to chain the method: <code>
+   * client.NewTransaction().queryWithVars(...) </code>.
+   *
+   * @param query query in DQL
+   * @param vars DQL variables used in query
+   * @return a Response protocol buffer object.
+   */
+  public Response queryRDFWithVars(final String query, final Map<String, String> vars) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> asyncTransaction.queryRDFWithVars(query, vars).join());
+  }
+
+  /**
+   * Calls {@code Transcation#queryRDFWithVars} with an empty vars map.
+   *
+   * @param query query in DQL
+   * @return a Response protocol buffer object
+   */
+  public Response queryRDF(final String query) {
+    return queryRDFWithVars(query, Collections.emptyMap());
   }
 
   /**
