@@ -27,11 +27,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.MetadataUtils;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -50,6 +46,7 @@ import org.slf4j.LoggerFactory;
 public class DgraphAsyncClient {
   private static final Logger LOG = LoggerFactory.getLogger(DgraphAsyncClient.class);
   private final List<DgraphGrpc.DgraphStub> stubs;
+  private final Executor executor;
   private final ReadWriteLock jwtLock;
   private DgraphProto.Jwt jwt;
 
@@ -63,6 +60,22 @@ public class DgraphAsyncClient {
    */
   public DgraphAsyncClient(DgraphGrpc.DgraphStub... stubs) {
     this.stubs = asList(stubs);
+    this.executor = ForkJoinPool.commonPool();
+    this.jwtLock = new ReentrantReadWriteLock();
+  }
+
+  /**
+   * Creates a new client for interacting with a Dgraph store.
+   *
+   * <p>A single client is thread safe.
+   *
+   * @param executor - the executor to use for various asynchronous tasks executed by this client.
+   * @param stubs - an array of grpc stubs to be used by this client. The stubs to be used are
+   *     chosen at random per transaction.
+   */
+  public DgraphAsyncClient(Executor executor, DgraphGrpc.DgraphStub... stubs) {
+    this.stubs = asList(stubs);
+    this.executor = executor;
     this.jwtLock = new ReentrantReadWriteLock();
   }
 
@@ -216,7 +229,8 @@ public class DgraphAsyncClient {
           } catch (Exception e) {
             throw new CompletionException(e);
           }
-        });
+        },
+        this.executor);
   }
 
   /**

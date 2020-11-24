@@ -23,6 +23,7 @@ import io.grpc.Metadata;
 import io.grpc.stub.MetadataUtils;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.Executor;
 
 /**
  * Implementation of a DgraphClient using grpc.
@@ -75,6 +76,20 @@ public class DgraphClient {
    */
   public DgraphClient(DgraphGrpc.DgraphStub... stubs) {
     this.asyncClient = new DgraphAsyncClient(stubs);
+  }
+
+  /**
+   * Creates a new client for interacting with a Dgraph store.
+   *
+   * <p>A single client is thread safe.
+   *
+   * @param executor - the executor to use for various asynchronous tasks executed by the underlying
+   *     asynchronous client.
+   * @param stubs - an array of grpc stubs to be used by this client. The stubs to be used are
+   *     chosen at random per transaction.
+   */
+  public DgraphClient(Executor executor, DgraphGrpc.DgraphStub... stubs) {
+    this.asyncClient = new DgraphAsyncClient(executor, stubs);
   }
 
   /**
