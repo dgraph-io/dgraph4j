@@ -27,8 +27,11 @@ ossrhPassword=<…password…>
 * Build and test the code that needs to be published.
 * Bump version by modifying the `version` variable in `build.gradle` file.
 * Update download version in README for both Maven and Gradle.
+* Update `dgraph4j version` in `grpc-netty` table in README.
+* Raise a PR for the above changes. Put the changelog in PR description and merge it.
 * Run `./gradlew uploadArchives`.
 * Release the deployment by following the steps on the page _Releasing the Deployment_ (link in references below).
+* Also cut a release tag on GitHub with the new version.
 
 ### References
 * [Publishing a project on Maven Central](https://medium.com/@nmauti/publishing-a-project-on-maven-central-8106393db2c3)
