@@ -96,7 +96,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     // Verify data as expected
     assertEquals(muRes.getUidsMap().values().size(), 1);
     String uid = (String) muRes.getUidsMap().values().toArray()[0];
-    assertEquals(response.getRdf().toStringUtf8(), "<"+uid+"> <name> \"Alice\" .\n");
+    assertEquals(response.getRdf().toStringUtf8(), "<" + uid + "> <name> \"Alice\" .\n");
   }
 
   @Test
