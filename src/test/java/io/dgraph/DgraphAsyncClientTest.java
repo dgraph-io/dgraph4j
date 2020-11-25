@@ -177,14 +177,13 @@ public class DgraphAsyncClientTest {
             .setCommitNow(true)
             .setSetJson(ByteString.copyFromUtf8(jsonData.toString()))
             .build();
-    dgraphAsyncClient.newTransaction().mutate(mu).join();
     Response muRes = dgraphAsyncClient.newTransaction().mutate(mu).join();
 
     // Query
     String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
     Map<String, String> vars = Collections.singletonMap("$a", "Alice");
     Response response =
-        dgraphAsyncClient.newReadOnlyTransaction().queryWithVars(query, vars).join();
+        dgraphAsyncClient.newReadOnlyTransaction().queryRDFWithVars(query, vars).join();
 
     // Verify data as expected
     assertEquals(muRes.getUidsMap().values().size(), 1);
