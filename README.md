@@ -34,6 +34,7 @@ and understand how to run and work with Dgraph.
   * [Running a Mutation](#running-a-mutation)
   * [Committing a Transaction](#committing-a-transaction)
   * [Running a Query](#running-a-query)
+  * [Running a Query with RDF response](#running-a-query-with-rdf-response)
   * [Running an Upsert: Query + Mutation](#running-an-upsert-query--mutation)
   * [Running a Conditional Upsert](#running-a-conditional-upsert)
   * [Setting Deadlines](#setting-deadlines)
@@ -430,6 +431,33 @@ Request request = Request.newBuilder()
     .setQuery(query)
     .build();
 txn.doRequest(request);
+```
+
+### Running a Query with RDF response
+
+You can get query results as an RDF response by calling `queryRDFWithVars()`. 
+The response contains the `getRdf()` method, which will provide the RDF encoded output.
+
+**Note**: If you are querying for `uid` values only, use a JSON format response
+
+```java
+Mutation mu =
+    Mutation.newBuilder()
+        .setCommitNow(true)
+        .setSetJson(ByteString.copyFromUtf8(jsonData.toString()))
+        .build();
+Response muRes = dgraphAsyncClient.newTransaction().mutate(mu).join();
+
+// Query
+String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
+Map<String, String> vars = Collections.singletonMap("$a", "Alice");
+Response response =
+    dgraphAsyncClient.newReadOnlyTransaction().queryRDFWithVars(query, vars).join();
+
+// Verify data as expected
+assertEquals(muRes.getUidsMap().values().size(), 1);
+String uid = (String) muRes.getUidsMap().values().toArray()[0];
+assertEquals(response.getRdf().toStringUtf8(), "<" + uid + "> <name> \"Alice\" .\n");
 ```
 
 ### Running an Upsert: Query + Mutation
