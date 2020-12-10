@@ -34,6 +34,7 @@ and understand how to run and work with Dgraph.
   * [Running a Mutation](#running-a-mutation)
   * [Committing a Transaction](#committing-a-transaction)
   * [Running a Query](#running-a-query)
+  * [Running a Query with RDF response](#running-a-query-with-rdf-response)
   * [Running an Upsert: Query + Mutation](#running-an-upsert-query--mutation)
   * [Running a Conditional Upsert](#running-a-conditional-upsert)
   * [Setting Deadlines](#setting-deadlines)
@@ -430,6 +431,30 @@ Request request = Request.newBuilder()
     .setQuery(query)
     .build();
 txn.doRequest(request);
+```
+
+### Running a Query with RDF response
+
+You can get query results as an RDF response by calling either `queryRDF()` or `queryRDFWithVars()`. 
+The response contains the `getRdf()` method, which will provide the RDF encoded output.
+
+**Note**: If you are querying for `uid` values only, use a JSON format response
+
+```java
+// Query
+String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
+Map<String, String> vars = Collections.singletonMap("$a", "Alice");
+Response response =
+    dgraphAsyncClient.newReadOnlyTransaction().queryRDFWithVars(query, vars).join();
+
+// Print results
+System.out.println(response.getRdf().toStringUtf8());
+```
+
+This should print (assuming Alice's `uid` is `0x2`):
+
+```
+<0x2> <name> "Alice" .
 ```
 
 ### Running an Upsert: Query + Mutation
