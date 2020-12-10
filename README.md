@@ -435,29 +435,26 @@ txn.doRequest(request);
 
 ### Running a Query with RDF response
 
-You can get query results as an RDF response by calling `queryRDFWithVars()`. 
+You can get query results as an RDF response by calling either `queryRDF()` or `queryRDFWithVars()`. 
 The response contains the `getRdf()` method, which will provide the RDF encoded output.
 
 **Note**: If you are querying for `uid` values only, use a JSON format response
 
 ```java
-Mutation mu =
-    Mutation.newBuilder()
-        .setCommitNow(true)
-        .setSetJson(ByteString.copyFromUtf8(jsonData.toString()))
-        .build();
-Response muRes = dgraphAsyncClient.newTransaction().mutate(mu).join();
-
 // Query
 String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
 Map<String, String> vars = Collections.singletonMap("$a", "Alice");
 Response response =
     dgraphAsyncClient.newReadOnlyTransaction().queryRDFWithVars(query, vars).join();
 
-// Verify data as expected
-assertEquals(muRes.getUidsMap().values().size(), 1);
-String uid = (String) muRes.getUidsMap().values().toArray()[0];
-assertEquals(response.getRdf().toStringUtf8(), "<" + uid + "> <name> \"Alice\" .\n");
+// Print results
+System.out.println(response.getRdf().toStringUtf8());
+```
+
+This should print (assuming Alice's `uid` is `0x2`):
+
+```
+<0x2> <name> "Alice" .
 ```
 
 ### Running an Upsert: Query + Mutation
