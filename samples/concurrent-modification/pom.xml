@@ -33,7 +33,7 @@
 		<dependency>
 			<groupId>io.dgraph</groupId>
 			<artifactId>dgraph4j</artifactId>
-			<version>20.03.1</version>
+			<version>20.11.0</version>
 		</dependency>
 	</dependencies>
 </project>
