@@ -9,6 +9,8 @@ and this project adheres to [Calendar Versioning](https://calver.org/) starting 
 ## [20.11.0] - 2020-12-23
 ### Added
 * feat: Add support for RDF response (DGRAPH-2659) (#160)
+### Changed
+* gRPC: bumped gRPC libs to v1.34.1
 
 ## [20.03.3] - 2020-11-25
 ### Added
