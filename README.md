@@ -329,7 +329,10 @@ String json = gson.toJson(person);
 Mutation mu = Mutation.newBuilder()
     .setSetJson(ByteString.copyFromUtf8(json.toString()))
     .build();
-txn.mutate(mu);
+// mutationResponse stores a Response protocol buffer object
+Response mutationResponse = txn.mutate(mu);
+// eg: to get the UIDs created in this mutation
+System.out.println(mutationResponse.getUidsMap())
 ```
 
 Sometimes, you only want to commit mutation, without querying anything further.
