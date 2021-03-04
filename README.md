@@ -524,7 +524,7 @@ ClientInterceptor timeoutInterceptor = new ClientInterceptor(){
         return next.newCall(method, callOptions.withDeadlineAfter(500, TimeUnit.MILLISECONDS));
     }
 };
-stub.withInterceptors(timeoutInterceptor);
+stub = stub.withInterceptors(timeoutInterceptor);
 DgraphClient dgraphClient = new DgraphClient(stub);
 ```
 
