@@ -185,15 +185,29 @@ public class DgraphClient {
   }
 
   /**
-   * login sends a LoginRequest to the server that contains the userid and password. If the
-   * LoginRequest is processed successfully, the response returned by the server will contain an
-   * access JWT and a refresh JWT, which will be stored in the jwt field of this class, and used for
-   * authorizing all subsequent requests sent to the server.
+   * login sends a LoginRequest to the server using the given userid and password for the default
+   * namespace (0). If the LoginRequest is processed successfully, the response returned by the
+   * server will contain an access JWT and a refresh JWT, which will be stored in the jwt field of
+   * this class, and used for authorizing all subsequent requests sent to the server.
    *
    * @param userid the id of the user who is trying to login, e.g. Alice
    * @param password the password of the user
    */
   public void login(String userid, String password) {
     asyncClient.login(userid, password).join();
+  }
+
+  /**
+   * loginIntoNamespace sends a LoginRequest to the server using the given userid, password and
+   * namespace. If the LoginRequest is processed successfully, the response returned by the server
+   * will contain an access JWT and a refresh JWT, which will be stored in the jwt field of this
+   * class, and used for authorizing all subsequent requests sent to the server.
+   *
+   * @param userid the id of the user who is trying to login, e.g. Alice
+   * @param password the password of the user
+   * @param namespace the namespace in which to login
+   */
+  public void loginIntoNamespace(String userid, String password, long namespace) {
+    asyncClient.loginIntoNamespace(userid, password, namespace).join();
   }
 }
