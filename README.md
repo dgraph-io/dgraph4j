@@ -216,9 +216,15 @@ query/mutation which results from some dynamic library loading and linking that 
 
 ### Login Using ACL
 
+If ACL is enabled then you can log-in to the default namespace (0) with following:
 ```java
 dgraphClient.login(USER_ID, USER_PASSWORD);
 ```
+For logging-in to some other namespace, use the `loginIntoNamespace` method on the client:
+```java
+dgraphClient.loginIntoNamespace(USER_ID, USER_PASSWORD, NAMESPACE);
+```
+Once logged-in, the `dgraphClient` object can be used to do any further operations.
 
 ### Altering the Database
 
