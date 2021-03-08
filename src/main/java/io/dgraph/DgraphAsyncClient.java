@@ -80,22 +80,43 @@ public class DgraphAsyncClient {
   }
 
   /**
-   * login sends a LoginRequest to the server that contains the userid and password. If the
-   * LoginRequest is processed successfully, the response returned by the server will contain an
-   * access JWT and a refresh JWT, which will be stored in the jwt field of this class, and used for
-   * authorizing all subsequent requests sent to the server.
+   * login sends a LoginRequest to the server using the given userid and password for the default
+   * namespace (0). If the LoginRequest is processed successfully, the response returned by the
+   * server will contain an access JWT and a refresh JWT, which will be stored in the jwt field of
+   * this class, and used for authorizing all subsequent requests sent to the server.
    *
    * @param userid the id of the user who is trying to login, e.g. Alice
    * @param password the password of the user
    * @return a future which can be used to wait for completion of the login request
    */
   public CompletableFuture<Void> login(String userid, String password) {
+    return this.loginIntoNamespace(userid, password, 0L);
+  }
+
+  /**
+   * loginIntoNamespace sends a LoginRequest to the server using the given userid, password and
+   * namespace. If the LoginRequest is processed successfully, the response returned by the server
+   * will contain an access JWT and a refresh JWT, which will be stored in the jwt field of this
+   * class, and used for authorizing all subsequent requests sent to the server.
+   *
+   * @param userid the id of the user who is trying to login, e.g. Alice
+   * @param password the password of the user
+   * @param namespace the namespace in which to login
+   * @return a future which can be used to wait for completion of the login request
+   */
+  public CompletableFuture<Void> loginIntoNamespace(
+      String userid, String password, long namespace) {
     Lock wlock = jwtLock.writeLock();
     wlock.lock();
     try {
       final DgraphGrpc.DgraphStub client = anyClient();
       final DgraphProto.LoginRequest loginRequest =
-          DgraphProto.LoginRequest.newBuilder().setUserid(userid).setPassword(password).build();
+          DgraphProto.LoginRequest.newBuilder()
+              .setUserid(userid)
+              .setPassword(password)
+              .setNamespace(namespace)
+              .build();
+
       StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
       client.login(loginRequest, bridge);
       return bridge
