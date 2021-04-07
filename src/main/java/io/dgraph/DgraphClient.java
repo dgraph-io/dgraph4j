@@ -43,12 +43,14 @@ public class DgraphClient {
 
   /**
    * Creates a gRPC stub that can be used to construct clients to connect with Slash GraphQL.
-   *
    * @param slashEndpoint The url of the Slash GraphQL endpoint. Example:
    *     https://your-slash-instance.cloud.dgraph.io/graphql
    * @param apiKey The API key used to connect to your Slash GraphQL instance.
    * @return A new DgraphGrpc.DgraphStub object to be used with DgraphClient/DgraphAsyncClient.
+   * @deprecated This method will be removed in v21.07 release. For more details, see:
+   * https://discuss.dgraph.io/t/regarding-slash-cloud-dgraph-endpoints-in-the-clients/13492
    */
+  @Deprecated
   public static DgraphGrpc.DgraphStub clientStubFromSlashEndpoint(
       String slashEndpoint, String apiKey) throws MalformedURLException {
     String[] parts = new URL(slashEndpoint).getHost().split("[.]", 2);
