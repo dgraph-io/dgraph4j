@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
 public class AclTest extends DgraphIntegrationTest {
   private static final String USER_ID = "alice";
   private static final String USER_PASSWORD = "simplepassword";
-  private static final String GROOT_PASSWORD = "password";
+  private static final String GUARDIAN_CREDS = "user=groot;password=password;namespace=0";
   private static final String PREDICATE_TO_READ = "predicate_to_read";
   private static final String PREDICATE_TO_WRITE = "predicate_to_write";
   private static final String PREDICATE_TO_ALTER = "predicate_to_alter";
@@ -101,8 +101,8 @@ public class AclTest extends DgraphIntegrationTest {
         DGRAPH_ENDPOINT,
         "-g",
         group,
-        "-x",
-        GROOT_PASSWORD);
+        "--guardian-creds",
+        GUARDIAN_CREDS);
 
     if (addUserToGroup) {
       checkCmd(
@@ -116,8 +116,8 @@ public class AclTest extends DgraphIntegrationTest {
           USER_ID,
           "--group_list",
           group,
-          "-x",
-          GROOT_PASSWORD);
+          "--guardian-creds",
+          GUARDIAN_CREDS);
     }
 
     // add READ permission on the predicate_to_read to the group
@@ -134,8 +134,8 @@ public class AclTest extends DgraphIntegrationTest {
         PREDICATE_TO_READ,
         "-m",
         "4",
-        "-x",
-        GROOT_PASSWORD);
+        "--guardian-creds",
+        GUARDIAN_CREDS);
 
     // also add READ permission on the attribute queryAttr, which is used inside the query block
     checkCmd(
@@ -151,8 +151,8 @@ public class AclTest extends DgraphIntegrationTest {
         QUERY_ATTR,
         "-m",
         "4",
-        "-x",
-        GROOT_PASSWORD);
+        "--guardian-creds",
+        GUARDIAN_CREDS);
 
     checkCmd(
         "unable to add WRITE permission on " + PREDICATE_TO_WRITE + " to the group " + group,
@@ -167,8 +167,8 @@ public class AclTest extends DgraphIntegrationTest {
         PREDICATE_TO_WRITE,
         "-m",
         "2",
-        "-x",
-        GROOT_PASSWORD);
+        "--guardian-creds",
+        GUARDIAN_CREDS);
 
     checkCmd(
         "unable to add ALTER permission on " + PREDICATE_TO_ALTER + " to the group " + group,
@@ -183,8 +183,8 @@ public class AclTest extends DgraphIntegrationTest {
         PREDICATE_TO_ALTER,
         "-m",
         "1",
-        "-x",
-        GROOT_PASSWORD);
+        "--guardian-creds",
+        GUARDIAN_CREDS);
   }
 
   private void removeUserFromAllGroups() throws IOException, InterruptedException {
@@ -199,8 +199,8 @@ public class AclTest extends DgraphIntegrationTest {
         USER_ID,
         "--group_list",
         "",
-        "-x",
-        GROOT_PASSWORD);
+        "--guardian-creds",
+        GUARDIAN_CREDS);
   }
 
   private void queryPredicateWithUserAccount(boolean shouldFail) {
@@ -280,7 +280,15 @@ public class AclTest extends DgraphIntegrationTest {
   private void resetUser() throws Exception {
     Process deleteUserCmd =
         new ProcessBuilder(
-                "dgraph", "acl", "del", "-a", DGRAPH_ENDPOINT, "-u", USER_ID, "-x", GROOT_PASSWORD)
+                "dgraph",
+                "acl",
+                "del",
+                "-a",
+                DGRAPH_ENDPOINT,
+                "-u",
+                USER_ID,
+                "--guardian-creds",
+                GUARDIAN_CREDS)
             .start();
     deleteUserCmd.waitFor();
 
@@ -295,8 +303,8 @@ public class AclTest extends DgraphIntegrationTest {
                 USER_ID,
                 "-p",
                 USER_PASSWORD,
-                "-x",
-                GROOT_PASSWORD)
+                "--guardian-creds",
+                GUARDIAN_CREDS)
             .redirectErrorStream(true)
             .start();
     createUserCmd.waitFor();
