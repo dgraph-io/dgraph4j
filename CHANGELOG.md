@@ -22,7 +22,7 @@ and this project adheres to [Calendar Versioning](https://calver.org/) starting 
 
 ## [20.03.2] - 2020-10-27
 ### Added
-* feat: Support for Slash GraphqQL endpoint ([#158])
+* feat: Support for Slash GraphQL endpoint ([#158])
 
 [#158]: https://github.com/dgraph-io/dgraph4j/pull/158
 

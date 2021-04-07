@@ -194,7 +194,11 @@ public class AsyncTransaction implements AutoCloseable {
       mutated = true;
     }
 
-    Request requestStartTs = Request.newBuilder(request).setStartTs(context.getStartTs()).build();
+    Request requestStartTs =
+        Request.newBuilder(request)
+            .setStartTs(context.getStartTs())
+            .setHash(context.getHash())
+            .build();
 
     return client
         .runWithRetries(
@@ -293,6 +297,8 @@ public class AsyncTransaction implements AutoCloseable {
 
   private void mergeContext(final TxnContext src) {
     TxnContext.Builder builder = TxnContext.newBuilder(context);
+
+    builder.setHash(src.getHash());
 
     if (context.getStartTs() == 0) {
       builder.setStartTs(src.getStartTs());
