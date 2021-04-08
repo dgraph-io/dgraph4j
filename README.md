@@ -55,12 +55,12 @@ grab via Maven:
 <dependency>
   <groupId>io.dgraph</groupId>
   <artifactId>dgraph4j</artifactId>
-  <version>20.11.0</version>
+  <version>21.03.0</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'io.dgraph:dgraph4j:20.11.0'
+compile 'io.dgraph:dgraph4j:21.03.0'
 ```
 
 ## Supported Versions
@@ -72,7 +72,9 @@ use a different version of this client.
 |:--------------:|:-----------------:|:------------:|
 |     1.0.X      |       1.X.X       |     1.9.X    |
 |  1.1.0 - 2.X.X |       2.X.X       |     1.9.X    |
-|   >= 20.XX.X   |      20.XX.X      |     1.9.X    |
+|20.03.X-20.07.X |      20.03.X      |     1.9.X    |
+|     20.11.X    |      20.11.X      |     1.9.X    |
+|   >= 21.XX.X   |      21.XX.X      |     1.9.X    |
 
 #### Note regarding Java 1.8.x support:
 * If you aren't using gRPC with TLS, then the above version table will work for you with Java
