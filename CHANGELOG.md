@@ -151,8 +151,8 @@ and this project adheres to [Calendar Versioning](https://calver.org/) starting 
 ## [1.0.0] - 2017-12-18
 * Fully compatible with Dgraph v1.0
 
-[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.0...HEAD
-[21.03.0]: https://github.com/dgraph-io/dgraph4j/compare/v20.11.0...v20.03.0
+[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.0...HEAD
+[21.03.0]: https://github.com/dgraph-io/dgraph4j/compare/v20.11.0...v21.03.0
 [20.11.0]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.3...v20.11.0
 [20.03.3]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.2...v20.03.3
 [20.03.2]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.1...v20.03.2
