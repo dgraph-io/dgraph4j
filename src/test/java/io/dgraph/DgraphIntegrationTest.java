@@ -29,7 +29,8 @@ import org.testng.annotations.BeforeClass;
 public abstract class DgraphIntegrationTest {
   static final Logger logger = LoggerFactory.getLogger(DgraphIntegrationTest.class);
   static final String TEST_HOSTNAME = "localhost";
-  static final int TEST_PORT = 9180;
+  static final int TEST_gRPC_PORT = 9180;
+  static final int TEST_HTTP_PORT = 8180;
   protected static DgraphClient dgraphClient;
   private static ManagedChannel channel1, channel2, channel3;
 

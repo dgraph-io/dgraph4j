@@ -7,7 +7,6 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.stream.Collectors;
 import org.testng.annotations.BeforeClass;
@@ -16,15 +15,12 @@ import org.testng.annotations.Test;
 public class AclTest extends DgraphIntegrationTest {
   private static final String USER_ID = "alice";
   private static final String USER_PASSWORD = "simplepassword";
-  private static final String GUARDIAN_CREDS = "user=groot;password=password;namespace=0";
   private static final String PREDICATE_TO_READ = "predicate_to_read";
   private static final String PREDICATE_TO_WRITE = "predicate_to_write";
   private static final String PREDICATE_TO_ALTER = "predicate_to_alter";
   private static final String QUERY_ATTR = "name";
   private static final String UNUSED_GROUP = "unusedGroup";
   private static final String DEV_GROUP = "dev";
-
-  private static final String DGRAPH_ENDPOINT = TEST_HOSTNAME + ":" + TEST_PORT;
 
   @BeforeClass
   public void setSchema() {
@@ -88,119 +84,28 @@ public class AclTest extends DgraphIntegrationTest {
             .build());
   }
 
-  private void createGroupAndACLs(String group, boolean addUserToGroup)
-      throws IOException, InterruptedException {
+  private void createGroupAndACLs(String group, boolean addUserToGroup) throws Exception {
 
     // create a new group
-    checkCmd(
-        "unable to create the group " + group,
-        "dgraph",
-        "acl",
-        "add",
-        "-a",
-        DGRAPH_ENDPOINT,
-        "-g",
-        group,
-        "--guardian-creds",
-        GUARDIAN_CREDS);
+    TestUtil.addGroup(group);
 
     if (addUserToGroup) {
-      checkCmd(
-          "unable to add user " + USER_ID + " to the group " + group,
-          "dgraph",
-          "acl",
-          "mod",
-          "-a",
-          DGRAPH_ENDPOINT,
-          "-u",
-          USER_ID,
-          "--group_list",
-          group,
-          "--guardian-creds",
-          GUARDIAN_CREDS);
+      TestUtil.updateUser(USER_ID, group, true);
     }
 
     // add READ permission on the predicate_to_read to the group
-    checkCmd(
-        "unable to add READ permission on " + PREDICATE_TO_READ + " to the group " + group,
-        "dgraph",
-        "acl",
-        "mod",
-        "-a",
-        DGRAPH_ENDPOINT,
-        "-g",
-        group,
-        "-p",
-        PREDICATE_TO_READ,
-        "-m",
-        "4",
-        "--guardian-creds",
-        GUARDIAN_CREDS);
+    TestUtil.updateGroup(group, PREDICATE_TO_READ, 4);
 
     // also add READ permission on the attribute queryAttr, which is used inside the query block
-    checkCmd(
-        "unable to add READ permission on " + QUERY_ATTR + " to the group " + group,
-        "dgraph",
-        "acl",
-        "mod",
-        "-a",
-        DGRAPH_ENDPOINT,
-        "-g",
-        group,
-        "-p",
-        QUERY_ATTR,
-        "-m",
-        "4",
-        "--guardian-creds",
-        GUARDIAN_CREDS);
+    TestUtil.updateGroup(group, QUERY_ATTR, 4);
 
-    checkCmd(
-        "unable to add WRITE permission on " + PREDICATE_TO_WRITE + " to the group " + group,
-        "dgraph",
-        "acl",
-        "mod",
-        "-a",
-        DGRAPH_ENDPOINT,
-        "-g",
-        group,
-        "-p",
-        PREDICATE_TO_WRITE,
-        "-m",
-        "2",
-        "--guardian-creds",
-        GUARDIAN_CREDS);
+    TestUtil.updateGroup(group, PREDICATE_TO_WRITE, 2);
 
-    checkCmd(
-        "unable to add ALTER permission on " + PREDICATE_TO_ALTER + " to the group " + group,
-        "dgraph",
-        "acl",
-        "mod",
-        "-a",
-        DGRAPH_ENDPOINT,
-        "-g",
-        group,
-        "-p",
-        PREDICATE_TO_ALTER,
-        "-m",
-        "1",
-        "--guardian-creds",
-        GUARDIAN_CREDS);
+    TestUtil.updateGroup(group, PREDICATE_TO_ALTER, 1);
   }
 
-  private void removeUserFromAllGroups() throws IOException, InterruptedException {
-    checkCmd(
-        "unable to remove user " + USER_ID + " from all the groups",
-        "dgraph",
-        "acl",
-        "mod",
-        "-a",
-        DGRAPH_ENDPOINT,
-        "-u",
-        USER_ID,
-        "--group_list",
-        "",
-        "--guardian-creds",
-        GUARDIAN_CREDS);
+  private void removeUserFromAllGroups() throws Exception {
+    TestUtil.updateUser(USER_ID, DEV_GROUP, false);
   }
 
   private void queryPredicateWithUserAccount(boolean shouldFail) {
@@ -278,47 +183,8 @@ public class AclTest extends DgraphIntegrationTest {
   }
 
   private void resetUser() throws Exception {
-    Process deleteUserCmd =
-        new ProcessBuilder(
-                "dgraph",
-                "acl",
-                "del",
-                "-a",
-                DGRAPH_ENDPOINT,
-                "-u",
-                USER_ID,
-                "--guardian-creds",
-                GUARDIAN_CREDS)
-            .start();
-    deleteUserCmd.waitFor();
-
-    Process createUserCmd =
-        new ProcessBuilder(
-                "dgraph",
-                "acl",
-                "add",
-                "-a",
-                DGRAPH_ENDPOINT,
-                "-u",
-                USER_ID,
-                "-p",
-                USER_PASSWORD,
-                "--guardian-creds",
-                GUARDIAN_CREDS)
-            .redirectErrorStream(true)
-            .start();
-    createUserCmd.waitFor();
-    if (createUserCmd.exitValue() != 0) {
-      // print out the output from the command
-      InputStream inputStream = createUserCmd.getInputStream();
-      BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
-      String line;
-      while ((line = br.readLine()) != null) {
-        System.out.println(line);
-      }
-
-      throw new Exception("unable to create user");
-    }
+    TestUtil.deleteUser(USER_ID);
+    TestUtil.addUser(USER_ID, USER_PASSWORD);
   }
 
   private void checkCmd(String failureMsg, String... args)
