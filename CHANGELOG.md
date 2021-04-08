@@ -6,6 +6,18 @@ and this project adheres to [Calendar Versioning](https://calver.org/) starting 
 
 ## [Unreleased]
 
+## [21.03.0] - 2021-04-08
+### Added
+* feat: add loginIntoNamespace API on clients (GRAPHQL-1058) ([#166])
+### Deprecated
+* chore: Sync dgo + deprecate Slash endpoint method (GRAPHQL-1141) ([#167])
+### Fixed
+* fix(test): Don't use dgraph binary in tests (GRAPHQL-1144) ([#168])
+
+[#166]: https://github.com/dgraph-io/dgraph4j/pull/166
+[#167]: https://github.com/dgraph-io/dgraph4j/pull/167
+[#168]: https://github.com/dgraph-io/dgraph4j/pull/168
+
 ## [20.11.0] - 2020-12-23
 ### Added
 * feat: Add support for RDF response (DGRAPH-2659) ([#160])
@@ -139,7 +151,8 @@ and this project adheres to [Calendar Versioning](https://calver.org/) starting 
 ## [1.0.0] - 2017-12-18
 * Fully compatible with Dgraph v1.0
 
-[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v20.11.0...HEAD
+[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.0...HEAD
+[21.03.0]: https://github.com/dgraph-io/dgraph4j/compare/v20.11.0...v20.03.0
 [20.11.0]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.3...v20.11.0
 [20.03.3]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.2...v20.03.3
 [20.03.2]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.1...v20.03.2
