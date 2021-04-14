@@ -25,7 +25,7 @@ and understand how to run and work with Dgraph.
 - [Intro](#intro)
 - [Using the Synchronous Client](#using-the-synchronous-client)
   * [Creating a Client](#creating-a-client)
-  * [Creating a Client for Slash Graphql Endpoint](#creating-a-client-for-slash-graphql-endpoint)
+  * [Creating a Client for Dgraph Cloud](#creating-a-client-for-dgraph-cloud)
   * [Creating a Secure Client Using TLS](#creating-a-secure-client-using-tls)
   * [Check Dgraph Version](#check-dgraph-version)
   * [Login Using ACL](#login-using-acl)
@@ -160,12 +160,14 @@ DgraphStub stub3 = DgraphGrpc.newStub(channel3);
 DgraphClient dgraphClient = new DgraphClient(stub1, stub2, stub3);
 ```
 
-### Creating a Client for Slash Graphql Endpoint
+### Creating a Client for Dgraph Cloud
 
-If you want to connect to Dgraph running on your [Slash GraphQL](https://slash.dgraph.io) instance, then all you need is the URL of your Slash GraphQL endpoint and the API key. You can get a client using them as follows :
+If you want to connect to Dgraph running on a [Dgraph Cloud](https://cloud.dgraph.io) instance,
+then all you need is the URL of your Dgraph Cloud instance and the API key. You can get a client
+with them as follows :
 
 ```java
-DgraphStub stub = DgraphClient.clientStubFromSlashEndpoint("https://your-slash-instance.cloud.dgraph.io/graphql", "your-api-key");
+DgraphStub stub = DgraphClient.clientStubFromCloudEndpoint("https://your-instance.cloud.dgraph.io/graphql", "your-api-key");
 DgraphClient dgraphClient = new DgraphClient(stub);
 ```
 

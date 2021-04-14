@@ -181,19 +181,19 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   }
 
   @Test
-  public void testFromSlashEndpoint_ValidURL() {
+  public void testFromCloudEndpoint_ValidURL() {
     try {
-      DgraphClient.clientStubFromSlashEndpoint(
-          "https://your-slash-instance.cloud.dgraph.io/graphql", "");
+      DgraphClient.clientStubFromCloudEndpoint(
+          "https://your-instance.cloud.dgraph.io/graphql", "");
     } catch (MalformedURLException e) {
       fail(e.getMessage());
     }
   }
 
   @Test
-  public void testFromSlashEndpoint_InValidURL() {
+  public void testFromCloudEndpoint_InValidURL() {
     try {
-      DgraphClient.clientStubFromSlashEndpoint("https://a-bad-url", "");
+      DgraphClient.clientStubFromCloudEndpoint("https://a-bad-url", "");
       fail("Invalid Slash URL should not be accepted.");
     } catch (MalformedURLException e) {
     }
