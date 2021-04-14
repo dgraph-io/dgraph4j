@@ -131,19 +131,19 @@ public class DgraphClientTest extends DgraphIntegrationTest {
 
   @Test
   public void testNewTransactionFromContext() {
-    TxnContext ctx = TxnContext.newBuilder().setStartTs(1234L).build();
+    TxnContext ctx = TxnContext.newBuilder().build();
     try (Transaction txn = dgraphClient.newTransaction(ctx)) {
       Response response = txn.query("{ result(func: uid(0x1)) { } }");
-      assertEquals(response.getTxn().getStartTs(), 1234L);
+      assertTrue(response.getTxn().getStartTs() > 0L);
     }
   }
 
   @Test
   public void testNewReadOnlyTransactionFromContext() {
-    TxnContext ctx = TxnContext.newBuilder().setStartTs(1234L).build();
+    TxnContext ctx = TxnContext.newBuilder().build();
     try (Transaction txn = dgraphClient.newReadOnlyTransaction(ctx)) {
       Response response = txn.query("{ result(func: uid(0x1)) { } }");
-      assertEquals(response.getTxn().getStartTs(), 1234L);
+      assertTrue(response.getTxn().getStartTs() > 0L);
     }
   }
 
@@ -183,8 +183,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   @Test
   public void testFromCloudEndpoint_ValidURL() {
     try {
-      DgraphClient.clientStubFromCloudEndpoint(
-          "https://your-instance.cloud.dgraph.io/graphql", "");
+      DgraphClient.clientStubFromCloudEndpoint("https://your-instance.cloud.dgraph.io/graphql", "");
     } catch (MalformedURLException e) {
       fail(e.getMessage());
     }
