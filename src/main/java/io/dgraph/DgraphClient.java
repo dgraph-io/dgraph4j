@@ -48,15 +48,30 @@ public class DgraphClient {
    *     https://your-slash-instance.cloud.dgraph.io/graphql
    * @param apiKey The API key used to connect to your Slash GraphQL instance.
    * @return A new DgraphGrpc.DgraphStub object to be used with DgraphClient/DgraphAsyncClient.
-   * @deprecated This method will be removed in v21.07 release. For more details, see:
-   *     https://discuss.dgraph.io/t/regarding-slash-cloud-dgraph-endpoints-in-the-clients/13492
+   * @deprecated This method will be removed in v21.07 release. Please use {@link
+   *     #clientStubFromCloudEndpoint(String, String) clientStubFromCloudEndpoint} instead.
    */
   @Deprecated
   public static DgraphGrpc.DgraphStub clientStubFromSlashEndpoint(
       String slashEndpoint, String apiKey) throws MalformedURLException {
-    String[] parts = new URL(slashEndpoint).getHost().split("[.]", 2);
+    return clientStubFromCloudEndpoint(slashEndpoint, apiKey);
+  }
+
+  /**
+   * Creates a gRPC stub that can be used to construct clients to connect with Dgraph Cloud.
+   *
+   * @param cloudEndpoint The url of the Dgraph Cloud instance. Example:
+   *     https://your-instance.cloud.dgraph.io/graphql
+   * @param apiKey The API key used to connect to your Dgraph Cloud instance.
+   * @return A new {@link io.dgraph.DgraphGrpc.DgraphStub} object to be used with {@link
+   *     DgraphClient}/{@link DgraphAsyncClient}.
+   * @since v21.03.1
+   */
+  public static DgraphGrpc.DgraphStub clientStubFromCloudEndpoint(
+      String cloudEndpoint, String apiKey) throws MalformedURLException {
+    String[] parts = new URL(cloudEndpoint).getHost().split("[.]", 2);
     if (parts.length < 2) {
-      throw new MalformedURLException("Invalid Slash URL.");
+      throw new MalformedURLException("Invalid Dgraph Cloud URL.");
     }
     String gRPCAddress = parts[0] + ".grpc." + parts[1];
 
