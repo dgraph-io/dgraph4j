@@ -27,6 +27,7 @@ ossrhPassword=<…password…>
 * Build and test the code that needs to be published.
 * Bump version by modifying the `version` variable in `build.gradle` file.
 * Update download version in README for both Maven and Gradle.
+* Update `Supported Versions` table in README.
 * Update `dgraph4j version` in `grpc-netty` table in README.
 * Update CHANGELOG.
 * Raise a PR for the above changes. Put the changelog in PR description and merge it.

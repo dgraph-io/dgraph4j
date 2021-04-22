@@ -6,6 +6,12 @@ and this project adheres to [Calendar Versioning](https://calver.org/) starting 
 
 ## [Unreleased]
 
+## [21.03.1] - 2021-04-22
+### Added
+* fix(deprecation): add DgraphClient.clientStubFromCloudEndpoint ([#170])
+
+[#170]: https://github.com/dgraph-io/dgraph4j/pull/170
+
 ## [21.03.0] - 2021-04-08
 ### Added
 * feat: add loginIntoNamespace API on clients (GRAPHQL-1058) ([#166])
@@ -151,7 +157,8 @@ and this project adheres to [Calendar Versioning](https://calver.org/) starting 
 ## [1.0.0] - 2017-12-18
 * Fully compatible with Dgraph v1.0
 
-[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.0...HEAD
+[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.1...HEAD
+[21.03.1]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.0...v21.03.1
 [21.03.0]: https://github.com/dgraph-io/dgraph4j/compare/v20.11.0...v21.03.0
 [20.11.0]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.3...v20.11.0
 [20.03.3]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.2...v20.03.3
