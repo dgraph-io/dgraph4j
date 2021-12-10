@@ -11,31 +11,35 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.Metadata;
 import io.grpc.stub.MetadataUtils;
+
+import java.net.MalformedURLException;
+import java.sql.Time;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class App {
   private static final String TEST_HOSTNAME = "localhost";
   private static final int TEST_PORT = 9180;
+  private static final String TEST_CLOUD_ENDPOINT = System.getenv("TEST_CLOUD_ENDPOINT");
+  private static final String TEST_CLOUD_API_KEY = System.getenv("TEST_CLOUD_API_KEY");
 
-  private static DgraphClient createDgraphClient(boolean withAuthHeader) {
-    ManagedChannel channel =
-        ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext().build();
-    DgraphStub stub = DgraphGrpc.newStub(channel);
-
-    if (withAuthHeader) {
-      Metadata metadata = new Metadata();
-      metadata.put(
-          Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
-      stub = MetadataUtils.attachHeaders(stub, metadata);
+  private static DgraphClient createDgraphClient() {
+    DgraphStub stub = null;
+    try {
+      stub = DgraphClient.clientStubFromCloudEndpoint(TEST_CLOUD_ENDPOINT, TEST_CLOUD_API_KEY);
+      stub = stub.withDeadlineAfter(5, TimeUnit.SECONDS);
+    } catch (MalformedURLException exception) {
+      System.out.println("Error");
     }
-
     return new DgraphClient(stub);
   }
 
   public static void main(final String[] args) {
-    DgraphClient dgraphClient = createDgraphClient(false);
+    System.out.println("Connecting to endpoint: " + TEST_CLOUD_ENDPOINT);
+    DgraphClient dgraphClient = createDgraphClient();
+    dgraphClient.login("groot", "password");
 
     // Initialize
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
@@ -65,17 +69,25 @@ public class App {
       txn.discard();
     }
     // Query
-    String query =
-        "query all($a: string){\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
-    Map<String, String> vars = Collections.singletonMap("$a", "Alice");
-    Response res = dgraphClient.newTransaction().queryWithVars(query, vars);
+    for (int i =0 ; i < 10; i++) {
+      String query =
+              "query all($a: string){\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
+      Map<String, String> vars = Collections.singletonMap("$a", "Alice");
+      Response res = dgraphClient.newTransaction().queryWithVars(query, vars);
 
-    // Deserialize
-    People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
+      // Deserialize
+      People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
 
-    // Print results
-    System.out.printf("people found: %d\n", ppl.all.size());
-    ppl.all.forEach(person -> System.out.println(person.name));
+      // Print results
+      System.out.printf("people found: %d\n", ppl.all.size());
+      ppl.all.forEach(person -> System.out.println(person.name));
+      System.out.println("Sleeping for 1 second");
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   static class Person {
