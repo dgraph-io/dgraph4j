@@ -28,6 +28,7 @@ import io.dgraph.DgraphProto.TxnContext;
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -196,5 +197,36 @@ public class DgraphClientTest extends DgraphIntegrationTest {
       fail("Invalid Slash URL should not be accepted.");
     } catch (MalformedURLException e) {
     }
+  }
+
+  @Test
+  public void testTimeouts() {
+    // Set schema
+    Operation op = Operation.newBuilder().setSchema("name: string @index(exact) @upsert .").build();
+    dgraphClient.alter(op);
+
+    // Add data
+    JsonObject data = new JsonObject();
+    data.addProperty("name", "Alice");
+
+    Mutation mu =
+        Mutation.newBuilder()
+            .setCommitNow(true)
+            .setSetJson(ByteString.copyFromUtf8(data.toString()))
+            .build();
+    dgraphClient.newTransaction().mutate(mu, 10, TimeUnit.SECONDS);
+
+    // Query
+    String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
+    Map<String, String> vars = Collections.singletonMap("$a", "Alice");
+    Response response =
+        dgraphClient.newTransaction().queryWithVars(query, vars, 10, TimeUnit.SECONDS);
+
+    // Verify data as expected
+    JsonParser parser = new JsonParser();
+    data = parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
+    assertTrue(data.has("me"));
+    String name = data.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
+    assertEquals("Alice", name);
   }
 }
