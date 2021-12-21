@@ -9,11 +9,8 @@ import io.dgraph.DgraphProto.Response;
 import io.dgraph.Transaction;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import io.grpc.Metadata;
-import io.grpc.stub.MetadataUtils;
 
 import java.net.MalformedURLException;
-import java.sql.Time;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
