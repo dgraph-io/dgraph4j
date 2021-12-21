@@ -20,6 +20,7 @@ import io.dgraph.DgraphProto.Request;
 import io.dgraph.DgraphProto.Response;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is synchronous implementation of Dgraph transaction. All operations are delegated to
@@ -57,12 +58,13 @@ public class Transaction implements AutoCloseable {
    *
    * @param query query in DQL
    * @param vars DQL variables used in query
-   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no timeout is set.
+   * @param units the time unit for the duration
    * @return a Response protocol buffer object.
    */
-  public Response queryWithVars(final String query, final Map<String, String> vars, long duration) {
+  public Response queryWithVars(final String query, final Map<String, String> vars, long duration, TimeUnit units) {
     return ExceptionUtil.withExceptionUnwrapped(
-            () -> asyncTransaction.queryWithVars(query, vars, duration).join());
+            () -> asyncTransaction.queryWithVars(query, vars, duration, units).join());
   }
 
   /**
@@ -79,11 +81,12 @@ public class Transaction implements AutoCloseable {
    * Calls {@code Transcation#queryWithVars} with an empty vars map.
    *
    * @param query query in DQL
-   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no timeout is set.
+   * @param units the time unit for the duration
    * @return a Response protocol buffer object
    */
-  public Response query(final String query, long duration) {
-    return queryWithVars(query, Collections.emptyMap(), duration);
+  public Response query(final String query, long duration, TimeUnit units) {
+    return queryWithVars(query, Collections.emptyMap(), duration, units);
   }
 
 
@@ -108,12 +111,13 @@ public class Transaction implements AutoCloseable {
    *
    * @param query query in DQL
    * @param vars DQL variables used in query
-   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no timeout is set.
+   * @param units the time unit for the duration
    * @return a Response protocol buffer object.
    */
-  public Response queryRDFWithVars(final String query, final Map<String, String> vars, long duration) {
+  public Response queryRDFWithVars(final String query, final Map<String, String> vars, long duration, TimeUnit units) {
     return ExceptionUtil.withExceptionUnwrapped(
-            () -> asyncTransaction.queryRDFWithVars(query, vars, duration).join());
+            () -> asyncTransaction.queryRDFWithVars(query, vars, duration, units).join());
   }
 
   /**
@@ -133,7 +137,7 @@ public class Transaction implements AutoCloseable {
    * @return a Response protocol buffer object
    */
   public Response queryRDF(final String query, long duration) {
-    return queryRDFWithVars(query, Collections.emptyMap(), duration);
+    return queryRDFWithVars(query, Collections.emptyMap(), duration, unit);
   }
 
   /**
@@ -156,11 +160,12 @@ public class Transaction implements AutoCloseable {
    * this case, there is no need to subsequently call AsyncTransaction#commit.
    *
    * @param mutation a Mutation protocol buffer object representing the mutation.
-   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no timeout is set.
+   * @param units the time unit for the duration
    * @return a Response protocol buffer object.
    */
-  public Response mutate(Mutation mutation, long duration) {
-    return ExceptionUtil.withExceptionUnwrapped(() -> asyncTransaction.mutate(mutation, duration).join());
+  public Response mutate(Mutation mutation, long duration, TimeUnit units) {
+    return ExceptionUtil.withExceptionUnwrapped(() -> asyncTransaction.mutate(mutation, duration, units).join());
   }
 
   /**
@@ -179,11 +184,12 @@ public class Transaction implements AutoCloseable {
    * upsert involving a query and a mutation.
    *
    * @param request a Request protocol buffer object.
-   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no timeout is set.
+   * @param units the time unit for the duration
    * @return a Response protocol buffer object.
    */
-  public Response doRequest(Request request, long duration) {
-    return ExceptionUtil.withExceptionUnwrapped(() -> asyncTransaction.doRequest(request, duration).join());
+  public Response doRequest(Request request, long duration, TimeUnit units) {
+    return ExceptionUtil.withExceptionUnwrapped(() -> asyncTransaction.doRequest(request, duration, units).join());
   }
 
   /**
