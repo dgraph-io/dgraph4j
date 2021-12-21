@@ -1,48 +1,41 @@
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import io.dgraph.DgraphClient;
+import io.dgraph.DgraphGrpc;
 import io.dgraph.DgraphGrpc.DgraphStub;
 import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
 import io.dgraph.Transaction;
-import io.grpc.*;
-import java.net.MalformedURLException;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class App {
   private static final String TEST_HOSTNAME = "localhost";
   private static final int TEST_PORT = 9180;
-  private static final String TEST_CLOUD_ENDPOINT = System.getenv("TEST_CLOUD_ENDPOINT");
-  private static final String TEST_CLOUD_API_KEY = System.getenv("TEST_CLOUD_API_KEY");
 
-  private static DgraphClient createDgraphClient() {
-    DgraphStub stub = null;
-    try {
-      stub = DgraphClient.clientStubFromCloudEndpoint(TEST_CLOUD_ENDPOINT, TEST_CLOUD_API_KEY);
-      // stub = stub.withDeadlineAfter(5, TimeUnit.SECONDS);
-      stub =
-          stub.withInterceptors(
-              new ClientInterceptor() {
-                @Override
-                public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
-                    MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
-                  return next.newCall(method, callOptions.withDeadlineAfter(5, TimeUnit.SECONDS));
-                }
-              });
-    } catch (MalformedURLException exception) {
-      System.out.println("Error");
+  private static DgraphClient createDgraphClient(boolean withAuthHeader) {
+    ManagedChannel channel =
+        ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext().build();
+    DgraphStub stub = DgraphGrpc.newStub(channel);
+
+    if (withAuthHeader) {
+      Metadata metadata = new Metadata();
+      metadata.put(
+          Metadata.Key.of("auth-token", Metadata.ASCII_STRING_MARSHALLER), "the-auth-token-value");
+      stub = MetadataUtils.attachHeaders(stub, metadata);
     }
+
     return new DgraphClient(stub);
   }
 
   public static void main(final String[] args) {
-    System.out.println("Connecting to endpoint: " + TEST_CLOUD_ENDPOINT);
-    DgraphClient dgraphClient = createDgraphClient();
-    dgraphClient.login("groot", "password");
+    DgraphClient dgraphClient = createDgraphClient(false);
 
     // Initialize
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
@@ -72,33 +65,17 @@ public class App {
       txn.discard();
     }
     // Query
-    for (int i = 0; i < 10; i++) {
-      String query =
-          "query all($a: string){\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
-      Map<String, String> vars = Collections.singletonMap("$a", "Alice");
+    String query =
+        "query all($a: string){\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
+    Map<String, String> vars = Collections.singletonMap("$a", "Alice");
+    Response res = dgraphClient.newTransaction().queryWithVars(query, vars);
 
-      try {
-        Transaction queryTxn = dgraphClient.newTransaction();
-        Response res = queryTxn.queryWithVars(query, vars);
+    // Deserialize
+    People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
 
-        // Deserialize
-        People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
-
-        // Print results
-        System.out.printf("people found: %d\n", ppl.all.size());
-        ppl.all.forEach(person -> System.out.println(person.name));
-      } catch (Exception e) {
-        System.out.println("Exception while running transaction: " + e.toString());
-      }
-      ;
-      System.out.println("Sleeping for 1 second");
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      System.out.println("Done!");
-    }
+    // Print results
+    System.out.printf("people found: %d\n", ppl.all.size());
+    ppl.all.forEach(person -> System.out.println(person.name));
   }
 
   static class Person {
