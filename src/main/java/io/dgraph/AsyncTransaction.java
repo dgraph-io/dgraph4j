@@ -112,7 +112,7 @@ public class AsyncTransaction implements AutoCloseable {
   }
 
   /**
-   * Calls {@code Transcation#queryWithVars} with an empty vars map.
+   * Calls {@code AsyncTransaction#queryWithVars} with an empty vars map.
    *
    * @param query query in DQL
    * @return a Response protocol buffer object
@@ -122,7 +122,7 @@ public class AsyncTransaction implements AutoCloseable {
   }
 
   /**
-   * Calls {@code Transcation#queryWithVars} with an empty vars map.
+   * Calls {@code AsyncTranscation#queryWithVars} with an empty vars map.
    *
    * @param query query in DQL
    * @param duration A non-negative timeout duration for the request. If duration is 0, then no
@@ -177,7 +177,7 @@ public class AsyncTransaction implements AutoCloseable {
   }
 
   /**
-   * Calls {@code Transcation#queryRDFWithVars} with an empty vars map.
+   * Calls {@code AsyncTransaction#queryRDFWithVars} with an empty vars map.
    *
    * @param query query in DQL
    * @return a Response protocol buffer object
@@ -187,7 +187,7 @@ public class AsyncTransaction implements AutoCloseable {
   }
 
   /**
-   * Calls {@code Transcation#queryRDFWithVars} with an empty vars map.
+   * Calls {@code AsyncTransaction#queryRDFWithVars} with an empty vars map.
    *
    * @param query query in DQL
    * @param duration A non-negative timeout duration for the request. If duration is 0, then no

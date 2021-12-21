@@ -70,7 +70,7 @@ public class Transaction implements AutoCloseable {
   }
 
   /**
-   * Calls {@code Transcation#queryWithVars} with an empty vars map.
+   * Calls {@code Transaction#queryWithVars} with an empty vars map.
    *
    * @param query query in DQL
    * @return a Response protocol buffer object
@@ -80,7 +80,7 @@ public class Transaction implements AutoCloseable {
   }
 
   /**
-   * Calls {@code Transcation#queryWithVars} with an empty vars map.
+   * Calls {@code Transaction#queryWithVars} with an empty vars map.
    *
    * @param query query in DQL
    * @param duration A non-negative timeout duration for the request. If duration is 0, then no
