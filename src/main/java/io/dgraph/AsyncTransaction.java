@@ -91,21 +91,22 @@ public class AsyncTransaction implements AutoCloseable {
    *
    * @param query query in DQL
    * @param vars DQL variables used in query
-   * @param duration A non-negative timeout duration for the request. If duration is 0, then no timeout is set.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
    * @param units the time unit for the duration
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> queryWithVars(
-          final String query, final Map<String, String> vars, long duration, TimeUnit units) {
+      final String query, final Map<String, String> vars, long duration, TimeUnit units) {
 
     final Request request =
-            Request.newBuilder()
-                    .setQuery(query)
-                    .putAllVars(vars)
-                    .setStartTs(context.getStartTs())
-                    .setReadOnly(readOnly)
-                    .setBestEffort(bestEffort)
-                    .build();
+        Request.newBuilder()
+            .setQuery(query)
+            .putAllVars(vars)
+            .setStartTs(context.getStartTs())
+            .setReadOnly(readOnly)
+            .setBestEffort(bestEffort)
+            .build();
 
     return this.doRequest(request, duration, units);
   }
@@ -130,7 +131,6 @@ public class AsyncTransaction implements AutoCloseable {
     return queryWithVars(query, Collections.emptyMap(), duration, units);
   }
 
-
   /**
    * Sends a query to one of the connected dgraph instances and returns RDF response. If no
    * mutations need to be made in the same transaction, it's convenient to chain the method: <code>
@@ -141,7 +141,7 @@ public class AsyncTransaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> queryRDFWithVars(
-          final String query, final Map<String, String> vars) {
+      final String query, final Map<String, String> vars) {
     return this.queryRDFWithVars(query, vars, 0, null);
   }
 
@@ -152,22 +152,23 @@ public class AsyncTransaction implements AutoCloseable {
    *
    * @param query query in DQL
    * @param vars DQL variables used in query
-   * @param duration A non-negative timeout duration for the request. If duration is 0, then no timeout is set.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
    * @param units the time unit for the duration
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> queryRDFWithVars(
-          final String query, final Map<String, String> vars, long duration, TimeUnit units) {
+      final String query, final Map<String, String> vars, long duration, TimeUnit units) {
 
     final Request request =
-            Request.newBuilder()
-                    .setQuery(query)
-                    .putAllVars(vars)
-                    .setStartTs(context.getStartTs())
-                    .setReadOnly(readOnly)
-                    .setBestEffort(bestEffort)
-                    .setRespFormat(Request.RespFormat.RDF)
-                    .build();
+        Request.newBuilder()
+            .setQuery(query)
+            .putAllVars(vars)
+            .setStartTs(context.getStartTs())
+            .setReadOnly(readOnly)
+            .setBestEffort(bestEffort)
+            .setRespFormat(Request.RespFormat.RDF)
+            .build();
 
     return this.doRequest(request, duration, units);
   }
@@ -208,7 +209,7 @@ public class AsyncTransaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> mutate(Mutation mutation) {
-    return this.mutate(mutation,0, null);
+    return this.mutate(mutation, 0, null);
   }
 
   /**
@@ -218,17 +219,18 @@ public class AsyncTransaction implements AutoCloseable {
    * this case, there is no need to subsequently call AsyncTransaction#commit.
    *
    * @param mutation a Mutation protocol buffer object representing the mutation.
-   * @param duration A non-negative timeout duration for the request. If duration is 0, then no timeout is set.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
    * @param units the time unit for the duration
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> mutate(Mutation mutation, long duration, TimeUnit units) {
     Request request =
-            Request.newBuilder()
-                    .addMutations(mutation)
-                    .setCommitNow(mutation.getCommitNow())
-                    .setStartTs(context.getStartTs())
-                    .build();
+        Request.newBuilder()
+            .addMutations(mutation)
+            .setCommitNow(mutation.getCommitNow())
+            .setStartTs(context.getStartTs())
+            .build();
 
     return this.doRequest(request, duration, units);
   }
@@ -242,7 +244,8 @@ public class AsyncTransaction implements AutoCloseable {
    * upsert involving a query and a mutation.
    *
    * @param request a Request protocol buffer object.
-   * @param duration A non-negative timeout duration for the request. If duration is 0, then no timeout is set.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
    * @param units the time unit for the duration
    * @return a Response protocol buffer object.
    */

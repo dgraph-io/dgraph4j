@@ -9,7 +9,6 @@ import io.dgraph.DgraphProto.Response;
 import io.dgraph.Transaction;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.List;
@@ -28,10 +27,8 @@ public class App {
       if (TEST_CLOUD_ENDPOINT != null && TEST_CLOUD_ENDPOINT.length() > 0) {
         stub = DgraphClient.clientStubFromCloudEndpoint(TEST_CLOUD_ENDPOINT, TEST_CLOUD_API_KEY);
       } else {
-        ManagedChannel chan = ManagedChannelBuilder
-                .forAddress(TEST_HOSTNAME, TEST_PORT)
-                .usePlaintext()
-                .build();
+        ManagedChannel chan =
+            ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext().build();
         stub = DgraphGrpc.newStub(chan);
       }
       stub = stub.withDeadlineAfter(5, TimeUnit.SECONDS);
@@ -78,7 +75,7 @@ public class App {
     for (int i = 1; i <= 10; i++) {
       System.out.printf("Loop iteration: %d\n", i);
       String query =
-              "query all($a: string){\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
+          "query all($a: string){\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
       Map<String, String> vars = Collections.singletonMap("$a", "Alice");
       Response res = dgraphClient.newTransaction().queryWithVars(query, vars);
 

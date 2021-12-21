@@ -14,7 +14,6 @@ import io.grpc.ClientInterceptor;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.MethodDescriptor;
-
 import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.List;
@@ -33,10 +32,8 @@ public class App {
       if (TEST_CLOUD_ENDPOINT != null && TEST_CLOUD_ENDPOINT.length() > 0) {
         stub = DgraphClient.clientStubFromCloudEndpoint(TEST_CLOUD_ENDPOINT, TEST_CLOUD_API_KEY);
       } else {
-        ManagedChannel chan = ManagedChannelBuilder
-                .forAddress(TEST_HOSTNAME, TEST_PORT)
-                .usePlaintext()
-                .build();
+        ManagedChannel chan =
+            ManagedChannelBuilder.forAddress(TEST_HOSTNAME, TEST_PORT).usePlaintext().build();
         stub = DgraphGrpc.newStub(chan);
       }
       stub =
