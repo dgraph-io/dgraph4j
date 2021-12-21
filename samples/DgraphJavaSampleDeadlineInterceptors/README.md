@@ -50,7 +50,15 @@ For more info, see [Setting
 Deadlines](https://github.com/dgraph-io/dgraph4j/#setting-deadlines).
 
 ```java
-stub = stub.withDeadlineAfter(5, TimeUnit.SECONDS);
+stub =
+    stub.withInterceptors(
+        new ClientInterceptor() {
+          @Override
+          public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+              MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+            return next.newCall(method, callOptions.withDeadlineAfter(5, TimeUnit.SECONDS));
+          }
+        });
 ```
 
 The following output is shown when running the example (`./gradlew run`):
