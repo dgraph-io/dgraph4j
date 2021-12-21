@@ -184,6 +184,19 @@ public class AsyncTransaction implements AutoCloseable {
   }
 
   /**
+   * Calls {@code Transcation#queryRDFWithVars} with an empty vars map.
+   *
+   * @param query query in DQL
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
+   * @return a Response protocol buffer object
+   */
+  public CompletableFuture<Response> queryRDF(final String query, long duration, TimeUnit units) {
+    return queryRDFWithVars(query, Collections.emptyMap(), duration, units);
+  }
+
+  /**
    * Sets the best effort flag for this transaction. The Best effort flag can only be set for
    * read-only transactions, and setting the best effort flag will enable a read-only transaction to
    * see mutations made by other transactions even if those mutations have not been committed.
