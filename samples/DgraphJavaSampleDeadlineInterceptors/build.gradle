@@ -1,0 +1,28 @@
+
+// Apply the java plugin to add support for Java
+apply plugin: 'java'
+
+// Apply the maven plugin to add support for Maven
+apply plugin: 'maven'
+
+// Apply the application plugin to add support for building an application
+apply plugin: 'application'
+apply plugin: 'idea'
+
+// In this section you declare where to find the dependencies of your project
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+ 	// Use Dgraph Java client
+    compile 'io.dgraph:dgraph4j:21.03.1'
+
+    // Use JUnit test framework
+    testCompile 'junit:junit:4.12'
+}
+
+// Define the main class for the application
+mainClassName = 'App'
+

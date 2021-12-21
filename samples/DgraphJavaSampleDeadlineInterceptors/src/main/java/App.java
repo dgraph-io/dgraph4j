@@ -7,13 +7,8 @@ import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
 import io.dgraph.Transaction;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import io.grpc.Metadata;
-import io.grpc.stub.MetadataUtils;
-
+import io.grpc.*;
 import java.net.MalformedURLException;
-import java.sql.Time;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +32,15 @@ public class App {
                 .build();
         stub = DgraphGrpc.newStub(chan);
       }
-      stub = stub.withDeadlineAfter(5, TimeUnit.SECONDS);
+      stub =
+          stub.withInterceptors(
+              new ClientInterceptor() {
+                @Override
+                public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(
+                    MethodDescriptor<ReqT, RespT> method, CallOptions callOptions, Channel next) {
+                  return next.newCall(method, callOptions.withDeadlineAfter(5, TimeUnit.SECONDS));
+                }
+              });
     } catch (MalformedURLException exception) {
       System.out.println("Error");
     }
@@ -81,22 +84,30 @@ public class App {
     for (int i = 1; i <= 10; i++) {
       System.out.printf("Loop iteration: %d\n", i);
       String query =
-              "query all($a: string){\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
+          "query all($a: string){\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
       Map<String, String> vars = Collections.singletonMap("$a", "Alice");
-      Response res = dgraphClient.newTransaction().queryWithVars(query, vars);
 
-      // Deserialize
-      People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
+      try {
+        Transaction queryTxn = dgraphClient.newTransaction();
+        Response res = queryTxn.queryWithVars(query, vars);
 
-      // Print results
-      System.out.printf("people found: %d\n", ppl.all.size());
-      ppl.all.forEach(person -> System.out.println(person.name));
+        // Deserialize
+        People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
+
+        // Print results
+        System.out.printf("people found: %d\n", ppl.all.size());
+        ppl.all.forEach(person -> System.out.println(person.name));
+      } catch (Exception e) {
+        System.out.println("Exception while running transaction: " + e.toString());
+      }
+      ;
       System.out.println("Sleeping for 1 second");
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
+      System.out.println("Done!");
     }
   }
 
