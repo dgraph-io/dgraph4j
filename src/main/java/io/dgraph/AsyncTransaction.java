@@ -125,6 +125,9 @@ public class AsyncTransaction implements AutoCloseable {
    * Calls {@code Transcation#queryWithVars} with an empty vars map.
    *
    * @param query query in DQL
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
    * @return a Response protocol buffer object
    */
   public CompletableFuture<Response> query(final String query, long duration, TimeUnit units) {
