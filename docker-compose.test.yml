@@ -45,7 +45,7 @@ services:
         limits:
           memory: 32G
   alpha3:
-    image: dgraph/dgraph:latest
+    image: dgraph/dgraph:v21.12.0
     container_name: alpha3
     working_dir: /data/alpha3
     labels:
