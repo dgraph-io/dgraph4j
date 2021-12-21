@@ -51,6 +51,21 @@ public class Transaction implements AutoCloseable {
   }
 
   /**
+   * Sends a query to one of the connected dgraph instances. If no mutations need to be made in the
+   * same transaction, it's convenient to chain the method: <code>
+   * client.NewTransaction().queryWithVars(...) </code>.
+   *
+   * @param query query in DQL
+   * @param vars DQL variables used in query
+   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @return a Response protocol buffer object.
+   */
+  public Response queryWithVars(final String query, final Map<String, String> vars, long duration) {
+    return ExceptionUtil.withExceptionUnwrapped(
+            () -> asyncTransaction.queryWithVars(query, vars, duration).join());
+  }
+
+  /**
    * Calls {@code Transcation#queryWithVars} with an empty vars map.
    *
    * @param query query in DQL
@@ -59,6 +74,18 @@ public class Transaction implements AutoCloseable {
   public Response query(final String query) {
     return queryWithVars(query, Collections.emptyMap());
   }
+
+  /**
+   * Calls {@code Transcation#queryWithVars} with an empty vars map.
+   *
+   * @param query query in DQL
+   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @return a Response protocol buffer object
+   */
+  public Response query(final String query, long duration) {
+    return queryWithVars(query, Collections.emptyMap(), duration);
+  }
+
 
   /**
    * Sends a query to one of the connected dgraph instances and returns RDF response. If no
@@ -75,6 +102,21 @@ public class Transaction implements AutoCloseable {
   }
 
   /**
+   * Sends a query to one of the connected dgraph instances and returns RDF response. If no
+   * mutations need to be made in the same transaction, it's convenient to chain the method: <code>
+   * client.NewTransaction().queryWithVars(...) </code>.
+   *
+   * @param query query in DQL
+   * @param vars DQL variables used in query
+   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @return a Response protocol buffer object.
+   */
+  public Response queryRDFWithVars(final String query, final Map<String, String> vars, long duration) {
+    return ExceptionUtil.withExceptionUnwrapped(
+            () -> asyncTransaction.queryRDFWithVars(query, vars, duration).join());
+  }
+
+  /**
    * Calls {@code Transcation#queryRDFWithVars} with an empty vars map.
    *
    * @param query query in DQL
@@ -82,6 +124,16 @@ public class Transaction implements AutoCloseable {
    */
   public Response queryRDF(final String query) {
     return queryRDFWithVars(query, Collections.emptyMap());
+  }
+
+  /**
+   * Calls {@code Transcation#queryRDFWithVars} with an empty vars map.
+   *
+   * @param query query in DQL
+   * @return a Response protocol buffer object
+   */
+  public Response queryRDF(final String query, long duration) {
+    return queryRDFWithVars(query, Collections.emptyMap(), duration);
   }
 
   /**
@@ -98,6 +150,20 @@ public class Transaction implements AutoCloseable {
   }
 
   /**
+   * Allows data stored on dgraph instances to be modified. The fields in Mutation come in pairs,
+   * set and delete. Mutations can either be encoded as JSON or as RDFs. If the `commitNow` property
+   * on the Mutation object is set, this call will result in the transaction being committed. In
+   * this case, there is no need to subsequently call AsyncTransaction#commit.
+   *
+   * @param mutation a Mutation protocol buffer object representing the mutation.
+   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @return a Response protocol buffer object.
+   */
+  public Response mutate(Mutation mutation, long duration) {
+    return ExceptionUtil.withExceptionUnwrapped(() -> asyncTransaction.mutate(mutation, duration).join());
+  }
+
+  /**
    * Allows performing a query on dgraph instances. It could perform just query or a mutation or an
    * upsert involving a query and a mutation.
    *
@@ -106,6 +172,18 @@ public class Transaction implements AutoCloseable {
    */
   public Response doRequest(Request request) {
     return ExceptionUtil.withExceptionUnwrapped(() -> asyncTransaction.doRequest(request).join());
+  }
+
+  /**
+   * Allows performing a query on dgraph instances. It could perform just query or a mutation or an
+   * upsert involving a query and a mutation.
+   *
+   * @param request a Request protocol buffer object.
+   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @return a Response protocol buffer object.
+   */
+  public Response doRequest(Request request, long duration) {
+    return ExceptionUtil.withExceptionUnwrapped(() -> asyncTransaction.doRequest(request, duration).join());
   }
 
   /**

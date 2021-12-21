@@ -23,6 +23,7 @@ import io.dgraph.DgraphProto.TxnContext;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is the implementation of asynchronous Dgraph transaction. The asynchrony is backed-up by
@@ -80,17 +81,32 @@ public class AsyncTransaction implements AutoCloseable {
    */
   public CompletableFuture<Response> queryWithVars(
       final String query, final Map<String, String> vars) {
+    return this.queryWithVars(query, vars, 0);
+  }
+
+  /**
+   * Sends a query to one of the connected dgraph instances. If no mutations need to be made in the
+   * same transaction, it's convenient to chain the method: <code>
+   * client.NewTransaction().queryWithVars(...)</code>.
+   *
+   * @param query query in DQL
+   * @param vars DQL variables used in query
+   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @return a Response protocol buffer object.
+   */
+  public CompletableFuture<Response> queryWithVars(
+          final String query, final Map<String, String> vars, long duration) {
 
     final Request request =
-        Request.newBuilder()
-            .setQuery(query)
-            .putAllVars(vars)
-            .setStartTs(context.getStartTs())
-            .setReadOnly(readOnly)
-            .setBestEffort(bestEffort)
-            .build();
+            Request.newBuilder()
+                    .setQuery(query)
+                    .putAllVars(vars)
+                    .setStartTs(context.getStartTs())
+                    .setReadOnly(readOnly)
+                    .setBestEffort(bestEffort)
+                    .build();
 
-    return this.doRequest(request);
+    return this.doRequest(request, duration);
   }
 
   /**
@@ -113,19 +129,34 @@ public class AsyncTransaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> queryRDFWithVars(
-      final String query, final Map<String, String> vars) {
+          final String query, final Map<String, String> vars) {
+    return this.queryRDFWithVars(query, vars, 0);
+  }
+
+  /**
+   * Sends a query to one of the connected dgraph instances and returns RDF response. If no
+   * mutations need to be made in the same transaction, it's convenient to chain the method: <code>
+   * client.NewTransaction().queryRDFWithVars(...)</code>.
+   *
+   * @param query query in DQL
+   * @param vars DQL variables used in query
+   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @return a Response protocol buffer object.
+   */
+  public CompletableFuture<Response> queryRDFWithVars(
+          final String query, final Map<String, String> vars, long duration) {
 
     final Request request =
-        Request.newBuilder()
-            .setQuery(query)
-            .putAllVars(vars)
-            .setStartTs(context.getStartTs())
-            .setReadOnly(readOnly)
-            .setBestEffort(bestEffort)
-            .setRespFormat(Request.RespFormat.RDF)
-            .build();
+            Request.newBuilder()
+                    .setQuery(query)
+                    .putAllVars(vars)
+                    .setStartTs(context.getStartTs())
+                    .setReadOnly(readOnly)
+                    .setBestEffort(bestEffort)
+                    .setRespFormat(Request.RespFormat.RDF)
+                    .build();
 
-    return this.doRequest(request);
+    return this.doRequest(request, duration);
   }
 
   /**
@@ -164,14 +195,32 @@ public class AsyncTransaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> mutate(Mutation mutation) {
-    Request request =
-        Request.newBuilder()
-            .addMutations(mutation)
-            .setCommitNow(mutation.getCommitNow())
-            .setStartTs(context.getStartTs())
-            .build();
+    return this.mutate(mutation,0);
+  }
 
-    return this.doRequest(request);
+  /**
+   * Allows data stored on dgraph instances to be modified. The fields in Mutation come in pairs,
+   * set and delete. Mutations can either be encoded as JSON or as RDFs. If the `commitNow` property
+   * on the Mutation object is set, this call will result in the transaction being committed. In
+   * this case, there is no need to subsequently call AsyncTransaction#commit.
+   *
+   * @param mutation a Mutation protocol buffer object representing the mutation.
+   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
+   * @return a Response protocol buffer object.
+   */
+  public CompletableFuture<Response> mutate(Mutation mutation, long duration) {
+    Request request =
+            Request.newBuilder()
+                    .addMutations(mutation)
+                    .setCommitNow(mutation.getCommitNow())
+                    .setStartTs(context.getStartTs())
+                    .build();
+
+    return this.doRequest(request, duration);
+  }
+
+  public CompletableFuture<Response> doRequest(Request request) {
+    return this.doRequest(request, 0);
   }
 
   /**
@@ -179,9 +228,10 @@ public class AsyncTransaction implements AutoCloseable {
    * upsert involving a query and a mutation.
    *
    * @param request a Request protocol buffer object.
+   * @param duration timeout duration in milliseconds for the request. If duration is 0, then no timeout is set.
    * @return a Response protocol buffer object.
    */
-  public CompletableFuture<Response> doRequest(Request request) {
+  public CompletableFuture<Response> doRequest(Request request, long duration) {
     if (finished) {
       throw new TxnFinishedException();
     }
@@ -206,6 +256,9 @@ public class AsyncTransaction implements AutoCloseable {
             () -> {
               StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
               DgraphStub localStub = client.getStubWithJwt(stub);
+              if (duration > 0) {
+                localStub = localStub.withDeadlineAfter(duration, TimeUnit.MILLISECONDS);
+              }
               localStub.query(requestStartTs, bridge);
 
               return bridge
