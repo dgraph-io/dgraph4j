@@ -230,15 +230,14 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     assertEquals("Alice", name);
 
     // query
-    String query = "query { me(func: eq(name, \"Alice\")) { name }}";
-    Response response =
-        dgraphClient.newTransaction().query(query, 10, TimeUnit.SECONDS);
+    query = "query { me(func: eq(name, \"Alice\")) { name }}";
+    response = dgraphClient.newTransaction().query(query, 10, TimeUnit.SECONDS);
 
     // Verify data as expected
     parser = new JsonParser();
     data = parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
     assertTrue(data.has("me"));
-    String name = data.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
+    name = data.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
     assertEquals("Alice", name);
   }
 }
