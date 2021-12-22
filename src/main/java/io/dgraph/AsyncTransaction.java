@@ -73,7 +73,7 @@ public class AsyncTransaction implements AutoCloseable {
   /**
    * Sends a query to one of the connected dgraph instances. If no mutations need to be made in the
    * same transaction, it's convenient to chain the method: <code>
-   * client.NewTransaction().queryWithVars(...)</code>.
+   * client.newTransaction().queryWithVars(...)</code>.
    *
    * @param query query in DQL
    * @param vars DQL variables used in query
@@ -87,7 +87,7 @@ public class AsyncTransaction implements AutoCloseable {
   /**
    * Sends a query to one of the connected dgraph instances. If no mutations need to be made in the
    * same transaction, it's convenient to chain the method: <code>
-   * client.NewTransaction().queryWithVars(...)</code>.
+   * client.newTransaction().queryWithVars(...)</code>.
    *
    * @param query query in DQL
    * @param vars DQL variables used in query
@@ -137,7 +137,7 @@ public class AsyncTransaction implements AutoCloseable {
   /**
    * Sends a query to one of the connected dgraph instances and returns RDF response. If no
    * mutations need to be made in the same transaction, it's convenient to chain the method: <code>
-   * client.NewTransaction().queryRDFWithVars(...)</code>.
+   * client.newTransaction().queryRDFWithVars(...)</code>.
    *
    * @param query query in DQL
    * @param vars DQL variables used in query
@@ -151,7 +151,7 @@ public class AsyncTransaction implements AutoCloseable {
   /**
    * Sends a query to one of the connected dgraph instances and returns RDF response. If no
    * mutations need to be made in the same transaction, it's convenient to chain the method: <code>
-   * client.NewTransaction().queryRDFWithVars(...)</code>.
+   * client.newTransaction().queryRDFWithVars(...)</code>.
    *
    * @param query query in DQL
    * @param vars DQL variables used in query
