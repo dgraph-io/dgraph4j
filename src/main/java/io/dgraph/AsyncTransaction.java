@@ -225,7 +225,7 @@ public class AsyncTransaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> mutate(Mutation mutation) {
-    return this.mutate(mutation, 0, null);
+    return mutate(mutation, 0, null);
   }
 
   /**
