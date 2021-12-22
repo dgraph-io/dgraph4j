@@ -216,7 +216,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
             .build();
     dgraphClient.newTransaction().mutate(mu, 10, TimeUnit.SECONDS);
 
-    // Query
+    // queryWithVars
     String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
     Map<String, String> vars = Collections.singletonMap("$a", "Alice");
     Response response =
@@ -224,6 +224,18 @@ public class DgraphClientTest extends DgraphIntegrationTest {
 
     // Verify data as expected
     JsonParser parser = new JsonParser();
+    data = parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
+    assertTrue(data.has("me"));
+    String name = data.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
+    assertEquals("Alice", name);
+
+    // query
+    String query = "query { me(func: eq(name, \"Alice\")) { name }}";
+    Response response =
+        dgraphClient.newTransaction().query(query, 10, TimeUnit.SECONDS);
+
+    // Verify data as expected
+    parser = new JsonParser();
     data = parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
     assertTrue(data.has("me"));
     String name = data.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
