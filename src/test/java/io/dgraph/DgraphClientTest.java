@@ -219,23 +219,30 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     // queryWithVars
     String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
     Map<String, String> vars = Collections.singletonMap("$a", "Alice");
-    Response response =
-        dgraphClient.newTransaction().queryWithVars(query, vars, 10, TimeUnit.SECONDS);
-
-    // Verify data as expected
-    JsonParser parser = new JsonParser();
-    data = parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
-    assertTrue(data.has("me"));
-    String name = data.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
-    assertEquals("Alice", name);
+    Response response = null;
+    String name = null;
+    boolean timedOut = false;
+    try {
+      dgraphClient.newTransaction().queryWithVars(query, vars, 10, TimeUnit.NANOSECONDS);
+    } catch (RuntimeException e) {
+      Throwable exception = e;
+      while (exception != null) {
+        if (exception.getMessage().contains("DEADLINE_EXCEEDED")) {
+          timedOut = true;
+          break;
+        }
+        exception = exception.getCause();
+      }
+    }
+    assertTrue(timedOut);
 
     // query
+    // no timeout set means indefinite timeout (it should not pick up any previously set timeout)
     query = "query { me(func: eq(name, \"Alice\")) { name }}";
-    response = dgraphClient.newTransaction().query(query, 10, TimeUnit.SECONDS);
+    response = dgraphClient.newTransaction().query(query);
 
     // Verify data as expected
-    parser = new JsonParser();
-    data = parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
+    data = JsonParser.parseString(response.getJson().toStringUtf8()).getAsJsonObject();
     assertTrue(data.has("me"));
     name = data.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
     assertEquals("Alice", name);
