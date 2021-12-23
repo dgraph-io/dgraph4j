@@ -12,6 +12,7 @@ import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Request;
 import io.dgraph.DgraphProto.Response;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.testng.annotations.Test;
 
 public class UpsertBlockTest extends DgraphIntegrationTest {
@@ -339,6 +340,47 @@ public class UpsertBlockTest extends DgraphIntegrationTest {
 
     Transaction transaction = dgraphClient.newTransaction();
     transaction.doRequest(request);
+
+    try {
+      transaction.doRequest(request);
+    } catch (RuntimeException e) {
+      fail(e.getMessage());
+    }
+
+    transaction.discard();
+  }
+
+  @Test
+  public void upsertTimeoutTest() {
+    DgraphProto.Operation op =
+        DgraphProto.Operation.newBuilder()
+            .setSchema("email: string @index(exact) @upsert .")
+            .build();
+    dgraphClient.alter(op);
+
+    JsonArray jsonData = new JsonArray();
+    JsonObject person = new JsonObject();
+    person.addProperty("uid", "uid(v)");
+    person.addProperty("name", "wrong");
+    jsonData.add(person);
+
+    JsonObject person2 = new JsonObject();
+    person2.addProperty("email", "me@example.com");
+    person2.addProperty("uid", "uid(v)");
+    jsonData.add(person2);
+
+    String query =
+        "{\n"
+            + "    me(func: eq(email, \"me@example.com\")) {\n"
+            + "        v as uid\n"
+            + "    }\n"
+            + "}\n";
+    Mutation mu =
+        Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(jsonData.toString())).build();
+    Request request = Request.newBuilder().addMutations(mu).setQuery(query).build();
+
+    Transaction transaction = dgraphClient.newTransaction();
+    transaction.doRequest(request, 10, TimeUnit.SECONDS);
 
     try {
       transaction.doRequest(request);

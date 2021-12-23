@@ -20,6 +20,7 @@ import io.dgraph.DgraphProto.Request;
 import io.dgraph.DgraphProto.Response;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is synchronous implementation of Dgraph transaction. All operations are delegated to
@@ -39,7 +40,7 @@ public class Transaction implements AutoCloseable {
   /**
    * Sends a query to one of the connected dgraph instances. If no mutations need to be made in the
    * same transaction, it's convenient to chain the method: <code>
-   * client.NewTransaction().queryWithVars(...) </code>.
+   * client.newTransaction().queryWithVars(...) </code>.
    *
    * @param query query in DQL
    * @param vars DQL variables used in query
@@ -51,7 +52,25 @@ public class Transaction implements AutoCloseable {
   }
 
   /**
-   * Calls {@code Transcation#queryWithVars} with an empty vars map.
+   * Sends a query to one of the connected dgraph instances. If no mutations need to be made in the
+   * same transaction, it's convenient to chain the method: <code>
+   * client.newTransaction().queryWithVars(...) </code>.
+   *
+   * @param query query in DQL
+   * @param vars DQL variables used in query
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
+   * @return a Response protocol buffer object.
+   */
+  public Response queryWithVars(
+      final String query, final Map<String, String> vars, long duration, TimeUnit units) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> asyncTransaction.queryWithVars(query, vars, duration, units).join());
+  }
+
+  /**
+   * Calls {@code Transaction#queryWithVars} with an empty vars map.
    *
    * @param query query in DQL
    * @return a Response protocol buffer object
@@ -61,9 +80,22 @@ public class Transaction implements AutoCloseable {
   }
 
   /**
+   * Calls {@code Transaction#queryWithVars} with an empty vars map.
+   *
+   * @param query query in DQL
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
+   * @return a Response protocol buffer object
+   */
+  public Response query(final String query, long duration, TimeUnit units) {
+    return queryWithVars(query, Collections.emptyMap(), duration, units);
+  }
+
+  /**
    * Sends a query to one of the connected dgraph instances and returns RDF response. If no
    * mutations need to be made in the same transaction, it's convenient to chain the method: <code>
-   * client.NewTransaction().queryWithVars(...) </code>.
+   * client.newTransaction().queryWithVars(...) </code>.
    *
    * @param query query in DQL
    * @param vars DQL variables used in query
@@ -75,6 +107,24 @@ public class Transaction implements AutoCloseable {
   }
 
   /**
+   * Sends a query to one of the connected dgraph instances and returns RDF response. If no
+   * mutations need to be made in the same transaction, it's convenient to chain the method: <code>
+   * client.newTransaction().queryWithVars(...) </code>.
+   *
+   * @param query query in DQL
+   * @param vars DQL variables used in query
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
+   * @return a Response protocol buffer object.
+   */
+  public Response queryRDFWithVars(
+      final String query, final Map<String, String> vars, long duration, TimeUnit units) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> asyncTransaction.queryRDFWithVars(query, vars, duration, units).join());
+  }
+
+  /**
    * Calls {@code Transcation#queryRDFWithVars} with an empty vars map.
    *
    * @param query query in DQL
@@ -82,6 +132,19 @@ public class Transaction implements AutoCloseable {
    */
   public Response queryRDF(final String query) {
     return queryRDFWithVars(query, Collections.emptyMap());
+  }
+
+  /**
+   * Calls {@code Transcation#queryRDFWithVars} with an empty vars map.
+   *
+   * @param query query in DQL
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
+   * @return a Response protocol buffer object
+   */
+  public Response queryRDF(final String query, long duration, TimeUnit units) {
+    return queryRDFWithVars(query, Collections.emptyMap(), duration, units);
   }
 
   /**
@@ -98,6 +161,23 @@ public class Transaction implements AutoCloseable {
   }
 
   /**
+   * Allows data stored on dgraph instances to be modified. The fields in Mutation come in pairs,
+   * set and delete. Mutations can either be encoded as JSON or as RDFs. If the `commitNow` property
+   * on the Mutation object is set, this call will result in the transaction being committed. In
+   * this case, there is no need to subsequently call AsyncTransaction#commit.
+   *
+   * @param mutation a Mutation protocol buffer object representing the mutation.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
+   * @return a Response protocol buffer object.
+   */
+  public Response mutate(Mutation mutation, long duration, TimeUnit units) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> asyncTransaction.mutate(mutation, duration, units).join());
+  }
+
+  /**
    * Allows performing a query on dgraph instances. It could perform just query or a mutation or an
    * upsert involving a query and a mutation.
    *
@@ -106,6 +186,21 @@ public class Transaction implements AutoCloseable {
    */
   public Response doRequest(Request request) {
     return ExceptionUtil.withExceptionUnwrapped(() -> asyncTransaction.doRequest(request).join());
+  }
+
+  /**
+   * Allows performing a query on dgraph instances. It could perform just query or a mutation or an
+   * upsert involving a query and a mutation.
+   *
+   * @param request a Request protocol buffer object.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
+   * @return a Response protocol buffer object.
+   */
+  public Response doRequest(Request request, long duration, TimeUnit units) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> asyncTransaction.doRequest(request, duration, units).join());
   }
 
   /**

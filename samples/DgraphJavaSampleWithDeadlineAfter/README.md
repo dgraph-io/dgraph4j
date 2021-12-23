@@ -44,7 +44,7 @@ For more configuration options, and other details, refer to [docs.dgraph.io](htt
 **Warning**: The sample code, when run, will remove all data from your locally running Dgraph instance. 
 So make sure that you don't have any important data on your Dgraph instance.
 
-This example in [App.java:37](./src/main/java/App.java#L37) creates the
+This example in [App.java:34](./src/main/java/App.java#L34) creates the
 DgraphStub with a deadline set for the **entire life of the stub**. This is most
 likely what you do NOT want to do. For more info, see [Setting
 Deadlines](https://github.com/dgraph-io/dgraph4j/#setting-deadlines).

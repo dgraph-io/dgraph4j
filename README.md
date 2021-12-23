@@ -524,6 +524,8 @@ It is recommended that you always set a deadline for each client call, after
 which the client terminates. This is in line with the recommendation for any gRPC client.
 Read [this forum post][deadline-post] for more details.
 
+#### Setting deadlines for all requests
+
 ```java
 channel = ManagedChannelBuilder.forAddress("localhost", 9080).usePlaintext(true).build();
 DgraphGrpc.DgraphStub stub = DgraphGrpc.newStub(channel);
@@ -537,6 +539,13 @@ ClientInterceptor timeoutInterceptor = new ClientInterceptor(){
 stub = stub.withInterceptors(timeoutInterceptor);
 DgraphClient dgraphClient = new DgraphClient(stub);
 ```
+
+#### Setting deadlines for a single request
+
+```
+dgraphClient.newTransaction().query(query, 500, TimeUnit.MILLISECONDS);
+```
+
 
 [deadline-post]: https://discuss.dgraph.io/t/dgraph-java-client-setting-deadlines-per-call/3056
 

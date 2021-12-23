@@ -23,6 +23,7 @@ import io.dgraph.DgraphProto.TxnContext;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is the implementation of asynchronous Dgraph transaction. The asynchrony is backed-up by
@@ -72,7 +73,7 @@ public class AsyncTransaction implements AutoCloseable {
   /**
    * Sends a query to one of the connected dgraph instances. If no mutations need to be made in the
    * same transaction, it's convenient to chain the method: <code>
-   * client.NewTransaction().queryWithVars(...)</code>.
+   * client.newTransaction().queryWithVars(...)</code>.
    *
    * @param query query in DQL
    * @param vars DQL variables used in query
@@ -80,6 +81,23 @@ public class AsyncTransaction implements AutoCloseable {
    */
   public CompletableFuture<Response> queryWithVars(
       final String query, final Map<String, String> vars) {
+    return this.queryWithVars(query, vars, 0, null);
+  }
+
+  /**
+   * Sends a query to one of the connected dgraph instances. If no mutations need to be made in the
+   * same transaction, it's convenient to chain the method: <code>
+   * client.newTransaction().queryWithVars(...)</code>.
+   *
+   * @param query query in DQL
+   * @param vars DQL variables used in query
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
+   * @return a Response protocol buffer object.
+   */
+  public CompletableFuture<Response> queryWithVars(
+      final String query, final Map<String, String> vars, long duration, TimeUnit units) {
 
     final Request request =
         Request.newBuilder()
@@ -90,11 +108,11 @@ public class AsyncTransaction implements AutoCloseable {
             .setBestEffort(bestEffort)
             .build();
 
-    return this.doRequest(request);
+    return this.doRequest(request, duration, units);
   }
 
   /**
-   * Calls {@code Transcation#queryWithVars} with an empty vars map.
+   * Calls {@code AsyncTransaction#queryWithVars} with an empty vars map.
    *
    * @param query query in DQL
    * @return a Response protocol buffer object
@@ -104,9 +122,22 @@ public class AsyncTransaction implements AutoCloseable {
   }
 
   /**
+   * Calls {@code AsyncTranscation#queryWithVars} with an empty vars map.
+   *
+   * @param query query in DQL
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
+   * @return a Response protocol buffer object
+   */
+  public CompletableFuture<Response> query(final String query, long duration, TimeUnit units) {
+    return queryWithVars(query, Collections.emptyMap(), duration, units);
+  }
+
+  /**
    * Sends a query to one of the connected dgraph instances and returns RDF response. If no
    * mutations need to be made in the same transaction, it's convenient to chain the method: <code>
-   * client.NewTransaction().queryRDFWithVars(...)</code>.
+   * client.newTransaction().queryRDFWithVars(...)</code>.
    *
    * @param query query in DQL
    * @param vars DQL variables used in query
@@ -114,6 +145,23 @@ public class AsyncTransaction implements AutoCloseable {
    */
   public CompletableFuture<Response> queryRDFWithVars(
       final String query, final Map<String, String> vars) {
+    return this.queryRDFWithVars(query, vars, 0, null);
+  }
+
+  /**
+   * Sends a query to one of the connected dgraph instances and returns RDF response. If no
+   * mutations need to be made in the same transaction, it's convenient to chain the method: <code>
+   * client.newTransaction().queryRDFWithVars(...)</code>.
+   *
+   * @param query query in DQL
+   * @param vars DQL variables used in query
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
+   * @return a Response protocol buffer object.
+   */
+  public CompletableFuture<Response> queryRDFWithVars(
+      final String query, final Map<String, String> vars, long duration, TimeUnit units) {
 
     final Request request =
         Request.newBuilder()
@@ -125,17 +173,30 @@ public class AsyncTransaction implements AutoCloseable {
             .setRespFormat(Request.RespFormat.RDF)
             .build();
 
-    return this.doRequest(request);
+    return this.doRequest(request, duration, units);
   }
 
   /**
-   * Calls {@code Transcation#queryRDFWithVars} with an empty vars map.
+   * Calls {@code AsyncTransaction#queryRDFWithVars} with an empty vars map.
    *
    * @param query query in DQL
    * @return a Response protocol buffer object
    */
   public CompletableFuture<Response> queryRDF(final String query) {
     return queryRDFWithVars(query, Collections.emptyMap());
+  }
+
+  /**
+   * Calls {@code AsyncTransaction#queryRDFWithVars} with an empty vars map.
+   *
+   * @param query query in DQL
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
+   * @return a Response protocol buffer object
+   */
+  public CompletableFuture<Response> queryRDF(final String query, long duration, TimeUnit units) {
+    return queryRDFWithVars(query, Collections.emptyMap(), duration, units);
   }
 
   /**
@@ -164,6 +225,22 @@ public class AsyncTransaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public CompletableFuture<Response> mutate(Mutation mutation) {
+    return mutate(mutation, 0, null);
+  }
+
+  /**
+   * Allows data stored on dgraph instances to be modified. The fields in Mutation come in pairs,
+   * set and delete. Mutations can either be encoded as JSON or as RDFs. If the `commitNow` property
+   * on the Mutation object is set, this call will result in the transaction being committed. In
+   * this case, there is no need to subsequently call AsyncTransaction#commit.
+   *
+   * @param mutation a Mutation protocol buffer object representing the mutation.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
+   * @return a Response protocol buffer object.
+   */
+  public CompletableFuture<Response> mutate(Mutation mutation, long duration, TimeUnit units) {
     Request request =
         Request.newBuilder()
             .addMutations(mutation)
@@ -171,7 +248,11 @@ public class AsyncTransaction implements AutoCloseable {
             .setStartTs(context.getStartTs())
             .build();
 
-    return this.doRequest(request);
+    return this.doRequest(request, duration, units);
+  }
+
+  public CompletableFuture<Response> doRequest(Request request) {
+    return this.doRequest(request, 0, null);
   }
 
   /**
@@ -179,9 +260,12 @@ public class AsyncTransaction implements AutoCloseable {
    * upsert involving a query and a mutation.
    *
    * @param request a Request protocol buffer object.
+   * @param duration A non-negative timeout duration for the request. If duration is 0, then no
+   *     timeout is set.
+   * @param units the time unit for the duration
    * @return a Response protocol buffer object.
    */
-  public CompletableFuture<Response> doRequest(Request request) {
+  public CompletableFuture<Response> doRequest(Request request, long duration, TimeUnit units) {
     if (finished) {
       throw new TxnFinishedException();
     }
@@ -206,6 +290,9 @@ public class AsyncTransaction implements AutoCloseable {
             () -> {
               StreamObserverBridge<Response> bridge = new StreamObserverBridge<>();
               DgraphStub localStub = client.getStubWithJwt(stub);
+              if (duration > 0) {
+                localStub = localStub.withDeadlineAfter(duration, units);
+              }
               localStub.query(requestStartTs, bridge);
 
               return bridge

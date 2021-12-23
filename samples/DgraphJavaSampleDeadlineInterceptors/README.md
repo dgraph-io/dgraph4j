@@ -44,7 +44,7 @@ For more configuration options, and other details, refer to [docs.dgraph.io](htt
 **Warning**: The sample code, when run, will remove all data from your locally running Dgraph instance. 
 So make sure that you don't have any important data on your Dgraph instance.
 
-This example in [App.java:42](./src/main/java/App.java#L42-L50) creates the
+This example in [App.java:39](./src/main/java/App.java#L39-L47) creates the
 DgraphStub with a deadline using a call interceptor to set timeouts **per
 request**. This is most likely what you want to do. For more info, see [Setting
 Deadlines](https://github.com/dgraph-io/dgraph4j/#setting-deadlines).
