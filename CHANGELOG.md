@@ -6,6 +6,16 @@ and this project adheres to [Calendar Versioning](https://calver.org/) starting 
 
 ## [Unreleased]
 
+## [21.03.2] - 2021-12-24
+
+### Added
+
+* feat: Add timeout parameters to transaction requests. ([#172])
+* feat: Add shutdown method to client. ([#173])
+
+[#172]: https://github.com/dgraph-io/dgraph4j/pull/172
+[#173]: https://github.com/dgraph-io/dgraph4j/pull/173
+
 ## [21.03.1] - 2021-04-22
 ### Added
 * fix(deprecation): add DgraphClient.clientStubFromCloudEndpoint ([#170])
@@ -157,7 +167,8 @@ and this project adheres to [Calendar Versioning](https://calver.org/) starting 
 ## [1.0.0] - 2017-12-18
 * Fully compatible with Dgraph v1.0
 
-[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.1...HEAD
+[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.2...HEAD
+[21.03.2]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.1...v21.03.2
 [21.03.1]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.0...v21.03.1
 [21.03.0]: https://github.com/dgraph-io/dgraph4j/compare/v20.11.0...v21.03.0
 [20.11.0]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.3...v20.11.0

@@ -55,12 +55,12 @@ grab via Maven:
 <dependency>
   <groupId>io.dgraph</groupId>
   <artifactId>dgraph4j</artifactId>
-  <version>21.03.1</version>
+  <version>21.03.2</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'io.dgraph:dgraph4j:21.03.1'
+compile 'io.dgraph:dgraph4j:21.03.2'
 ```
 
 ## Supported Versions
@@ -592,6 +592,12 @@ client](#creating-a-client).
 
 ```
 channel.shutdown();
+```
+
+You can also close all channels in from the client object:
+
+```
+dgraphClient.shutdown();
 ```
 
 ## Using the Asynchronous Client
