@@ -6,6 +6,10 @@ and this project adheres to [Calendar Versioning](https://calver.org/) starting 
 
 ## [Unreleased]
 
+## [21.12.0] - 2021-12-24
+
+* Version bump. No changes from v21.03.2.
+
 ## [21.03.2] - 2021-12-24
 
 ### Added
@@ -167,7 +171,8 @@ and this project adheres to [Calendar Versioning](https://calver.org/) starting 
 ## [1.0.0] - 2017-12-18
 * Fully compatible with Dgraph v1.0
 
-[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.2...HEAD
+[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v21.12.0...HEAD
+[21.12.0]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.2...v21.12.0
 [21.03.2]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.1...v21.03.2
 [21.03.1]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.0...v21.03.1
 [21.03.0]: https://github.com/dgraph-io/dgraph4j/compare/v20.11.0...v21.03.0

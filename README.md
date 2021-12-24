@@ -55,12 +55,12 @@ grab via Maven:
 <dependency>
   <groupId>io.dgraph</groupId>
   <artifactId>dgraph4j</artifactId>
-  <version>21.03.2</version>
+  <version>21.12.0</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'io.dgraph:dgraph4j:21.03.2'
+compile 'io.dgraph:dgraph4j:21.12.0'
 ```
 
 ## Supported Versions
