@@ -85,8 +85,11 @@ public abstract class DgraphIntegrationTest {
 
   @AfterClass
   public static void afterClass() throws InterruptedException {
+    // Shutdown channel connections
     channel1.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     channel2.shutdown().awaitTermination(5, TimeUnit.SECONDS);
     channel3.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+    // Or, alternatively, shutdown channels from the client
+    dgraphClient.shutdown();
   }
 }

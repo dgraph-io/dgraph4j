@@ -228,4 +228,9 @@ public class DgraphClient {
   public void loginIntoNamespace(String userid, String password, long namespace) {
     asyncClient.loginIntoNamespace(userid, password, namespace).join();
   }
+
+  /** Calls %{@link io.grpc.ManagedChannel#shutdown} on all connections for this client */
+  public void shutdown() {
+    asyncClient.shutdown().join();
+  }
 }
