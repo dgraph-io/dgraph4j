@@ -21,7 +21,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import io.dgraph.DgraphProto.Payload;
 import io.dgraph.DgraphProto.TxnContext;
 import io.dgraph.DgraphProto.Version;
+import io.grpc.Channel;
 import io.grpc.Context;
+import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -370,5 +372,21 @@ public class DgraphAsyncClient {
    */
   public AsyncTransaction newReadOnlyTransaction(TxnContext context) {
     return new AsyncTransaction(this, this.anyClient(), context, true);
+  }
+
+  /** Calls %{@link io.grpc.ManagedChannel#shutdown} on all connections for this client */
+  public CompletableFuture<Void> shutdown() {
+    CompletableFuture<Void> future =
+        CompletableFuture.runAsync(
+            () -> {
+              for (DgraphGrpc.DgraphStub stub : this.stubs) {
+                Channel chan = stub.getChannel();
+                if (chan instanceof ManagedChannel) {
+                  ((ManagedChannel) chan).shutdown();
+                }
+              }
+            },
+            this.executor);
+    return future;
   }
 }
