@@ -8,6 +8,8 @@ and this project adheres to [Calendar Versioning](https://calver.org/) starting 
 
 ## [21.03.2] - 2021-12-24
 
+### Added
+
 * feat: Add timeout parameters to transaction requests. ([#172])
 * feat: Add shutdown method to client. ([#173])
 
