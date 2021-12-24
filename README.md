@@ -594,6 +594,12 @@ client](#creating-a-client).
 channel.shutdown();
 ```
 
+You can also close all channels in from the client object:
+
+```
+dgraphClient.shutdown();
+```
+
 ## Using the Asynchronous Client
 Dgraph Client for Java also bundles an asynchronous API, which can be used by
 instantiating the `DgraphAsyncClient` class. The usage is almost exactly the
