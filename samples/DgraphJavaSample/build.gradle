@@ -3,7 +3,7 @@
 apply plugin: 'java'
 
 // Apply the maven plugin to add support for Maven
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
 // Apply the application plugin to add support for building an application
 apply plugin: 'application'
@@ -17,10 +17,13 @@ repositories {
 
 dependencies {
  	// Use Dgraph Java client
-    compile 'io.dgraph:dgraph4j:21.12.0'
+    implementation 'io.dgraph:dgraph4j:21.12.0'
 
     // Use JUnit test framework
-    testCompile 'junit:junit:4.12'
+    runtimeOnly 'junit:junit:4.12'
+
+	// https://mvnrepository.com/artifact/com.google.code.gson/gson
+	implementation 'com.google.code.gson:gson:2.10.1'
 }
 
 // Define the main class for the application
