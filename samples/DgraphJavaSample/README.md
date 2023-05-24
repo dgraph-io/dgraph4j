@@ -30,7 +30,7 @@ Finally, start the `dgraph alpha` server:
 
 ```
 cd dgraphdata/data
-rm -rf p w; dgraph alpha --lru_mb=1024 --zero localhost:5080 -o 100
+rm -rf p w; dgraph alpha --zero localhost:5080 -o 100
 ```
 
 Notice that in the command above, we shifted the ports by 100 from the default ports of 7080 for
