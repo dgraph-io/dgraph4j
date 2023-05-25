@@ -20,7 +20,7 @@ dependencies {
     implementation 'io.dgraph:dgraph4j:21.12.0'
 
     // Use JUnit test framework
-    runtimeOnly 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.12'
 
     // https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation 'com.google.code.gson:gson:2.10.1'
