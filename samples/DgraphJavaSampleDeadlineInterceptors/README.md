@@ -5,13 +5,10 @@ for Dgraph.
 
 ## Running
 ### Start Dgraph Server
-You will need to install [Dgraph v21.03.0 or above][releases] and run it.
+You will need to install [Dgraph v21.3.0 or above][releases] and start a local cluster as shown below.
 
 [releases]: https://github.com/dgraph-io/dgraph/releases
 
-
-You can run the commands below to start a clean dgraph server everytime, for testing
-and exploration.
 
 First, create two separate directories for `dgraph zero` and `dgraph server`.
 
