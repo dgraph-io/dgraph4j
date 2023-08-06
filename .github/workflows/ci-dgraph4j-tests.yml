@@ -18,6 +18,11 @@ jobs:
     name: dgraph4j-tests
     runs-on: ubuntu-20.04
     steps:
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: oracle
+          java-version: 14
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Checkout Dgraph repo # use latest dgraph build
