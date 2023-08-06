@@ -45,8 +45,8 @@ jobs:
       - name: Build dgraph binary
         run: cd dgraph && make docker-image # builds docker image with local tag
       - name: Spin up local dgraph cluster
-        run: docker compose -f docker-compose.test.yml up
+        run: cd dgraph4j && docker compose -f docker-compose.test.yml up
       - name: Run tests
         run: cd dgraph4j && ./gradlew build
       - name: Tear down cluster
-        run: docker compose -f docker-compose.test.yml down
+        run: cd dgraph4j && docker compose -f docker-compose.test.yml down
