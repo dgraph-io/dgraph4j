@@ -18,13 +18,6 @@ jobs:
     name: dgraph4j-tests
     runs-on: ubuntu-20.04
     steps:
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: oracle
-          java-version: 14
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
       - name: Checkout Dgraph repo # use latest dgraph build
         uses: actions/checkout@v3
         with:
@@ -37,6 +30,13 @@ jobs:
           path: dgraph4j
           repository: dgraph-io/dgraph4j
           ref: ${{ github.ref }}
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: oracle
+          java-version-file: dgraph4j/.java-version
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
       - name: Get Go Version
         run: |
           #!/bin/bash
