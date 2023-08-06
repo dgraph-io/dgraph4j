@@ -3,7 +3,7 @@
 version: "3.5"
 services:
   alpha1:
-    image: dgraph/dgraph:v21.12.0
+    image: dgraph/dgraph:local
     container_name: alpha1
     working_dir: /data/alpha1
     labels:
@@ -19,12 +19,8 @@ services:
     command: dgraph alpha -o 100 --my=alpha1:7180 --zero=zero1:5180 --logtostderr
       -v=2 --raft "idx=1; group=1" --security "whitelist=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16;"
       --acl "secret-file=/secret/hmac; access-ttl=3s"
-    deploy:
-      resources:
-        limits:
-          memory: 32G
   alpha2:
-    image: dgraph/dgraph:v21.12.0
+    image: dgraph/dgraph:local
     container_name: alpha2
     working_dir: /data/alpha2
     labels:
@@ -40,12 +36,8 @@ services:
     command: dgraph alpha -o 102 --my=alpha2:7182 --zero=zero1:5180 --logtostderr
       -v=2 --raft "idx=2; group=1" --security "whitelist=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16;"
       --acl "secret-file=/secret/hmac; access-ttl=3s"
-    deploy:
-      resources:
-        limits:
-          memory: 32G
   alpha3:
-    image: dgraph/dgraph:v21.12.0
+    image: dgraph/dgraph:local
     container_name: alpha3
     working_dir: /data/alpha3
     labels:
@@ -61,12 +53,8 @@ services:
     command: dgraph alpha -o 103 --my=alpha3:7183 --zero=zero1:5180 --logtostderr
       -v=2 --raft "idx=3; group=1" --security "whitelist=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16;"
       --acl "secret-file=/secret/hmac; access-ttl=3s"
-    deploy:
-      resources:
-        limits:
-          memory: 32G
   zero1:
-    image: dgraph/dgraph:v21.12.0
+    image: dgraph/dgraph:local
     container_name: zero1
     working_dir: /data/zero1
     labels:
@@ -76,8 +64,4 @@ services:
     - 6180:6180
     command: dgraph zero -o 100 --raft='idx=1' --my=zero1:5180 --replicas=3
       --logtostderr -v=2 --bindall
-    deploy:
-      resources:
-        limits:
-          memory: 32G
-volumes: {}
+
