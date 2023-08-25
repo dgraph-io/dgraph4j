@@ -20,7 +20,21 @@ import static org.testng.Assert.fail;
 import io.dgraph.DgraphProto.Operation;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.netty.GrpcSslContexts;
+import io.grpc.netty.NettyChannelBuilder;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.PrivateKey;
 import java.util.concurrent.TimeUnit;
+
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.bouncycastle.util.io.pem.PemWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
@@ -35,17 +49,10 @@ public abstract class DgraphIntegrationTest {
   private static ManagedChannel channel1, channel2, channel3;
 
   @BeforeClass
-  public static void beforeClass() throws InterruptedException {
-    channel1 = ManagedChannelBuilder.forAddress("localhost", 9180).usePlaintext().build();
-    DgraphGrpc.DgraphStub stub1 = DgraphGrpc.newStub(channel1);
-
-    channel2 = ManagedChannelBuilder.forAddress("localhost", 9182).usePlaintext().build();
-    DgraphGrpc.DgraphStub stub2 = DgraphGrpc.newStub(channel2);
-
-    channel3 = ManagedChannelBuilder.forAddress("localhost", 9183).usePlaintext().build();
-    DgraphGrpc.DgraphStub stub3 = DgraphGrpc.newStub(channel3);
-
-    dgraphClient = new DgraphClient(stub1, stub2, stub3);
+  public static void beforeClass() throws InterruptedException, IOException {
+    String baseCertPath = "/home/aman/gocode/src/github.com/dgraph-io/dgraph/tlstest/tls";
+    setupTLSClient(baseCertPath);
+    // setupClient();
 
     boolean succeed = false;
     boolean retry;
@@ -81,6 +88,56 @@ public abstract class DgraphIntegrationTest {
 
     // clean up database
     dgraphClient.alter(Operation.newBuilder().setDropAll(true).build());
+  }
+
+  private static void setupTLSClient(String baseCertPath) throws IOException {
+        // convert PKCS#1 to PKCS#8
+        PEMParser pemParser = new PEMParser(new FileReader(baseCertPath + "/client.acl.key"));
+        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+        Object object = pemParser.readObject();
+        KeyPair pair = converter.getKeyPair((PEMKeyPair) object);
+        PrivateKey priv = pair.getPrivate();
+        byte[] privBytes = priv.getEncoded();
+
+        // PEM object from PKCS#8
+        PemObject pemObject = new PemObject("RSA PRIVATE KEY", privBytes);
+        StringWriter stringWriter = new StringWriter();
+        PemWriter pemWriter = new PemWriter(stringWriter);
+        pemWriter.writeObject(pemObject);
+        pemWriter.close();
+        String pemString = stringWriter.toString();
+
+    // Setup SSL context with keys and certificates
+    SslContextBuilder builder = GrpcSslContexts.forClient();
+    builder.trustManager(new File(baseCertPath + "/ca.crt"));
+        builder.keyManager(
+            new FileInputStream(baseCertPath + "/client.acl.crt"),
+            new ByteArrayInputStream(pemString.getBytes(StandardCharsets.UTF_8)));
+    SslContext sslContext = builder.build();
+
+    channel1 = NettyChannelBuilder.forAddress("localhost", 9180).sslContext(sslContext).build();
+    DgraphGrpc.DgraphStub stub1 = DgraphGrpc.newStub(channel1);
+
+    channel2 = NettyChannelBuilder.forAddress("localhost", 9182).sslContext(sslContext).build();
+    DgraphGrpc.DgraphStub stub2 = DgraphGrpc.newStub(channel2);
+
+    channel3 = NettyChannelBuilder.forAddress("localhost", 9183).sslContext(sslContext).build();
+    DgraphGrpc.DgraphStub stub3 = DgraphGrpc.newStub(channel3);
+
+    dgraphClient = new DgraphClient(stub1, stub2, stub3);
+  }
+
+  private static void setupClient() {
+    channel1 = ManagedChannelBuilder.forAddress("localhost", 9180).usePlaintext().build();
+    DgraphGrpc.DgraphStub stub1 = DgraphGrpc.newStub(channel1);
+
+    channel2 = ManagedChannelBuilder.forAddress("localhost", 9182).usePlaintext().build();
+    DgraphGrpc.DgraphStub stub2 = DgraphGrpc.newStub(channel2);
+
+    channel3 = ManagedChannelBuilder.forAddress("localhost", 9183).usePlaintext().build();
+    DgraphGrpc.DgraphStub stub3 = DgraphGrpc.newStub(channel3);
+
+    dgraphClient = new DgraphClient(stub1, stub2, stub3);
   }
 
   @AfterClass
