@@ -45,9 +45,9 @@ version = '21.12.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-def grpcVersion = '1.34.1'
+def grpcVersion = '1.64.1'
 def dgraph4jVersion = "$version"
-def openCensusVersion = '0.23.0'
+def openCensusVersion = '0.31.1'
 
 
 protobuf {
@@ -94,6 +94,13 @@ sourceSets {
     }
 }
 
+
+configurations.all {
+    resolutionStrategy {
+        force 'com.google.guava:guava:32.0.0-jre'
+    }
+}
+
 configurations {
     integrationTestCompile.extendsFrom testCompile
     integrationTestRuntime.extendsFrom testRuntime
@@ -115,7 +122,7 @@ dependencies {
     testRuntime "io.opencensus:opencensus-impl:${openCensusVersion}"
 
     // Used for unmarshalling a JSON GraphQL response
-    testCompile "com.google.code.gson:gson:2.8.6"
+    testCompile "com.google.code.gson:gson:2.11.0"
 
     // Declare the dependency for your favourite test framework you want to use in your tests.
     testCompile 'org.testng:testng:6.8.8'

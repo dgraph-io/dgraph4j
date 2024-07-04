@@ -78,10 +78,9 @@ public class DgraphClient {
     Metadata metadata = new Metadata();
     metadata.put(
         Metadata.Key.of(gRPC_AUTHORIZATION_HEADER_NAME, Metadata.ASCII_STRING_MARSHALLER), apiKey);
-    return MetadataUtils.attachHeaders(
-        DgraphGrpc.newStub(
-            ManagedChannelBuilder.forAddress(gRPCAddress, 443).useTransportSecurity().build()),
-        metadata);
+    return DgraphGrpc.newStub(
+            ManagedChannelBuilder.forAddress(gRPCAddress, 443).useTransportSecurity().build())
+        .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata));
   }
 
   /**
