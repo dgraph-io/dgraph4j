@@ -187,7 +187,7 @@ public class DgraphAsyncClient {
         Metadata metadata = new Metadata();
         metadata.put(
             Metadata.Key.of("accessJwt", Metadata.ASCII_STRING_MARSHALLER), jwt.getAccessJwt());
-        return MetadataUtils.attachHeaders(stub, metadata);
+        return stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata));
       }
 
       return stub;
