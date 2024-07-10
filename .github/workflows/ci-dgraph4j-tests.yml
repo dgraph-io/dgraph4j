@@ -19,13 +19,13 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout Dgraph repo # use latest dgraph build
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: dgraph
           repository: dgraph-io/dgraph
           ref: main
       - name: Checkout dgraph4j repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: dgraph4j
           repository: dgraph-io/dgraph4j
@@ -44,7 +44,7 @@ jobs:
           GOVERSION=$({ [ -f .go-version ] && cat .go-version; })
           echo "GOVERSION=$GOVERSION" >> $GITHUB_ENV
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GOVERSION }}
       - name: Build dgraph binary
