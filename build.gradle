@@ -125,7 +125,7 @@ dependencies {
     testCompile "com.google.code.gson:gson:2.11.0"
 
     // Declare the dependency for your favourite test framework you want to use in your tests.
-    testCompile 'org.testng:testng:6.8.8'
+    testCompile 'org.testng:testng:7.10.2'
     // javax.annotation is removed from the oracle java se 11, and requires explicit dependency
     compile 'javax.annotation:javax.annotation-api:1.3.2'
 }
