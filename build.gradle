@@ -21,15 +21,15 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.8'
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.9.4'
     }
 }
 
 plugins {
     id 'java-library'
     id 'jacoco'
-    id 'com.github.kt3k.coveralls' version '2.8.2'
-    id 'com.github.sherter.google-java-format' version '0.8'
+    id 'com.github.kt3k.coveralls' version '2.12.2'
+    id 'com.github.sherter.google-java-format' version '0.9'
 }
 // Apply the java plugin to add support for Java
 apply plugin: 'java'
@@ -45,9 +45,9 @@ version = '21.12.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-def grpcVersion = '1.34.1'
+def grpcVersion = '1.65.0'
 def dgraph4jVersion = "$version"
-def openCensusVersion = '0.23.0'
+def openCensusVersion = '0.31.1'
 
 
 protobuf {
@@ -115,7 +115,7 @@ dependencies {
     testRuntime "io.opencensus:opencensus-impl:${openCensusVersion}"
 
     // Used for unmarshalling a JSON GraphQL response
-    testCompile "com.google.code.gson:gson:2.8.6"
+    testCompile "com.google.code.gson:gson:2.11.0"
 
     // Declare the dependency for your favourite test framework you want to use in your tests.
     testCompile 'org.testng:testng:6.8.8'
