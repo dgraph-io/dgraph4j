@@ -1,7 +1,9 @@
 version: 2
 updates:
   - package-ecosystem: "gradle"
-    directory: "/"
+    directories:
+      - "/"
+      - "/samples/*"
     schedule:
       interval: "weekly"
       day: "wednesday"
@@ -14,7 +16,7 @@ updates:
           - "patch"
 
   - package-ecosystem: "maven"
-    directory: "/"
+    directory: "/samples/concurrent-modification"
     schedule:
       interval: "weekly"
       day: "wednesday"
