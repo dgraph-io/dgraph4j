@@ -197,4 +197,39 @@ public class DgraphAsyncClientTest {
     assertTrue(v.getTag().length() > 0);
     // assertEquals(v.getTag().charAt(0), 'v');
   }
+
+  @Test
+  public void testBestEffortQueries() throws InterruptedException {
+    Operation op = Operation.newBuilder().setSchema("name: string @index(exact) .").build();
+    dgraphAsyncClient.alter(op).join();
+
+    // Add data
+    JsonObject json = new JsonObject();
+    json.addProperty("name", "Alice");
+
+    Mutation mu =
+        Mutation.newBuilder()
+            .setCommitNow(true)
+            .setSetJson(ByteString.copyFromUtf8(json.toString()))
+            .build();
+    Response mutationResp = dgraphAsyncClient.newTransaction().mutate(mu).join();
+    System.out.println("mutation response:" + mutationResp);
+
+    // sleep for 5 seconds for the max assigned ts to be propagated
+    Thread.sleep(5000);
+
+    // create a new transaction to verify the best effort read
+    AsyncTransaction readTxn = dgraphAsyncClient.newReadOnlyTransaction();
+    readTxn.setBestEffort(true);
+    String query = "query me($a: string) { me(func: eq(name, $a)) { name }}";
+    Map<String, String> vars = Collections.singletonMap("$a", "Alice");
+    Response res = readTxn.queryWithVars(query, vars).join();
+
+    // Verify data as expected
+    JsonParser parser = new JsonParser();
+    json = parser.parse(res.getJson().toStringUtf8()).getAsJsonObject();
+    assertTrue(json.has("me"));
+    String name = json.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
+    assertEquals(name, "Alice");
+  }
 }
