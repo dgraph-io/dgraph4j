@@ -209,10 +209,10 @@ public class DgraphAsyncClientTest {
 
     Mutation mu =
         Mutation.newBuilder()
-            // .setCommitNow(true)
+            .setCommitNow(true)
             .setSetJson(ByteString.copyFromUtf8(json.toString()))
-            .build(); // this mutation won't be committed
-            Response mutationResp = dgraphAsyncClient.newTransaction().mutate(mu).join();
+            .build();
+    Response mutationResp = dgraphAsyncClient.newTransaction().mutate(mu).join();
     System.out.println("mutation response:" + mutationResp);
 
     // sleep for 5 seconds for the max assigned ts to be propagated
