@@ -29,7 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.util.concurrent.TimeUnit;
-
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
@@ -50,7 +49,7 @@ public abstract class DgraphIntegrationTest {
 
   @BeforeClass
   public static void beforeClass() throws InterruptedException, IOException {
-    String baseCertPath = "/home/aman/gocode/src/github.com/dgraph-io/dgraph/tlstest/tls";
+    String baseCertPath = "/home/shiva/workspace/dgraph-work/dgraph/tlstest/tls";
     setupTLSClient(baseCertPath);
     // setupClient();
 
@@ -64,8 +63,11 @@ public abstract class DgraphIntegrationTest {
         // we need to login as groot to perform arbitrary operations
         dgraphClient.login("groot", "password");
         succeed = true;
+        System.out.println("Logged in as groot");
       } catch (RuntimeException e) {
         // check if the error can be retried
+        System.out.println("got in as groot");
+
         Throwable exception = e;
         while (exception != null) {
           if (exception.getMessage().contains("Please retry")) {
@@ -91,28 +93,28 @@ public abstract class DgraphIntegrationTest {
   }
 
   private static void setupTLSClient(String baseCertPath) throws IOException {
-        // convert PKCS#1 to PKCS#8
-        PEMParser pemParser = new PEMParser(new FileReader(baseCertPath + "/client.acl.key"));
-        JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
-        Object object = pemParser.readObject();
-        KeyPair pair = converter.getKeyPair((PEMKeyPair) object);
-        PrivateKey priv = pair.getPrivate();
-        byte[] privBytes = priv.getEncoded();
+    // convert PKCS#1 to PKCS#8
+    PEMParser pemParser = new PEMParser(new FileReader(baseCertPath + "/client.acl.key"));
+    JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+    Object object = pemParser.readObject();
+    KeyPair pair = converter.getKeyPair((PEMKeyPair) object);
+    PrivateKey priv = pair.getPrivate();
+    byte[] privBytes = priv.getEncoded();
 
-        // PEM object from PKCS#8
-        PemObject pemObject = new PemObject("RSA PRIVATE KEY", privBytes);
-        StringWriter stringWriter = new StringWriter();
-        PemWriter pemWriter = new PemWriter(stringWriter);
-        pemWriter.writeObject(pemObject);
-        pemWriter.close();
-        String pemString = stringWriter.toString();
+    // PEM object from PKCS#8
+    PemObject pemObject = new PemObject("RSA PRIVATE KEY", privBytes);
+    StringWriter stringWriter = new StringWriter();
+    PemWriter pemWriter = new PemWriter(stringWriter);
+    pemWriter.writeObject(pemObject);
+    pemWriter.close();
+    String pemString = stringWriter.toString();
 
     // Setup SSL context with keys and certificates
     SslContextBuilder builder = GrpcSslContexts.forClient();
     builder.trustManager(new File(baseCertPath + "/ca.crt"));
-        builder.keyManager(
-            new FileInputStream(baseCertPath + "/client.acl.crt"),
-            new ByteArrayInputStream(pemString.getBytes(StandardCharsets.UTF_8)));
+    builder.keyManager(
+        new FileInputStream(baseCertPath + "/client.acl.crt"),
+        new ByteArrayInputStream(pemString.getBytes(StandardCharsets.UTF_8)));
     SslContext sslContext = builder.build();
 
     channel1 = NettyChannelBuilder.forAddress("localhost", 9180).sslContext(sslContext).build();
