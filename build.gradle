@@ -45,7 +45,7 @@ version = '21.12.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-def grpcVersion = '1.65.0'
+def grpcVersion = '1.65.1'
 def dgraph4jVersion = "$version"
 def openCensusVersion = '0.31.1'
 
