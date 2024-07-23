@@ -35,7 +35,7 @@ public class OpencensusJaegerTest extends DgraphIntegrationTest {
             .build();
     Transaction txn = dgraphClient.newTransaction();
     txn.mutate(mu);
-    txn.commit();
+    txn.commit(false);
 
     String query = "{\n q(func: eq(name, \"Alice\")) {\n name\n uid\n}\n}";
     dgraphClient.newTransaction().query(query);

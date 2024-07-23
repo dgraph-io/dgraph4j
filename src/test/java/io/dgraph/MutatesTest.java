@@ -52,7 +52,7 @@ public class MutatesTest extends DgraphIntegrationTest {
       uidsMap.put(datum, resp.getUidsOrThrow(datum));
     }
 
-    txn.commit();
+    txn.commit(false);
   }
 
   @Test

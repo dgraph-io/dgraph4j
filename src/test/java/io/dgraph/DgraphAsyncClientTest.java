@@ -100,7 +100,7 @@ public class DgraphAsyncClientTest {
                             assertEquals(jsonData.getAsJsonArray("find_bob").size(), 0);
                           }))
           .get();
-      txn.commit();
+      txn.commit(false);
     }
   }
 

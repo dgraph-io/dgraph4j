@@ -305,7 +305,7 @@ public class AsyncTransaction implements AutoCloseable {
                         mergeContext(response.getTxn());
                         return response;
                       });
-            })
+            },false)
         .handle(
             (Response response, Throwable throwable) -> {
               if (throwable != null) {
@@ -327,7 +327,7 @@ public class AsyncTransaction implements AutoCloseable {
    *
    * @return CompletableFuture with Void result
    */
-  public CompletableFuture<Void> commit() {
+  public CompletableFuture<Void> commit( boolean retry) {
     if (readOnly) {
       throw new TxnReadOnlyException();
     }
@@ -348,7 +348,7 @@ public class AsyncTransaction implements AutoCloseable {
           DgraphStub localStub = client.getStubWithJwt(stub);
           localStub.commitOrAbort(context, bridge);
           return bridge.getDelegate().thenApply(txnContext -> null);
-        });
+        }, retry);
   }
 
   /**
@@ -379,7 +379,7 @@ public class AsyncTransaction implements AutoCloseable {
           DgraphStub localStub = client.getStubWithJwt(stub);
           localStub.commitOrAbort(context, bridge);
           return bridge.getDelegate().thenApply((o) -> null);
-        });
+        },false);
   }
 
   private void mergeContext(final TxnContext src) {

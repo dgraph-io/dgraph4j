@@ -95,7 +95,7 @@ public class AcctUpsertTest extends DgraphIntegrationTest {
       String nq = String.format("<%s> <when> \"%d\"^^<xs:int> .", uid, System.nanoTime());
       Mutation mu = Mutation.newBuilder().setSetNquads(ByteString.copyFromUtf8(nq)).build();
       txn.mutate(mu);
-      txn.commit();
+      txn.commit(false);
     } finally {
       txn.discard();
     }
