@@ -112,7 +112,7 @@ dependencies {
     compile "org.slf4j:slf4j-api:2.0.13"
     // Specific slf4j bindings should not be included in the default (compile) scope.
     // See http://www.slf4j.org/faq.html#maven2.
-    testCompile "org.slf4j:slf4j-simple:1.7.21"
+    testCompile "org.slf4j:slf4j-simple:2.0.13"
     compile "io.grpc:grpc-protobuf:${grpcVersion}"
     compile "io.grpc:grpc-netty:${grpcVersion}"
     compile "io.grpc:grpc-stub:${grpcVersion}"
