@@ -34,7 +34,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: microsoft
-          java-version-file: .java-version
+          java-version-file: ./.java-version
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
       - name: Get Go Version
