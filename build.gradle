@@ -42,8 +42,11 @@ apply plugin: 'signing'
 group = 'io.dgraph'
 archivesBaseName = 'dgraph4j'
 version = '21.12.0'
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+
+// Upgrade to Java SE 11 to match updated protobuf-protoc version. 
+// WARNING: Needs local toolchain upgrade from Java 8 to Java 11.
+sourceCompatibility = 11
+targetCompatibility = 11
 
 def grpcVersion = '1.65.1'
 def dgraph4jVersion = "$version"
@@ -116,6 +119,11 @@ dependencies {
     compile "io.grpc:grpc-protobuf:${grpcVersion}"
     compile "io.grpc:grpc-netty:${grpcVersion}"
     compile "io.grpc:grpc-stub:${grpcVersion}"
+
+    // Explicit matching of protobuf-java and protoc versions to address
+    // compilation errors arising due to transitive dependency on the version of 
+    // protobuf-java that grpc depends on. 
+    compile "com.google.protobuf:protobuf-java:4.27.2"
 
     testCompile "io.opencensus:opencensus-api:${openCensusVersion}"
     testCompile "io.opencensus:opencensus-exporter-trace-jaeger:${openCensusVersion}"
