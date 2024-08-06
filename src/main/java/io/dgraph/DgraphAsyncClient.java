@@ -209,7 +209,7 @@ public class DgraphAsyncClient {
    * @return a completable future which can be used to get the result
    */
   protected <T> CompletableFuture<T> runWithRetries(
-      String operation, Callable<CompletableFuture<T>> callable) {
+      String operation, Callable<CompletableFuture<T>> callable,boolean retry) {
     final Callable<CompletableFuture<T>> ctxCallable = Context.current().wrap(callable);
 
     return CompletableFuture.supplyAsync(
@@ -221,29 +221,18 @@ public class DgraphAsyncClient {
             throw new RuntimeException(e);
           } catch (ExecutionException e) {
             if (ExceptionUtil.isJwtExpired(e.getCause())) {
-              try {
-                // retry the login
-                retryLogin().get();
-                // retry the supplied logic
-                return ctxCallable.call().get();
-              } catch (InterruptedException ie) {
-                LOG.error("The retried " + operation + " got interrupted:", ie);
-                throw new RuntimeException(ie);
-              } catch (ExecutionException ie) {
-                LOG.error("The retried " + operation + " encounters an execution exception:", ie);
-                throw new RuntimeException(ie);
-              } catch (Exception ie) {
-                LOG.error("The retried " + operation + " encounters a completion exception:", ie);
-                throw new CompletionException(ie);
-              }
+              return retryLoginAndExecute(ctxCallable, operation);
             } else if (e.getCause() instanceof StatusRuntimeException) {
               StatusRuntimeException ex1 = (StatusRuntimeException) e.getCause();
               Status.Code code = ex1.getStatus().getCode();
-              String desc = ex1.getStatus().getDescription();
-
+            String  desc= ex1.getStatus().getDescription();
               if (code.equals(Status.Code.ABORTED)
                   || code.equals(Status.Code.FAILED_PRECONDITION)) {
-                throw new CompletionException(new TxnConflictException(desc));
+                    if (retry){
+                      return executeWithExponentialBackoff(
+                          ctxCallable, 5, 500, operation,desc);
+                    }
+                    throw new CompletionException(new TxnConflictException(desc));
               }
             }
             // Handle the case when the outer exception is not caused by JWT expiration
@@ -254,6 +243,114 @@ public class DgraphAsyncClient {
           }
         },
         this.executor);
+  }
+
+  /**
+   * Retries login and re-executes the given Callable.
+   *
+   * @param <T> The type of the Callable's returned CompletableFuture.
+   * @param ctxCallable The Callable to execute.
+   * @param operation The name of the operation for logging purposes.
+   * @return The result of the Callable if successful.
+   * @throws RuntimeException if login retry or callable execution fails.
+   */
+  private <T> T retryLoginAndExecute(Callable<CompletableFuture<T>> ctxCallable, String operation) {
+    try {
+      // Retry the login
+      retryLogin().get();
+      // Retry the supplied logic
+      return ctxCallable.call().get();
+    } catch (InterruptedException ie) {
+      LOG.error("The retried " + operation + " got interrupted:", ie);
+      throw new RuntimeException(ie);
+    } catch (ExecutionException ee) {
+      LOG.error("The retried " + operation + " encounters an execution exception:", ee);
+      throw new RuntimeException(ee);
+    } catch (Exception e) {
+      LOG.error("The retried " + operation + " encounters a completion exception:", e);
+      throw new CompletionException(e);
+    }
+  }
+
+  /**
+   * Implements exponential backoff with retries for a given Callable.
+   *
+   * @param <T> The type of the Callable's returned CompletableFuture.
+   * @param ctxCallable The Callable to execute.
+   * @param maxRetries The maximum number of retries.
+   * @param initialDelay The initial delay in milliseconds.
+   * @param operation The name of the operation for logging purposes.
+   * @return The result of the Callable if successful.
+   * @throws RuntimeException if the operation fails after the maximum retries.
+   */
+  private <T> T executeWithExponentialBackoff(
+      Callable<CompletableFuture<T>> ctxCallable,
+      int maxRetries,
+      int delay,
+      String operation,
+      String desc) {
+    int attempt = 0;
+    while (attempt < maxRetries) {
+      try {
+        return ctxCallable.call().get();
+      } catch (InterruptedException ie) {
+        LOG.error("The retried " + operation + " got interrupted:", ie);
+        throw new RuntimeException(ie);
+      } catch (ExecutionException ee) {
+        Throwable cause = ee.getCause();
+        if (ExceptionUtil.isJwtExpired(cause)) {
+          return retryLoginAndExecute(ctxCallable, operation);
+        } else if (cause instanceof StatusRuntimeException) {
+          StatusRuntimeException ex = (StatusRuntimeException) cause;
+          Status.Code code = ex.getStatus().getCode();
+          desc = ex.getStatus().getDescription();
+
+          if (code.equals(Status.Code.ABORTED) || code.equals(Status.Code.FAILED_PRECONDITION)) {
+            if (attempt < maxRetries - 1) {
+              LOG.warn(
+                  "Operation "
+                      + operation
+                      + " failed with "
+                      + code
+                      + ". Retrying in "
+                      + delay
+                      + "ms attempt "
+                      + attempt
+                      + 1
+                      + "/"
+                      + maxRetries);
+              try {
+                Thread.sleep(delay);
+              } catch (InterruptedException ie2) {
+                LOG.error("The backoff sleep got interrupted: " + ie2.getMessage());
+                throw new RuntimeException(ie2);
+              }
+              delay *= 2; // Exponential backoff
+              attempt++;
+            } else {
+              LOG.error(
+                  "Operation "
+                      + operation
+                      + " failed after  attempts: "
+                      + maxRetries
+                      + "description :"
+                      + desc);
+              throw new CompletionException(new TxnConflictException(desc));
+            }
+          } else {
+            LOG.error("Operation " + operation + "failed with unexpected error:" + ex.toString());
+            throw new RuntimeException(ex);
+          }
+        } else {
+          LOG.error("Operation " + operation + " encountered an execution exception: " + ee);
+          throw new RuntimeException(ee);
+        }
+      } catch (Exception e) {
+        LOG.error("Operation " + operation + " encountered an execution exception: " + e);
+        throw new RuntimeException(e);
+      }
+    }
+    throw new CompletionException(new TxnConflictException("Max retries reached " + desc));
   }
 
   /**
@@ -279,7 +376,7 @@ public class DgraphAsyncClient {
           DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
           localStub.alter(op, observerBridge);
           return observerBridge.getDelegate();
-        });
+        },false);
   }
 
   /**
@@ -300,7 +397,7 @@ public class DgraphAsyncClient {
           DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
           localStub.checkVersion(checkRequest, observerBridge);
           return observerBridge.getDelegate();
-        });
+        },false);
   }
 
   private DgraphGrpc.DgraphStub anyClient() {

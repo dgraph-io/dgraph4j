@@ -211,10 +211,10 @@ public class Transaction implements AutoCloseable {
    * thrown if transactions that modify the same data are being run concurrently. It's up to the
    * user to decide if they wish to retry. In this case, the user should create a new transaction.
    */
-  public void commit() {
+  public void commit(boolean retry) {
     ExceptionUtil.withExceptionUnwrapped(
         () -> {
-          asyncTransaction.commit().join();
+          asyncTransaction.commit(retry).join();
         });
   }
 

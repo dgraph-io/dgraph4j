@@ -53,7 +53,7 @@ public class BankTest extends DgraphIntegrationTest {
     Mutation mu =
         Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(gson.toJson(accounts))).build();
     Response response = txn.mutate(mu);
-    txn.commit();
+    txn.commit(false);
     response.getUidsMap().forEach((key, uid) -> uids.add(uid));
   }
 
@@ -109,7 +109,7 @@ public class BankTest extends DgraphIntegrationTest {
       Mutation mu =
           Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(gson.toJson(accounts))).build();
       txn.mutate(mu);
-      txn.commit();
+      txn.commit(false);
     } finally {
       txn.discard();
     }

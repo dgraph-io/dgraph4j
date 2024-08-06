@@ -51,7 +51,7 @@ public class AclTest extends DgraphIntegrationTest {
 
     // create the dev group and add the user to it
     createGroupAndACLs(DEV_GROUP, true);
-    System.out.println("Sleep for 6 seconds for acl caches to be refreshed");
+    System.out.println("Sleep for 4 seconds for acl caches to be refreshed");
     Thread.sleep(6 * 1000);
 
     // now the operations should succeed again through the dev group

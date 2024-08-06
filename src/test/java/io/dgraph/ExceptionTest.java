@@ -20,16 +20,16 @@ public class ExceptionTest extends DgraphIntegrationTest {
     Transaction txn2 = dgraphClient.newTransaction();
     txn1.mutate(mu);
     txn2.mutate(mu);
-    txn1.commit();
-    txn2.commit();
+    txn1.commit(false);
+    txn2.commit(false);
   }
 
   @Test(expectedExceptions = TxnFinishedException.class)
   public void testFinishedException() {
     Transaction txn = dgraphClient.newTransaction();
     txn.mutate(mu);
-    txn.commit();
-    txn.commit();
+    txn.commit(false);
+    txn.commit(false);
   }
 
   @Test(expectedExceptions = TxnReadOnlyException.class)

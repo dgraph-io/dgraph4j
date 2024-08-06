@@ -126,7 +126,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
       response = txn.query(query);
       jsonData = parser.parse(response.getJson().toStringUtf8()).getAsJsonObject();
       assertEquals(jsonData.getAsJsonArray("find_bob").size(), 0);
-      txn.commit();
+      txn.commit(false);
     }
   }
 
@@ -158,7 +158,7 @@ public class DgraphClientTest extends DgraphIntegrationTest {
               .setCommitNow(true)
               .build();
       txn.mutate(mu);
-      txn.commit();
+      txn.commit(false);
     }
   }
 
