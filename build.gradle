@@ -41,7 +41,7 @@ apply plugin: 'signing'
 
 group = 'io.dgraph'
 archivesBaseName = 'dgraph4j'
-version = '21.12.0'
+version = '24.0.0'
 
 // Upgrade to Java SE 11 to match updated protobuf-protoc version. 
 // WARNING: Needs local toolchain upgrade from Java 8 to Java 11.

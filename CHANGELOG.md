@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Calendar Versioning](https://calver.org/) starting v20.03.0.
 
+## [24.0.0] - 2024-08-06
+
+### Added
+
+* feat: Add Vector Support.  ([#220])
+
+### Fixed
+* fix:  Issues with disconnects addressed with Netty, protoc and protobuf-java updates. ([#212])
+
+### Security
+
+* chore: Bump com.google.protobuf:protoc from 3.2.0 to 4.27.2 ([#215])
+* chore: Bump org.slf4j:slf4j-simple from 1.7.21 to 2.0.13 ([#214])
+* chore: Bump the minor-and-patch group in /samples/concurrent-modification with 2 updates ([#208])
+* chore: resolve cves ([#193])
+* chore: Bump github/codeql-action from 2 to 3 ([#198])
+* chore: Bump actions/setup-go from 3 to 5 ([#195])
+
+
+### Testing
+
+* chore: added a test for best effort queries ([#182])
+
+[#220]: https://github.com/dgraph-io/dgraph4j/pull/220
+[#215]: https://github.com/dgraph-io/dgraph4j/pull/215
+[#214]: https://github.com/dgraph-io/dgraph4j/pull/214
+[#212]: https://github.com/dgraph-io/dgraph4j/pull/212
+[#208]: https://github.com/dgraph-io/dgraph4j/pull/208
+[#198]: https://github.com/dgraph-io/dgraph4j/pull/198
+[#195]: https://github.com/dgraph-io/dgraph4j/pull/195
+[#193]: https://github.com/dgraph-io/dgraph4j/pull/193
+[#182]: https://github.com/dgraph-io/dgraph4j/pull/182
+
 ## [Unreleased]
 
 ## [21.12.0] - 2021-12-24
