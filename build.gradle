@@ -58,7 +58,7 @@ protobuf {
         // The version of protoc must match protobuf-java. If you don't depend on
         // protobuf-java directly, you will be transitively depending on the
         // protobuf-java version that grpc depends on.
-        artifact = "com.google.protobuf:protoc:4.27.2"
+        artifact = "com.google.protobuf:protoc:4.27.3"
     }
     plugins {
         grpc {
@@ -112,10 +112,10 @@ configurations {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // The production code uses the SLF4J logging API at compile time
-    compile "org.slf4j:slf4j-api:2.0.13"
+    compile "org.slf4j:slf4j-api:2.0.14"
     // Specific slf4j bindings should not be included in the default (compile) scope.
     // See http://www.slf4j.org/faq.html#maven2.
-    testCompile "org.slf4j:slf4j-simple:2.0.13"
+    testCompile "org.slf4j:slf4j-simple:2.0.14"
     compile "io.grpc:grpc-protobuf:${grpcVersion}"
     compile "io.grpc:grpc-netty:${grpcVersion}"
     compile "io.grpc:grpc-stub:${grpcVersion}"
@@ -123,7 +123,7 @@ dependencies {
     // Explicit matching of protobuf-java and protoc versions to address
     // compilation errors arising due to transitive dependency on the version of 
     // protobuf-java that grpc depends on. 
-    compile "com.google.protobuf:protobuf-java:4.27.2"
+    compile "com.google.protobuf:protobuf-java:4.27.3"
 
     testCompile "io.opencensus:opencensus-api:${openCensusVersion}"
     testCompile "io.opencensus:opencensus-exporter-trace-jaeger:${openCensusVersion}"
