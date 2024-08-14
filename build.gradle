@@ -48,7 +48,7 @@ version = '24.0.0'
 sourceCompatibility = 11
 targetCompatibility = 11
 
-def grpcVersion = '1.65.1'
+def grpcVersion = '1.66.0'
 def dgraph4jVersion = "$version"
 def openCensusVersion = '0.31.1'
 
@@ -112,10 +112,10 @@ configurations {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // The production code uses the SLF4J logging API at compile time
-    compile "org.slf4j:slf4j-api:2.0.14"
+    compile "org.slf4j:slf4j-api:2.0.16"
     // Specific slf4j bindings should not be included in the default (compile) scope.
     // See http://www.slf4j.org/faq.html#maven2.
-    testCompile "org.slf4j:slf4j-simple:2.0.14"
+    testCompile "org.slf4j:slf4j-simple:2.0.16"
     compile "io.grpc:grpc-protobuf:${grpcVersion}"
     compile "io.grpc:grpc-netty:${grpcVersion}"
     compile "io.grpc:grpc-stub:${grpcVersion}"
