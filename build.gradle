@@ -103,13 +103,6 @@ sourceSets {
     }
 }
 
-
-configurations.all {
-    resolutionStrategy {
-        force 'com.google.guava:guava:32.0.0-jre'
-    }
-}
-
 configurations {
     integrationTestCompile.extendsFrom testCompile
     integrationTestRuntime.extendsFrom testRuntime
@@ -119,17 +112,16 @@ configurations {
 dependencies {
     // The production code uses the SLF4J logging API at compile time
     implementation "org.slf4j:slf4j-api:2.0.16"
+
     // Specific slf4j bindings should not be included in the default (compile) scope.
     // See http://www.slf4j.org/faq.html#maven2.
     testImplementation "org.slf4j:slf4j-simple:2.0.16"
+
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation "io.grpc:grpc-netty:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
 
-    // Explicit matching of protobuf-java and protoc versions to address
-    // compilation errors arising due to transitive dependency on the version of 
-    // protobuf-java that grpc depends on. 
-    implementation "com.google.protobuf:protobuf-java:4.27.3"
+    implementation "com.google.guava:guava:33.2.1-jre"
 
     testImplementation "io.opencensus:opencensus-api:${openCensusVersion}"
     testImplementation "io.opencensus:opencensus-exporter-trace-jaeger:${openCensusVersion}"
@@ -140,6 +132,7 @@ dependencies {
 
     // Declare the dependency for your favourite test framework you want to use in your tests.
     testImplementation 'org.testng:testng:6.8.8'
+
     // javax.annotation is removed from the oracle java se 11, and requires explicit dependency
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
 }
