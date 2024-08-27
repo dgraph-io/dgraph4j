@@ -123,6 +123,11 @@ dependencies {
 
     implementation "com.google.guava:guava:33.2.1-jre"
 
+    // Explicit matching of protobuf-java and protoc versions to address
+    // compilation errors arising due to transitive dependency on the version of 
+    // protobuf-java that grpc depends on. 
+    implementation "com.google.protobuf:protobuf-java:4.27.3"
+
     testImplementation "io.opencensus:opencensus-api:${openCensusVersion}"
     testImplementation "io.opencensus:opencensus-exporter-trace-jaeger:${openCensusVersion}"
     testRuntimeOnly "io.opencensus:opencensus-impl:${openCensusVersion}"
