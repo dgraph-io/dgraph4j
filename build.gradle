@@ -31,21 +31,17 @@ plugins {
     id 'com.github.kt3k.coveralls' version '2.12.2'
     id 'com.github.sherter.google-java-format' version '0.9'
     id 'base'
+    id 'maven-publish'
 }
 // Apply the java plugin to add support for Java
 apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'idea'
 apply plugin: 'com.github.sherter.google-java-format'
-apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
 group = 'io.dgraph'
 version = '24.0.0'
-
-base {
-    archivesName = 'dgraph4j'
-}
 
 // Upgrade to Java SE 11 to match updated protobuf-protoc version. 
 // WARNING: Needs local toolchain upgrade from Java 8 to Java 11.
