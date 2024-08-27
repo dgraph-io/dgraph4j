@@ -26,10 +26,6 @@ jobs:
           ref: main
       - name: Checkout dgraph4j repo
         uses: actions/checkout@v4
-        with:
-          path: dgraph4j
-          repository: dgraph-io/dgraph4j
-          ref: ${{ github.ref }}
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -37,6 +33,8 @@ jobs:
           java-version-file: dgraph4j/.java-version
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: current
       - name: Get Go Version
         run: |
           #!/bin/bash
