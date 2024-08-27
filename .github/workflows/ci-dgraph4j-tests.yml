@@ -52,6 +52,6 @@ jobs:
       - name: Spin up local dgraph cluster
         run: cd dgraph4j && docker compose -f docker-compose.test.yml up -d
       - name: Run tests
-        run: cd dgraph4j && ./gradlew build
+        run: cd dgraph4j && gradle build
       - name: Tear down cluster
         run: cd dgraph4j && docker compose -f docker-compose.test.yml down
