@@ -26,6 +26,8 @@ jobs:
           ref: main
       - name: Checkout dgraph4j repo
         uses: actions/checkout@v4
+        with:
+          path: dgraph4j
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
