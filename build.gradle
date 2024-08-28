@@ -121,7 +121,7 @@ dependencies {
     implementation "io.grpc:grpc-netty:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
 
-    implementation "com.google.guava:guava:33.2.1-jre"
+    implementation "com.google.guava:guava:33.3.0-jre"
 
     // Explicit matching of protobuf-java and protoc versions to address
     // compilation errors arising due to transitive dependency on the version of 
