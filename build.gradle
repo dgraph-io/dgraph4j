@@ -40,7 +40,6 @@ apply plugin: 'maven'
 apply plugin: 'signing'
 
 group = 'io.dgraph'
-archivesBaseName = 'dgraph4j'
 version = '24.0.0'
 
 // Upgrade to Java SE 11 to match updated protobuf-protoc version. 
@@ -52,6 +51,9 @@ def grpcVersion = '1.65.1'
 def dgraph4jVersion = "$version"
 def openCensusVersion = '0.31.1'
 
+base {
+    archivesName = 'dgraph4j'
+}
 
 protobuf {
     protoc {
