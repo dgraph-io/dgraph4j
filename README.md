@@ -3,7 +3,10 @@
 [![Build Status](https://teamcity.dgraph.io/guestAuth/app/rest/builds/buildType:%28id:Dgraph4j_Integration%29/statusIcon.svg)](https://teamcity.dgraph.io/viewLog.html?buildTypeId=Dgraph4j_Integration&buildId=lastFinished&guest=1)
 [![Coverage Status](https://coveralls.io/repos/github/dgraph-io/dgraph4j/badge.svg)](https://coveralls.io/github/dgraph-io/dgraph4j)
 
-A minimal implementation for a Dgraph client for Java 1.8 and above, using [grpc].
+A minimal implementation for a Dgraph client for Java 11 and above, using [grpc].
+
+### IMP NOTE: 
+v24.0.0 features an upgraded protobuf dependency which requires an upgrade to JDK 11. On account of this breaking change, all legacy applications built upon JDK 8 would be impacted.
 
 [grpc]: https://grpc.io/
 
@@ -55,12 +58,12 @@ grab via Maven:
 <dependency>
   <groupId>io.dgraph</groupId>
   <artifactId>dgraph4j</artifactId>
-  <version>21.12.0</version>
+  <version>24.0.0</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'io.dgraph:dgraph4j:21.12.0'
+compile 'io.dgraph:dgraph4j:24.0.0'
 ```
 
 ## Supported Versions
@@ -75,8 +78,12 @@ use a different version of this client.
 |20.03.X-20.07.X |      20.03.X      |     1.9.X    |
 |     20.11.X    |      20.11.X      |     1.9.X    |
 |   >= 21.XX.X   |      21.XX.X      |     1.9.X    |
+|   >= 24.X.X    |      24.X.X       |     11       |
 
 #### Note regarding Java 1.8.x support:
+v24.0.0 features an upgraded protoc-protobuf dependency that requires an upgrade to JDK 11. This version is incompatible with Java 1.8 and and requires an upgrade to Java 11. 
+
+The following is only applicable to dgraph4j versions < v24.X.X. 
 * If you aren't using gRPC with TLS, then the above version table will work for you with Java
  1.8.x too.
 * If you're using gRPC with TLS on Java 1.8.x, then you will need to follow gRPC docs [here
@@ -112,10 +119,9 @@ use a different version of this client.
   |    2.0.0-2.1.0    |        1.22.1      |               2.0.25.Final              |
   |  20.03.0-20.03.3  |        1.26.0      |               2.0.26.Final              |
   |    >= 20.11.0     |        1.34.1      |               2.0.31.Final              |
+  |    >= 24.0.0      |        1.65.1      |               4.1.100.Final             |
   
-  So, for example, if you were using `dgraph4j v20.03.0`, then you would need to use `2.0.26-Final` 
-  as the version for `netty-tcnative-boringssl-static` dependency as suggested by gRPC docs for 
-  `grpc-netty v1.26.0`.
+  For example, when using `dgraph4j v24.0.0`, the version of the `netty-tcnative-boringssl-static` dependency to be used is `4.1.100.Final`, as suggested by gRPC docs for `grpc-netty v1.65.1`.
 
 [this section]: https://github.com/grpc/grpc-java/blob/master/SECURITY.md#netty
 

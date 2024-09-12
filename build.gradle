@@ -58,7 +58,6 @@ def grpcVersion = '1.66.0'
 def dgraph4jVersion = "$version"
 def openCensusVersion = '0.31.1'
 
-
 protobuf {
     protoc {
         // The version of protoc must match protobuf-java. If you don't depend on
