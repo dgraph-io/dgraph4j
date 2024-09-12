@@ -43,11 +43,9 @@ apply plugin: 'signing'
 group = 'io.dgraph'
 version = '24.0.0'
 
-
 base {
     archivesName = 'dgraph4j'
 }
-
 
 // Upgrade to Java SE 11 to match updated protobuf-protoc version. 
 // WARNING: Needs local toolchain upgrade from Java 8 to Java 11.
@@ -59,10 +57,6 @@ java {
 def grpcVersion = '1.66.0'
 def dgraph4jVersion = "$version"
 def openCensusVersion = '0.31.1'
-
-base {
-    archivesName = 'dgraph4j'
-}
 
 protobuf {
     protoc {
