@@ -54,7 +54,7 @@ java {
     targetCompatibility = JavaVersion.VERSION_11
 }
 
-def grpcVersion = '1.66.0'
+def grpcVersion = '1.68.0'
 def dgraph4jVersion = "$version"
 def openCensusVersion = '0.31.1'
 
@@ -63,7 +63,7 @@ protobuf {
         // The version of protoc must match protobuf-java. If you don't depend on
         // protobuf-java directly, you will be transitively depending on the
         // protobuf-java version that grpc depends on.
-        artifact = "com.google.protobuf:protoc:4.28.1"
+        artifact = "com.google.protobuf:protoc:4.28.2"
     }
     plugins {
         grpc {
@@ -120,12 +120,12 @@ dependencies {
     implementation "io.grpc:grpc-netty:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
 
-    implementation "com.google.guava:guava:33.3.0-jre"
+    implementation "com.google.guava:guava:33.3.1-jre"
 
     // Explicit matching of protobuf-java and protoc versions to address
     // compilation errors arising due to transitive dependency on the version of 
     // protobuf-java that grpc depends on. 
-    implementation "com.google.protobuf:protobuf-java:4.28.1"
+    implementation "com.google.protobuf:protobuf-java:4.28.2"
 
     testImplementation "io.opencensus:opencensus-api:${openCensusVersion}"
     testImplementation "io.opencensus:opencensus-exporter-trace-jaeger:${openCensusVersion}"
