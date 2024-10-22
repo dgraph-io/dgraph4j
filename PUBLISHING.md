@@ -13,30 +13,45 @@ This document contains instructions to publish dgraph4j build artefacts to Maven
 * Note down the short version of the Key ID: `gpg --list-keys --keyid-format short`.
 * Generate a secret key ring file if not present: `gpg --export-secret-keys -o /path/to/.gnupg/secring.gpg`.
 * Publish the keys to the MIT server: `gpg --send-keys <key-id>` (Maven Central will check for keys here).
-* Create `~/.gradle/gradle.properties` and populate it with all the credentials:
+* Create `~/.m2/settings.xml` and populate it with all the credentials:
 ```
-signing.keyId=<…keyId…>
-signing.password=<…password…>
-signing.secretKeyRingFile=</path/to/.gnupg/secring.gpg>
-
-ossrhUsername=dgraph
-ossrhPassword=<…password…>
+<settings>
+  <servers>
+    <server>
+      <id>ossrh</id>
+      <username>dgraph</username>
+      <password>password</password>
+    </server>
+  </servers>
+  <profiles>
+    <profile>
+      <id>ossrh</id>
+      <properties>
+        <gpg.executable>gpg</gpg.executable>
+        <gpg.passphrase>password</gpg.passphrase>
+      </properties>
+    </profile>
+  </profiles>
+  <activeProfiles>
+    <activeProfile>ossrh</activeProfile>
+  </activeProfiles>
+</settings>
 ```
 
 ### Deploying
 * Build and test the code that needs to be published.
-* Bump version by modifying the `version` variable in `build.gradle` file.
-* Update download version in README for both Maven and Gradle.
+* Bump version by modifying the `version` variable in `pom.xml` file.
+* Update download version in README for Maven.
 * Update `Supported Versions` table in README.
 * Update `dgraph4j version` in `grpc-netty` table in README.
 * Update CHANGELOG.
 * Raise a PR for the above changes. Put the changelog in PR description and merge it.
-* Run `./gradlew uploadArchives`.
+* Run `mvn deploy`.
 * Release the deployment by following the steps on the page _Releasing the Deployment_ (link in references below).
 * Also cut a release tag on GitHub with the new version.
 
 ### References
 * [Publishing a project on Maven Central](https://medium.com/@nmauti/publishing-a-project-on-maven-central-8106393db2c3)
-* [Deploying to OSSRH with Gradle - Introduction](http://central.sonatype.org/pages/gradle.html)
+* [Deploying to OSSRH with Maven - Introduction](http://central.sonatype.org/pages/apache-maven.html)
 * [StackOverflow thread on issues during signing artefacts](https://stackoverflow.com/questions/27936119/gradle-uploadarchives-task-unable-to-read-secret-key)
 * [Releasing the Deployment](http://central.sonatype.org/pages/releasing-the-deployment.html)
