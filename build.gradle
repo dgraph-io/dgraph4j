@@ -44,7 +44,7 @@ apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'signing'
 
 group = 'io.dgraph'
-version = '24.0.0'
+version = '24.1.0'
 
 base {
     archivesName = 'dgraph4j'

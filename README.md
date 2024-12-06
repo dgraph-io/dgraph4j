@@ -58,12 +58,12 @@ grab via Maven:
 <dependency>
   <groupId>io.dgraph</groupId>
   <artifactId>dgraph4j</artifactId>
-  <version>24.0.0</version>
+  <version>24.1.0</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'io.dgraph:dgraph4j:24.0.0'
+compile 'io.dgraph:dgraph4j:24.1.0'
 ```
 
 ## Supported Versions
@@ -120,6 +120,7 @@ The following is only applicable to dgraph4j versions < v24.X.X.
   |  20.03.0-20.03.3  |        1.26.0      |               2.0.26.Final              |
   |    >= 20.11.0     |        1.34.1      |               2.0.31.Final              |
   |    >= 24.0.0      |        1.65.1      |               4.1.100.Final             |
+  |    >= 24.1.0      |        1.68.2      |               4.1.110.Final             |
   
   For example, when using `dgraph4j v24.0.0`, the version of the `netty-tcnative-boringssl-static` dependency to be used is `4.1.100.Final`, as suggested by gRPC docs for `grpc-netty v1.65.1`.
 

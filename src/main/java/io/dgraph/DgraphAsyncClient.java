@@ -340,10 +340,10 @@ public class DgraphAsyncClient {
    *
    * <p>- Various AsyncTransaction#query() and AsyncTransaction#mutate() calls made.
    *
-   * <p>- Commit using AsyncTransacation#commit() or Discard using AsyncTransaction#discard(). If
-   * any mutations have been made, It's important that at least one of these methods is called to
-   * clean up resources. Discard is a no-op if Commit has already been called, so it's safe to call
-   * it after Commit.
+   * <p>- Commit using AsyncTransaction#commit() or Discard using AsyncTransaction#discard(). If any
+   * mutations have been made, It's important that at least one of these methods is called to clean
+   * up resources. Discard is a no-op if Commit has already been called, so it's safe to call it
+   * after Commit.
    *
    * @return a new AsyncTransaction object.
    */
