@@ -18,12 +18,6 @@ jobs:
     name: dgraph4j-tests
     runs-on: ubuntu-20.04
     steps:
-      - name: Checkout Dgraph repo # use latest dgraph build
-        uses: actions/checkout@v4
-        with:
-          path: dgraph
-          repository: dgraph-io/dgraph
-          ref: main
       - name: Checkout dgraph4j repo
         uses: actions/checkout@v4
         with:
@@ -37,21 +31,21 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: current
-      - name: Get Go Version
-        run: |
-          #!/bin/bash
-          cd dgraph
-          GOVERSION=$({ [ -f .go-version ] && cat .go-version; })
-          echo "GOVERSION=$GOVERSION" >> $GITHUB_ENV
+      - name: Checkout Dgraph repo # use latest dgraph build
+        uses: actions/checkout@v4
+        with:
+          path: dgraph
+          repository: dgraph-io/dgraph
+          ref: main
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GOVERSION }}
+          go-version-file: dgraph/go.mod
       - name: Build dgraph binary
         run: cd dgraph && make docker-image # builds docker image with local tag
       - name: Spin up local dgraph cluster
         run: cd dgraph4j && docker compose -f docker-compose.test.yml up -d
       - name: Run tests
-        run: cd dgraph4j && gradle build
+        run: cd dgraph4j && gradle build -i
       - name: Tear down cluster
         run: cd dgraph4j && docker compose -f docker-compose.test.yml down
