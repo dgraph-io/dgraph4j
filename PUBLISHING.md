@@ -13,15 +13,16 @@ This document contains instructions to publish dgraph4j build artefacts to Maven
 - Note down the short version of the Key ID: `gpg --list-keys --keyid-format short`.
 - Generate a secret key ring file if not present: `gpg --export-secret-keys -o /path/to/.gnupg/secring.gpg`.
 - Publish the keys to the MIT server: `gpg --send-keys <key-id>` (Maven Central will check for keys here).
-- Create `~/.gradle/gradle.properties` and populate it with all the credentials:
+- Create `~/.gradle/gradle.properties` and populate it with all the credentials
+- Get the credentials from `profile` section after loggin into [Sonatype](https://oss.sonatype.org/)
 
 ```
 signing.keyId=<…keyId…>
 signing.password=<…password…>
 signing.secretKeyRingFile=</path/to/.gnupg/secring.gpg>
 
-ossrhUsername=dgraph
-ossrhPassword=<…password…>
+ossrhUsername=<username>
+ossrhPassword=<token>
 ```
 
 ### Deploying
@@ -33,7 +34,7 @@ ossrhPassword=<…password…>
 - Update `dgraph4j version` in `grpc-netty` table in README.
 - Update CHANGELOG.
 - Raise a PR for the above changes. Put the changelog in PR description and merge it.
-- Run `./gradlew uploadArchives`.
+- Run `./gradlew publishAllPublicationsToMavenRepository`.
 - Release the deployment by following the steps on the page _Releasing the Deployment_ (link in references below).
 - Also cut a release tag on GitHub with the new version.
 

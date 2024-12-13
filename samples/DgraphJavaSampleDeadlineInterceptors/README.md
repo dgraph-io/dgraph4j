@@ -1,14 +1,15 @@
 Sample project demonstrating the use of [dgraph4j], the official Java client
 for Dgraph.
 
-[dgraph4j]:https://github.com/dgraph-io/dgraph4
+[dgraph4j]: https://github.com/dgraph-io/dgraph4
 
 ## Running
+
 ### Start Dgraph Server
+
 You will need to install [Dgraph v21.3.0 or above][releases] and start a local cluster as shown below.
 
 [releases]: https://github.com/dgraph-io/dgraph/releases
-
 
 First, create two separate directories for `dgraph zero` and `dgraph server`.
 
@@ -38,7 +39,7 @@ For more configuration options, and other details, refer to [docs.dgraph.io](htt
 
 ## Run the sample code
 
-**Warning**: The sample code, when run, will remove all data from your locally running Dgraph instance. 
+**Warning**: The sample code, when run, will remove all data from your locally running Dgraph instance.
 So make sure that you don't have any important data on your Dgraph instance.
 
 This example in [App.java:39](./src/main/java/App.java#L39-L47) creates the
