@@ -225,14 +225,14 @@ jacocoTestReport {
 }
 
 if (project.hasProperty('ossrhUsername')) {
-    signing {
-        sign configurations.archives
-    }
-
     publishing {
+        java {
+            withSourcesJar()
+            withJavadocJar()
+        }
+
         repositories {
             maven {
-                // change URLs to point to your repos, e.g. http://my.org/repo
                 def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
                 credentials {
                     username = ossrhUsername
@@ -248,8 +248,12 @@ if (project.hasProperty('ossrhUsername')) {
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
             }
         }
+
         publications {
             mavenJava(MavenPublication) {
+                artifactId = 'dgraph4j'
+                from components.java
+
                 pom {
                     name = 'dgraph4j'
                     description = 'Dgraph Java Client'
@@ -264,7 +268,7 @@ if (project.hasProperty('ossrhUsername')) {
                     developers {
                         developer {
                             name = 'Dgraph Labs'
-                            email = 'helo@hypermode.com'
+                            email = 'hello@hypermode.com'
                         }
                     }
                     scm {
@@ -274,6 +278,10 @@ if (project.hasProperty('ossrhUsername')) {
                 }
             }
         }
+    }
+
+    signing {
+        sign publishing.publications.mavenJava
     }
 }
 
