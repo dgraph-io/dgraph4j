@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 DGraph Labs, Inc.
+ * Copyright 2016 Dgraph Labs, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 buildscript {
     repositories {
         maven {
-            url "https://plugins.gradle.org/m2/"
+            url 'https://plugins.gradle.org/m2/'
         }
     }
     dependencies {
@@ -36,6 +36,7 @@ plugins {
     id 'maven-publish'
     id 'com.gradleup.shadow' version '8.3.5'
 }
+
 // Apply the java plugin to add support for Java
 apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
@@ -44,13 +45,13 @@ apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'signing'
 
 group = 'io.dgraph'
-version = '24.1.0'
+version = '24.1.1'
 
 base {
     archivesName = 'dgraph4j'
 }
 
-// Upgrade to Java SE 11 to match updated protobuf-protoc version. 
+// Upgrade to Java SE 11 to match updated protobuf-protoc version.
 // WARNING: Needs local toolchain upgrade from Java 8 to Java 11.
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -66,7 +67,7 @@ protobuf {
         // The version of protoc must match protobuf-java. If you don't depend on
         // protobuf-java directly, you will be transitively depending on the
         // protobuf-java version that grpc depends on.
-        artifact = "com.google.protobuf:protoc:4.29.1"
+        artifact = 'com.google.protobuf:protoc:4.29.1'
     }
     plugins {
         grpc {
@@ -81,9 +82,9 @@ protobuf {
                     option 'annotate_code'
                 }
             }
-      	}
+        }
         all()*.plugins {
-            grpc {}
+            grpc { }
         }
     }
     generatedFilesBaseDir = "$projectDir/src/generated"
@@ -113,29 +114,29 @@ configurations {
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // The production code uses the SLF4J logging API at compile time
-    implementation "org.slf4j:slf4j-api:2.0.16"
+    implementation 'org.slf4j:slf4j-api:2.0.16'
 
     // Specific slf4j bindings should not be included in the default (compile) scope.
     // See http://www.slf4j.org/faq.html#maven2.
-    testImplementation "org.slf4j:slf4j-simple:2.0.16"
+    testImplementation 'org.slf4j:slf4j-simple:2.0.16'
 
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation "io.grpc:grpc-netty:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
 
-    implementation "com.google.guava:guava:33.3.1-jre"
+    implementation 'com.google.guava:guava:33.3.1-jre'
 
     // Explicit matching of protobuf-java and protoc versions to address
-    // compilation errors arising due to transitive dependency on the version of 
-    // protobuf-java that grpc depends on. 
-    implementation "com.google.protobuf:protobuf-java:4.29.1"
+    // compilation errors arising due to transitive dependency on the version of
+    // protobuf-java that grpc depends on.
+    implementation 'com.google.protobuf:protobuf-java:4.29.1'
 
     testImplementation "io.opencensus:opencensus-api:${openCensusVersion}"
     testImplementation "io.opencensus:opencensus-exporter-trace-jaeger:${openCensusVersion}"
     testRuntimeOnly "io.opencensus:opencensus-impl:${openCensusVersion}"
 
     // Used for unmarshalling a JSON GraphQL response
-    testImplementation "com.google.code.gson:gson:2.11.0"
+    testImplementation 'com.google.code.gson:gson:2.11.0'
 
     // Declare the dependency for your favourite test framework you want to use in your tests.
     testImplementation 'org.testng:testng:6.8.8'
@@ -146,14 +147,14 @@ dependencies {
 
 googleJavaFormat {
     toolVersion = '1.5'
-    exclude "src/generated/**/*.java"
+    exclude 'src/generated/**/*.java'
 }
 compileJava.dependsOn 'googleJavaFormat'
 
 idea {
     module {
-        sourceDirs += file("${projectDir}/src/generated/main/java");
-        sourceDirs += file("${projectDir}/src/generated/main/grpc");
+        sourceDirs += file("${projectDir}/src/generated/main/java")
+        sourceDirs += file("${projectDir}/src/generated/main/grpc")
     }
 }
 
@@ -170,15 +171,15 @@ task fatJar(type: Jar) {
                    'Implementation-Version': version
     }
     base { archivesName = project.name + '-all' }
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    from { configurations.compile.collect { it.directory() ? it : zipTree(it) } }
     with jar
 }
 
 tasks.named('shadowJar', ShadowJar) {
     enableRelocation true
-    relocationPrefix "io.dgraph.dgraph4j.shaded"
+    relocationPrefix 'io.dgraph.dgraph4j.shaded'
     relocate 'google', 'io.dgraph.dgraph4j.shaded.google'
-    archiveClassifier.set("shaded")
+    archiveClassifier.set('shaded')
     mergeServiceFiles()
 }
 
@@ -223,7 +224,60 @@ jacocoTestReport {
     }
 }
 
-task version() {
+if (project.hasProperty('ossrhUsername')) {
+    signing {
+        sign configurations.archives
+    }
+
+    publishing {
+        repositories {
+            maven {
+                // change URLs to point to your repos, e.g. http://my.org/repo
+                def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+                credentials {
+                    username = ossrhUsername
+                    password = ossrhPassword
+                }
+
+                def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+                credentials {
+                    username = ossrhUsername
+                    password = ossrhPassword
+                }
+
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+            }
+        }
+        publications {
+            mavenJava(MavenPublication) {
+                pom {
+                    name = 'dgraph4j'
+                    description = 'Dgraph Java Client'
+                    url = 'https://github.com/dgraph-io/dgraph4j'
+
+                    licenses {
+                        license {
+                            name = 'Apache License 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    developers {
+                        developer {
+                            name = 'Dgraph Labs'
+                            email = 'helo@hypermode.com'
+                        }
+                    }
+                    scm {
+                        connection = 'https://github.com/dgraph-io/dgraph4j.git'
+                        url = 'https://github.com/dgraph-io/dgraph4j'
+                    }
+                }
+            }
+        }
+    }
+}
+
+task version {
     doLast {
         println dgraph4jVersion
     }

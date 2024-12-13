@@ -5,7 +5,7 @@
 
 A minimal implementation for a Dgraph client for Java 11 and above, using [grpc].
 
-### IMP NOTE: 
+### IMP NOTE:
 v24.0.0 features an upgraded protobuf dependency which requires an upgrade to JDK 11. On account of this breaking change, all legacy applications built upon JDK 8 would be impacted.
 
 [grpc]: https://grpc.io/
@@ -22,28 +22,41 @@ and understand how to run and work with Dgraph.
 **Use [Discuss Issues](https://discuss.dgraph.io/c/issues/35/clients/46) for reporting issues about this repository.**
 
 ## Table of Contents
-- [Download](#download)
-- [Supported Versions](#supported-versions)
-- [Quickstart](#quickstart)
-- [Intro](#intro)
-- [Using the Synchronous Client](#using-the-synchronous-client)
-  * [Creating a Client](#creating-a-client)
-  * [Creating a Client for Dgraph Cloud](#creating-a-client-for-dgraph-cloud)
-  * [Creating a Secure Client Using TLS](#creating-a-secure-client-using-tls)
-  * [Check Dgraph Version](#check-dgraph-version)
-  * [Login Using ACL](#login-using-acl)
-  * [Altering the Database](#altering-the-database)
-  * [Creating a Transaction](#creating-a-transaction)
-  * [Running a Mutation](#running-a-mutation)
-  * [Committing a Transaction](#committing-a-transaction)
-  * [Running a Query](#running-a-query)
-  * [Running a Query with RDF response](#running-a-query-with-rdf-response)
-  * [Running an Upsert: Query + Mutation](#running-an-upsert-query--mutation)
-  * [Running a Conditional Upsert](#running-a-conditional-upsert)
-  * [Setting Deadlines](#setting-deadlines)
-  * [Setting Metadata Headers](#setting-metadata-headers)
-  * [Helper Methods](#helper-methods)
-  * [Closing the DB Connection](#closing-the-db-connection)
+- [Dgraph Client for Java](#dgraph-client-for-java)
+    - [IMP NOTE:](#imp-note)
+  - [Table of Contents](#table-of-contents)
+  - [Download](#download)
+  - [Supported Versions](#supported-versions)
+      - [Note regarding Java 1.8.x support:](#note-regarding-java-18x-support)
+  - [Quickstart](#quickstart)
+  - [Intro](#intro)
+  - [Using the Synchronous Client](#using-the-synchronous-client)
+    - [Creating a Client](#creating-a-client)
+    - [Creating a Client for Dgraph Cloud](#creating-a-client-for-dgraph-cloud)
+    - [Creating a Secure Client using TLS](#creating-a-secure-client-using-tls)
+    - [Check Dgraph version](#check-dgraph-version)
+    - [Login Using ACL](#login-using-acl)
+    - [Altering the Database](#altering-the-database)
+    - [Creating a Transaction](#creating-a-transaction)
+    - [Running a Mutation](#running-a-mutation)
+    - [Committing a Transaction](#committing-a-transaction)
+    - [Running a Query](#running-a-query)
+    - [Running a Query with RDF response](#running-a-query-with-rdf-response)
+    - [Running an Upsert: Query + Mutation](#running-an-upsert-query--mutation)
+    - [Running a Conditional Upsert](#running-a-conditional-upsert)
+    - [Setting Deadlines](#setting-deadlines)
+      - [Setting deadlines for all requests](#setting-deadlines-for-all-requests)
+      - [Setting deadlines for a single request](#setting-deadlines-for-a-single-request)
+    - [Setting Metadata Headers](#setting-metadata-headers)
+    - [Helper Methods](#helper-methods)
+      - [Delete multiple edges](#delete-multiple-edges)
+    - [Closing the DB Connection](#closing-the-db-connection)
+  - [Using the Asynchronous Client](#using-the-asynchronous-client)
+  - [Checking the request latency](#checking-the-request-latency)
+  - [Development](#development)
+    - [Building the source](#building-the-source)
+    - [Code Style](#code-style)
+    - [Running unit tests](#running-unit-tests)
 * [Using the Asynchronous Client](#using-the-asynchronous-client)
 * [Checking the request latency](#checking-the-request-latency)
 - [Development](#development)
@@ -58,12 +71,13 @@ grab via Maven:
 <dependency>
   <groupId>io.dgraph</groupId>
   <artifactId>dgraph4j</artifactId>
-  <version>24.1.0</version>
+  <version>24.1.1</version>
 </dependency>
 ```
+
 or Gradle:
 ```groovy
-compile 'io.dgraph:dgraph4j:24.1.0'
+compile 'io.dgraph:dgraph4j:24.1.1'
 ```
 
 ## Supported Versions
@@ -71,29 +85,30 @@ compile 'io.dgraph:dgraph4j:24.1.0'
 Depending on the version of Dgraph that you are connecting to, you will have to
 use a different version of this client.
 
-| Dgraph version | dgraph4j version  | java version |
-|:--------------:|:-----------------:|:------------:|
-|     1.0.X      |       1.X.X       |     1.9.X    |
-|  1.1.0 - 2.X.X |       2.X.X       |     1.9.X    |
-|20.03.X-20.07.X |      20.03.X      |     1.9.X    |
-|     20.11.X    |      20.11.X      |     1.9.X    |
-|   >= 21.XX.X   |      21.XX.X      |     1.9.X    |
-|   >= 24.X.X    |      24.X.X       |     11       |
+| Dgraph version  | dgraph4j version | java version |
+| :-------------: | :--------------: | :----------: |
+|      1.0.X      |      1.X.X       |    1.9.X     |
+|  1.1.0 - 2.X.X  |      2.X.X       |    1.9.X     |
+| 20.03.X-20.07.X |     20.03.X      |    1.9.X     |
+|     20.11.X     |     20.11.X      |    1.9.X     |
+|   >= 21.XX.X    |     21.XX.X      |    1.9.X     |
+|    >= 24.X.X    |      24.X.X      |      11      |
 
 #### Note regarding Java 1.8.x support:
-v24.0.0 features an upgraded protoc-protobuf dependency that requires an upgrade to JDK 11. This version is incompatible with Java 1.8 and and requires an upgrade to Java 11. 
+v24.0.0 features an upgraded protoc-protobuf dependency that requires an upgrade to JDK 11.
+This version is incompatible with Java 1.8 and and requires an upgrade to Java 11.
 
-The following is only applicable to dgraph4j versions < v24.X.X. 
+The following is only applicable to dgraph4j versions < v24.X.X.
 * If you aren't using gRPC with TLS, then the above version table will work for you with Java
  1.8.x too.
 * If you're using gRPC with TLS on Java 1.8.x, then you will need to follow gRPC docs [here
 ](https://github.com/grpc/grpc-java/blob/master/SECURITY.md#tls-on-non-android). Basically, it
- will require you to add the following dependency in your app with correct version for the 
- corresponding `grpc-netty` version used by `dgraph4j`. You can find out the correct version of 
+ will require you to add the following dependency in your app with correct version for the
+ corresponding `grpc-netty` version used by `dgraph4j`. You can find out the correct version of
  the dependency to use from the version combination table in [this section] in `grpc-netty` docs.
-  
+
   For maven:
-  
+
   ```xml
   <dependency>
     <groupId>io.netty</groupId>
@@ -101,28 +116,31 @@ The following is only applicable to dgraph4j versions < v24.X.X.
     <version><!-- See table in gRPC docs for correct version --></version>
   </dependency>
   ```
-  
+
   For Gradle:
-  
+
   ```groovy
   compile 'io.netty:netty-tcnative-boringssl-static:<See table in gRPC docs for correct version>'
   ```
-  
-  The following table lists the `grpc-netty` versions used by different `dgraph4j` versions over time, along with the supported versions of `netty-tcnative-boringssl-static` for the corresponding `grpc-netty` version:
-  
-  | dgraph4j version  | grpc-netty version | netty-tcnative-boringssl-static version |
-  |:-----------------:|:------------------:|:---------------------------------------:|
-  |    1.0.0-1.2.0    |        1.7.0       |               2.0.6.Final               |
-  |    1.4.0-1.6.0    |        1.10.0      |               2.0.7.Final               |
-  |       1.7.0       |        1.15.0      |               2.0.12.Final              |
-  |    1.7.3-1.7.5    |        1.15.1      |               2.0.12.Final              |
-  |    2.0.0-2.1.0    |        1.22.1      |               2.0.25.Final              |
-  |  20.03.0-20.03.3  |        1.26.0      |               2.0.26.Final              |
-  |    >= 20.11.0     |        1.34.1      |               2.0.31.Final              |
-  |    >= 24.0.0      |        1.65.1      |               4.1.100.Final             |
-  |    >= 24.1.0      |        1.68.2      |               4.1.110.Final             |
-  
-  For example, when using `dgraph4j v24.0.0`, the version of the `netty-tcnative-boringssl-static` dependency to be used is `4.1.100.Final`, as suggested by gRPC docs for `grpc-netty v1.65.1`.
+
+  The following table lists the `grpc-netty` versions used by different `dgraph4j` versions
+  over time, along with the supported versions of `netty-tcnative-boringssl-static`
+  for the corresponding `grpc-netty` version:
+
+  | dgraph4j version | grpc-netty version | netty-tcnative-boringssl-static version |
+  | :--------------: | :----------------: | :-------------------------------------: |
+  |   1.0.0-1.2.0    |       1.7.0        |               2.0.6.Final               |
+  |   1.4.0-1.6.0    |       1.10.0       |               2.0.7.Final               |
+  |      1.7.0       |       1.15.0       |              2.0.12.Final               |
+  |   1.7.3-1.7.5    |       1.15.1       |              2.0.12.Final               |
+  |   2.0.0-2.1.0    |       1.22.1       |              2.0.25.Final               |
+  | 20.03.0-20.03.3  |       1.26.0       |              2.0.26.Final               |
+  |    >= 20.11.0    |       1.34.1       |              2.0.31.Final               |
+  |    >= 24.0.0     |       1.65.1       |              4.1.100.Final              |
+  |    >= 24.1.1     |       1.68.2       |              4.1.110.Final              |
+
+  For example, when using `dgraph4j v24.0.0`, the version of the `netty-tcnative-boringssl-static`
+  dependency to be used is `4.1.100.Final`, as suggested by gRPC docs for `grpc-netty v1.65.1`.
 
 [this section]: https://github.com/grpc/grpc-java/blob/master/SECURITY.md#netty
 
@@ -457,7 +475,7 @@ txn.doRequest(request);
 
 ### Running a Query with RDF response
 
-You can get query results as an RDF response by calling either `queryRDF()` or `queryRDFWithVars()`. 
+You can get query results as an RDF response by calling either `queryRDF()` or `queryRDFWithVars()`.
 The response contains the `getRdf()` method, which will provide the RDF encoded output.
 
 **Note**: If you are querying for `uid` values only, use a JSON format response
@@ -505,8 +523,9 @@ txn.doRequest(request);
 
 ### Running a Conditional Upsert
 
-The upsert block also allows specifying a conditional mutation block using an `@if` directive. The mutation is executed
-only when the specified condition is true. If the condition is false, the mutation is silently ignored.
+The upsert block also allows specifying a conditional mutation block using an `@if` directive.
+The mutation is executed only when the specified condition is true. If the condition is false,
+the mutation is silently ignored.
 
 See more about Conditional Upsert [Here](https://docs.dgraph.io/mutations/#conditional-upsert).
 
@@ -625,7 +644,7 @@ Here is the asynchronous version of the code above, which runs a query.
 
 ```java
 // Query
-String query = 
+String query =
 "query all($a: string){\n" +
 "  all(func: eq(name, $a)) {\n" +
 "    name\n" +
