@@ -1,15 +1,15 @@
-Sample project demonstrating the use of [dgraph4j], the official Java client
-for Dgraph.
+Sample project demonstrating the use of [dgraph4j], the official Java client for Dgraph.
 
-[dgraph4j]: https://github.com/dgraph-io/dgraph4
+[dgraph4j]: https://github.com/hypermodeinc/dgraph4
 
 ## Running
 
 ### Start Dgraph Server
 
-You will need to install [Dgraph v21.3.0 or above][releases] and start a local cluster as shown below.
+You will need to install [Dgraph v21.3.0 or above][releases] and start a local cluster as shown
+below.
 
-[releases]: https://github.com/dgraph-io/dgraph/releases
+[releases]: https://github.com/hypermodeinc/dgraph/releases
 
 First, create two separate directories for `dgraph zero` and `dgraph server`.
 
@@ -32,20 +32,20 @@ rm -rf p w t; dgraph alpha --zero localhost:5080 -o 100
 ```
 
 Notice that in the command above, we shifted the ports by 100 from the default ports of 7080 for
-internal traffic, 8080 for http, and 9080 for GRPC, which means the alpha server is binding to
-the port 7180 for internal traffic, 8180 for http, and 9180 for GRPC.
+internal traffic, 8080 for http, and 9080 for GRPC, which means the alpha server is binding to the
+port 7180 for internal traffic, 8180 for http, and 9180 for GRPC.
 
 For more configuration options, and other details, refer to [docs.dgraph.io](https://docs.dgraph.io)
 
 ## Run the sample code
 
-**Warning**: The sample code, when run, will remove all data from your locally running Dgraph instance.
-So make sure that you don't have any important data on your Dgraph instance.
+**Warning**: The sample code, when run, will remove all data from your locally running Dgraph
+instance. So make sure that you don't have any important data on your Dgraph instance.
 
-This example in [App.java:39](./src/main/java/App.java#L39-L47) creates the
-DgraphStub with a deadline using a call interceptor to set timeouts **per
-request**. This is most likely what you want to do. For more info, see [Setting
-Deadlines](https://github.com/dgraph-io/dgraph4j/#setting-deadlines).
+This example in [App.java:39](./src/main/java/App.java#L39-L47) creates the DgraphStub with a
+deadline using a call interceptor to set timeouts **per request**. This is most likely what you want
+to do. For more info, see
+[Setting Deadlines](https://github.com/hypermodeinc/dgraph4j/#setting-deadlines).
 
 ```java
 stub =
@@ -115,5 +115,5 @@ Sleeping for 1 second
 Done!
 ```
 
-If you see the output `Done!`, then the example works as expected.
-You can explore the source code in `src/main/java/App.java` file.
+If you see the output `Done!`, then the example works as expected. You can explore the source code
+in `src/main/java/App.java` file.

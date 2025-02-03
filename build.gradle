@@ -201,7 +201,7 @@ task updateProto(type: Exec) {
 }
 
 task setupCluster(type: Exec) {
-    workingDir System.getenv('GOPATH') + '/src/github.com/dgraph-io/dgraph/dgraph'
+    workingDir System.getenv('GOPATH') + '/src/github.com/hypermodeinc/dgraph/dgraph'
 
     commandLine './run.sh'
 }
@@ -257,7 +257,7 @@ if (project.hasProperty('ossrhUsername')) {
                 pom {
                     name = 'dgraph4j'
                     description = 'Dgraph Java Client'
-                    url = 'https://github.com/dgraph-io/dgraph4j'
+                    url = 'https://github.com/hypermodeinc/dgraph4j'
 
                     licenses {
                         license {
@@ -272,8 +272,8 @@ if (project.hasProperty('ossrhUsername')) {
                         }
                     }
                     scm {
-                        connection = 'https://github.com/dgraph-io/dgraph4j.git'
-                        url = 'https://github.com/dgraph-io/dgraph4j'
+                        connection = 'https://github.com/hypermodeinc/dgraph4j.git'
+                        url = 'https://github.com/hypermodeinc/dgraph4j'
                     }
                 }
             }

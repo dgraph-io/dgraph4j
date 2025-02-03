@@ -1,7 +1,7 @@
 ## Publishing artefacts to Maven Central
 
-Dgraph owns the `io.dgraph` namespace on Maven Central. See [JIRA ticket][jira] for details.
-This document contains instructions to publish dgraph4j build artefacts to Maven central.
+Dgraph owns the `io.dgraph` namespace on Maven Central. See [JIRA ticket][jira] for details. This
+document contains instructions to publish dgraph4j build artefacts to Maven central.
 
 [jira]: https://issues.sonatype.org/browse/OSSRH-35895
 
@@ -11,8 +11,10 @@ This document contains instructions to publish dgraph4j build artefacts to Maven
 - Generate GPG credentials. Make sure you set a passphrase. You can use this
   [guide](https://help.github.com/en/articles/generating-a-new-gpg-key).
 - Note down the short version of the Key ID: `gpg --list-keys --keyid-format short`.
-- Generate a secret key ring file if not present: `gpg --export-secret-keys -o /path/to/.gnupg/secring.gpg`.
-- Publish the keys to the MIT server: `gpg --send-keys <key-id>` (Maven Central will check for keys here).
+- Generate a secret key ring file if not present:
+  `gpg --export-secret-keys -o /path/to/.gnupg/secring.gpg`.
+- Publish the keys to the MIT server: `gpg --send-keys <key-id>` (Maven Central will check for keys
+  here).
 - Create `~/.gradle/gradle.properties` and populate it with all the credentials
 - Get the credentials from `profile` section after loggin into [Sonatype](https://oss.sonatype.org/)
 
@@ -35,7 +37,8 @@ ossrhPassword=<token>
 - Update CHANGELOG.
 - Raise a PR for the above changes. Put the changelog in PR description and merge it.
 - Run `./gradlew publishMavenJavaPublicationToMavenRepository`.
-- Release the deployment by following the steps on the page _Releasing the Deployment_ (link in references below).
+- Release the deployment by following the steps on the page _Releasing the Deployment_ (link in
+  references below).
 - Also cut a release tag on GitHub with the new version.
 
 ### References
