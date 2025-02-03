@@ -1,8 +1,9 @@
 name: ci-dgraph4j-tests
+
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     types:
       - opened
@@ -10,13 +11,14 @@ on:
       - synchronize
       - ready_for_review
     branches:
-      - master
+      - main
   schedule:
-    - cron: "0 0 * * *" # run workflow daily
+    - cron: 0 0 * * *
+
 jobs:
   build:
     name: dgraph4j-tests
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout dgraph4j repo
         uses: actions/checkout@v4
@@ -35,7 +37,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: dgraph
-          repository: dgraph-io/dgraph
+          repository: hypermodeinc/dgraph
           ref: main
       - name: Set up Go
         uses: actions/setup-go@v5

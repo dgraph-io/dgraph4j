@@ -1,8 +1,8 @@
-This example shows how to handle concurrent modifications using a multi-threaded Java Program.
-The example demonstrates [transaction](https://dgraph.io/docs/clients/overview/#transactions)
-conflicts in Dgraph.
+This example shows how to handle concurrent modifications using a multi-threaded Java Program. The
+example demonstrates [transaction](https://dgraph.io/docs/clients/overview/#transactions) conflicts
+in Dgraph.
 
-[dgraph4j]: https://github.com/dgraph-io/dgraph4j
+[dgraph4j]: https://github.com/hypermodeinc/dgraph4j
 
 ## Steps to run this example
 
@@ -12,10 +12,9 @@ Step 1: Start a new terminal and launch Dgraph with the following command line.
 docker run -it -p 8080:8080 -p 9080:9080 dgraph/standalone:master
 ```
 
-Step 2: Checkout the source code from the 'samples' directory in dgraph4j repository.
-This particular example can be found at the path "samples/concurrent-modification".
-In order to run this example, execute the following maven command from the
-'concurrent-modification' folder.
+Step 2: Checkout the source code from the 'samples' directory in dgraph4j repository. This
+particular example can be found at the path "samples/concurrent-modification". In order to run this
+example, execute the following maven command from the 'concurrent-modification' folder.
 
 **Warning**: The sample code, when run, will remove all data from your locally running Dgraph
 instance. So make sure that you don't have any important data on your Dgraph instance.
@@ -32,14 +31,14 @@ Step 3: On running the example, the program initializes Dgraph with the followin
 ```
 
 Step 4: The program also initializes user "Alice" with a 'clickCount' of value '1', and then
-proceeds to increment 'clickCount' concurrently in two threads. Dgraph throws an exception if
-a transaction is updating a given predicate that is being concurrently modified. As part of the
+proceeds to increment 'clickCount' concurrently in two threads. Dgraph throws an exception if a
+transaction is updating a given predicate that is being concurrently modified. As part of the
 exception handling logic, the program sleeps for 1 second on receiving a concurrent modification
 exception (“TxnConflictException”), and then retries.
 
-<br> The logs below show that two threads are increasing clickCount for the same user named
-Alice (note the same uid). Thread #1 succeeds immediately, and Dgraph throws a concurrent
-modification conflict on Thread 2. Thread 2 sleeps for 1 second and retries, and this time succeeds.
+<br> The logs below show that two threads are increasing clickCount for the same user named Alice
+(note the same uid). Thread #1 succeeds immediately, and Dgraph throws a concurrent modification
+conflict on Thread 2. Thread 2 sleeps for 1 second and retries, and this time succeeds.
 
 <-timestamp-> <-log->
 
@@ -85,6 +84,6 @@ Response:
 **Summary**
 
 Concurrent modifications to the same predicate causes the TxnConflictException. When several
-transactions hit the same node's predicate at the same time, the first one succeeds, while the
-other will get the “io.dgraph.TxnConflictException”. Upon constantly retrying, the transactions
-begin to succeed one after another, and given enough retries, correctly completes its work.
+transactions hit the same node's predicate at the same time, the first one succeeds, while the other
+will get the “io.dgraph.TxnConflictException”. Upon constantly retrying, the transactions begin to
+succeed one after another, and given enough retries, correctly completes its work.
