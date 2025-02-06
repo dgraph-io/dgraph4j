@@ -256,7 +256,7 @@ if (project.hasProperty('ossrhUsername')) {
                     }
                     developers {
                         developer {
-                            name = 'Dgraph Labs'
+                            name = 'Hypermode Inc.'
                             email = 'hello@hypermode.com'
                         }
                     }
