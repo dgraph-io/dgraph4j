@@ -6,12 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [24.1.1] - 2024-12-13
 
-### Added
+**Added**
 
 - add support for big float and fix tests (#246)
 - Provide shaded jar with dgraph4j's dependencies (#239)
 
-### Fixed
+**Fixed**
 
 - build(deps): bump the minor-and-patch group across 1 directory with 4 updates (#245) (#243) (#244)
   (#241) (#237)
@@ -19,15 +19,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [24.0.0] - 2024-08-06
 
-### Added
+**Added**
 
 - feat: Add Vector Support. ([#220])
 
-### Fixed
+**Fixed**
 
 - fix: Issues with disconnects addressed with Netty, protoc and protobuf-java updates. ([#212])
 
-### Security
+**Security**
 
 - chore: Bump com.google.protobuf:protoc from 3.2.0 to 4.27.2 ([#215])
 - chore: Bump org.slf4j:slf4j-simple from 1.7.21 to 2.0.13 ([#214])
@@ -36,7 +36,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 - chore: Bump github/codeql-action from 2 to 3 ([#198])
 - chore: Bump actions/setup-go from 3 to 5 ([#195])
 
-### Testing
+**Testing**
 
 - chore: added a test for best effort queries ([#182])
 
@@ -58,7 +58,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [21.03.2] - 2021-12-24
 
-### Added
+**Added**
 
 - feat: Add timeout parameters to transaction requests. ([#172])
 - feat: Add shutdown method to client. ([#173])
@@ -68,7 +68,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [21.03.1] - 2021-04-22
 
-### Added
+**Added**
 
 - fix(deprecation): add DgraphClient.clientStubFromCloudEndpoint ([#170])
 
@@ -76,15 +76,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [21.03.0] - 2021-04-08
 
-### Added
+**Added**
 
 - feat: add loginIntoNamespace API on clients (GRAPHQL-1058) ([#166])
 
-### Deprecated
+**Deprecated**
 
 - chore: Sync dgo + deprecate Slash endpoint method (GRAPHQL-1141) ([#167])
 
-### Fixed
+**Fixed**
 
 - fix(test): Don't use dgraph binary in tests (GRAPHQL-1144) ([#168])
 
@@ -94,11 +94,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [20.11.0] - 2020-12-23
 
-### Added
+**Added**
 
 - feat: Add support for RDF response (DGRAPH-2659) ([#160])
 
-### Changed
+**Changed**
 
 - gRPC: bumped gRPC libs to v1.34.1
 
@@ -106,7 +106,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [20.03.3] - 2020-11-25
 
-### Added
+**Added**
 
 - feat: add client constructor with executor (DGRAPH-2746) ([#161])
 
@@ -114,7 +114,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [20.03.2] - 2020-10-27
 
-### Added
+**Added**
 
 - feat: Support for Slash GraphQL endpoint ([#158])
 
@@ -122,12 +122,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [20.03.1] - 2020-07-10
 
-### Added
+**Added**
 
 - Allow creation of Transaction/AsyncTransaction from TxnContext ([#149])
 - feat: Client now has a checkVersion method ([#155])
 
-### Fixed
+**Fixed**
 
 - Delete argument from method usePlainText ([#148])
 
@@ -137,12 +137,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [20.03.0] - 2020-04-01
 
-### Changed
+**Changed**
 
 - Upgrade grpc version to 1.26.0 ([#130])
 - Add docs for background indexing, update api.proto ([1324663])
 
-### Fixed
+**Fixed**
 
 - Fix slf4j dependencies. ([#133])
 - Fixed running multiple upserts within one transaction ([#137])
@@ -154,7 +154,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [2.1.0] - 2020-01-30
 
-### Changed
+**Changed**
 
 - Sync proto files with dgo ([#121])
 
@@ -162,7 +162,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [2.0.2] - 2019-10-13
 
-### Fixed
+**Fixed**
 
 - Fix Opencensus tracing. ([#117])
 
@@ -170,7 +170,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [2.0.1] - 2019-09-05
 
-### Fixed
+**Fixed**
 
 - Throw TxnConflictException correctly ([#102])
 
@@ -178,7 +178,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [2.0.0] - 2019-09-02
 
-### Changed
+**Changed**
 
 - Upgrade grpc to get rid of Java 11 warnings from grpc ([#94])
 - Update grpc API to support Multiple Mutations in future ([#101])
@@ -188,11 +188,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [1.7.5] - 2019-06-29
 
-### Added
+**Added**
 
 - Add support for upsert block ([#88])
 
-### Fixed
+**Fixed**
 
 - Moving the dependency io.opencensus.\* into a test dependency only, ([#89])
 
@@ -201,12 +201,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [1.7.4] - 2019-06-19
 
-### Added
+**Added**
 
 - Added best effort method to the transaction class to call the AsyncTransaction class method.
   ([#86])
 
-### Fixed
+**Fixed**
 
 - Fix broken tests ([#87])
 
@@ -215,7 +215,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [1.7.3] - 2019-03-27
 
-### Added
+**Added**
 
 - added logic for ACL and upgraded the code to be usable with java 11 ([#80])
 - Added best effort flag, shorten ACL test timing to match changes in dgraph ([b4bf3bf])
@@ -225,12 +225,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [1.7.1] - 2018-10-31
 
-### Added
+**Added**
 
 - Added the doc and sample code for setting auth token ([#70])
 - Readonly support, separating integration tests and unit tests etc ([#71])
 
-### Fixed
+**Fixed**
 
 - Fix client selection behavior to match Go client. ([3bb5e23])
 
@@ -286,7 +286,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 [2.0.1]: https://github.com/hypermodeinc/dgraph4j/compare/v1.7.4...v2.0.1
 [1.7.4]: https://github.com/hypermodeinc/dgraph4j/compare/v1.7.3...v1.7.4
 [1.7.3]: https://github.com/hypermodeinc/dgraph4j/compare/v1.7.0...v1.7.3
-[1.7.0]: https://github.com/hypermodeinc/dgraph4j/compare/v1.6.0...v1.7.0
 [1.7.0]: https://github.com/hypermodeinc/dgraph4j/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/hypermodeinc/dgraph4j/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/hypermodeinc/dgraph4j/compare/v1.4.2...v1.5.0

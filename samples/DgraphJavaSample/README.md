@@ -15,20 +15,20 @@ exploration.
 
 First, create two separate directories for `dgraph zero` and `dgraph server`.
 
-```
+```sh
 mkdir -p dgraphdata/zero dgraphdata/data
 ```
 
 Then start `dgraph zero`:
 
-```
+```sh
 cd dgraphdata/zero
 rm -rf zw; dgraph zero
 ```
 
 Finally, start the `dgraph alpha` server:
 
-```
+```sh
 cd dgraphdata/data
 rm -rf p w; dgraph alpha --zero localhost:5080 -o 100
 ```
@@ -44,7 +44,7 @@ For more configuration options, and other details, refer to [docs.dgraph.io](htt
 **Warning**: The sample code, when run, will remove all data from your locally running Dgraph
 instance. So make sure that you don't have any important data on your Dgraph instance.
 
-```
+```sh
 $ ./gradlew run
 
 > Task :run

@@ -13,20 +13,20 @@ below.
 
 First, create two separate directories for `dgraph zero` and `dgraph server`.
 
-```
+```sh
 mkdir -p dgraphdata/zero dgraphdata/data
 ```
 
 Then start `dgraph zero`:
 
-```
+```sh
 cd dgraphdata/zero
 rm -rf zw; dgraph zero
 ```
 
 Finally, start the `dgraph alpha` server:
 
-```
+```sh
 cd dgraphdata/data
 rm -rf p w t; dgraph alpha --zero localhost:5080 -o 100
 ```
