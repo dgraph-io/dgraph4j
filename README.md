@@ -25,6 +25,7 @@ this repository.**
 ## Table of Contents
 
 - [Dgraph Client for Java](#dgraph-client-for-java)
+
   - [Table of Contents](#table-of-contents)
   - [Download](#download)
   - [Supported Versions](#supported-versions)
