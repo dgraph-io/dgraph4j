@@ -15,20 +15,20 @@ exploration.
 
 First, create two separate directories for `dgraph zero` and `dgraph server`.
 
-```
+```sh
 mkdir -p dgraphdata/zero dgraphdata/data
 ```
 
 Then start `dgraph zero`:
 
-```
+```sh
 cd dgraphdata/zero
 rm -rf zw; dgraph zero
 ```
 
 Finally, start the `dgraph alpha` server:
 
-```
+```sh
 cd dgraphdata/data
 rm -rf p w t; dgraph alpha --zero localhost:5080 -o 100
 ```
@@ -75,7 +75,8 @@ people found: 1
 Alice
 Sleeping for 1 second
 Loop iteration: 6
-Exception in thread "main" java.lang.RuntimeException: java.util.concurrent.CompletionException: java.lang.RuntimeException: The doRequest encountered an execution exception:
+Exception in thread "main" java.lang.RuntimeException: java.util.concurrent.CompletionException:
+java.lang.RuntimeException: The doRequest encountered an execution exception:
         at io.dgraph.AsyncTransaction.lambda$doRequest$2(AsyncTransaction.java:226)
         at java.util.concurrent.CompletableFuture.uniHandle(CompletableFuture.java:836)
         at java.util.concurrent.CompletableFuture$UniHandle.tryFire(CompletableFuture.java:811)
@@ -95,7 +96,8 @@ Caused by: java.lang.RuntimeException: The doRequest encountered an execution ex
         at io.dgraph.DgraphAsyncClient.lambda$runWithRetries$2(DgraphAsyncClient.java:248)
         at java.util.concurrent.CompletableFuture$AsyncSupply.run(CompletableFuture.java:1604)
         ... 5 more
-Caused by: java.util.concurrent.ExecutionException: io.grpc.StatusRuntimeException: DEADLINE_EXCEEDED: ClientCall started after deadline exceeded: -0.923822565s from now
+Caused by: java.util.concurrent.ExecutionException: io.grpc.StatusRuntimeException: DEADLINE_EXCEEDED:
+ClientCall started after deadline exceeded: -0.923822565s from now
         at java.util.concurrent.CompletableFuture.reportGet(CompletableFuture.java:357)
         at java.util.concurrent.CompletableFuture.get(CompletableFuture.java:1908)
         at io.dgraph.DgraphAsyncClient.lambda$runWithRetries$2(DgraphAsyncClient.java:216)

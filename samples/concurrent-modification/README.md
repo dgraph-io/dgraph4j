@@ -1,8 +1,6 @@
-This example shows how to handle concurrent modifications using a multi-threaded Java Program. The
+This example shows how to handle concurrent modifications using a multi-threaded Java program. The
 example demonstrates [transaction](https://dgraph.io/docs/clients/overview/#transactions) conflicts
 in Dgraph.
-
-[dgraph4j]: https://github.com/hypermodeinc/dgraph4j
 
 ## Steps to run this example
 
@@ -55,7 +53,7 @@ conflict on Thread 2. Thread 2 sleeps for 1 second and retries, and this time su
 Step 5: Please note that the final value of clickCount is 3 (initial value was 1), which is correct.
 Query:
 
-```
+```sh
 {
   Alice(func: has(<name>)) @filter(eq(name,"Alice" )) {
     uid

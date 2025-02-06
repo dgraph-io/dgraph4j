@@ -5,10 +5,8 @@
 
 A minimal implementation for a Dgraph client for Java 11 and above, using [grpc].
 
-### IMP NOTE:
-
-v24.0.0 features an upgraded protobuf dependency which requires an upgrade to JDK 11. On account of
-this breaking change, all legacy applications built upon JDK 8 would be impacted.
+**Note:** v24.0.0 features an upgraded protobuf dependency which requires an upgrade to JDK 11. On
+account of this breaking change, all legacy applications built upon JDK 8 would be impacted.
 
 [grpc]: https://grpc.io/
 
@@ -27,7 +25,7 @@ this repository.**
 ## Table of Contents
 
 - [Dgraph Client for Java](#dgraph-client-for-java)
-  - [IMP NOTE:](#imp-note)
+
   - [Table of Contents](#table-of-contents)
   - [Download](#download)
   - [Supported Versions](#supported-versions)
@@ -62,8 +60,8 @@ this repository.**
     - [Code Style](#code-style)
     - [Running unit tests](#running-unit-tests)
 
-* [Using the Asynchronous Client](#using-the-asynchronous-client)
-* [Checking the request latency](#checking-the-request-latency)
+- [Using the Asynchronous Client](#using-the-asynchronous-client) 0
+- [Checking the request latency](#checking-the-request-latency)
 
 - [Development](#development)
   - [Building the source](#building-the-source)
@@ -102,7 +100,7 @@ version of this client.
 |   >= 21.XX.X    |     21.XX.X      |    1.9.X     |
 |    >= 24.X.X    |      24.X.X      |      11      |
 
-#### Note regarding Java 1.8.x support:
+### Note regarding Java 1.8.x support
 
 v24.0.0 features an upgraded protoc-protobuf dependency that requires an upgrade to JDK 11. This
 version is incompatible with Java 1.8 and and requires an upgrade to Java 11.
@@ -112,7 +110,7 @@ The following is only applicable to dgraph4j versions < v24.X.X.
 - If you aren't using gRPC with TLS, then the above version table will work for you with Java 1.8.x
   too.
 - If you're using gRPC with TLS on Java 1.8.x, then you will need to follow gRPC docs
-  [here ](https://github.com/grpc/grpc-java/blob/master/SECURITY.md#tls-on-non-android). Basically,
+  [here](https://github.com/grpc/grpc-java/blob/master/SECURITY.md#tls-on-non-android). Basically,
   it will require you to add the following dependency in your app with correct version for the
   corresponding `grpc-netty` version used by `dgraph4j`. You can find out the correct version of the
   dependency to use from the version combination table in [this section] in `grpc-netty` docs.
@@ -438,7 +436,7 @@ decode it before you can do anything useful with it.
 
 Let’s run the following query:
 
-```
+```java
 query all($a: string) {
   all(func: eq(name, $a)) {
             name
@@ -479,7 +477,7 @@ ppl.all.forEach(person -> System.out.println(person.name));
 
 This should print:
 
-```
+```sh
 people found: 1
 Alice
 ```
@@ -513,7 +511,7 @@ System.out.println(response.getRdf().toStringUtf8());
 
 This should print (assuming Alice's `uid` is `0x2`):
 
-```
+```sh
 <0x2> <name> "Alice" .
 ```
 
@@ -589,7 +587,7 @@ DgraphClient dgraphClient = new DgraphClient(stub);
 
 #### Setting deadlines for a single request
 
-```
+```java
 dgraphClient.newTransaction().query(query, 500, TimeUnit.MILLISECONDS);
 ```
 
@@ -638,13 +636,13 @@ dgraphClient.newTransaction().mutate(mu);
 To disconnect from Dgraph, call `ManagedChannel#shutdown` on the gRPC channel object created when
 [creating a Dgraph client](#creating-a-client).
 
-```
+```java
 channel.shutdown();
 ```
 
 You can also close all channels in from the client object:
 
-```
+```java
 dgraphClient.shutdown();
 ```
 
@@ -713,7 +711,7 @@ Latency latency = assignedIds.getLatency();
 will remove all data from your Dgraph instance. So make sure that you don't have any important data
 on your Dgraph instance.
 
-```
+```sh
 ./gradlew build
 ```
 
@@ -736,6 +734,6 @@ on your Dgraph instance.
 
 Make sure you have a Dgraph server running on localhost before you run this task.
 
-```
+```sh
 ./gradlew test
 ```

@@ -18,7 +18,7 @@ document contains instructions to publish dgraph4j build artefacts to Maven cent
 - Create `~/.gradle/gradle.properties` and populate it with all the credentials
 - Get the credentials from `profile` section after loggin into [Sonatype](https://oss.sonatype.org/)
 
-```
+```sh
 signing.keyId=<…keyId…>
 signing.password=<…password…>
 signing.secretKeyRingFile=</path/to/.gnupg/secring.gpg>
