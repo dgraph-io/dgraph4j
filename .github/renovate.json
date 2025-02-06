@@ -1,4 +1,12 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["local>hypermodeinc/renovate-config"]
+  "extends": ["local>hypermodeinc/renovate-config"],
+  "packageRules": [
+    {
+      "groupName": "java minor and patch",
+      "matchCategories": ["java"],
+      "matchUpdateTypes": ["digest", "patch", "minor"],
+      "minimumReleaseAge": "3 days"
+    }
+  ]
 }

@@ -25,7 +25,6 @@ this repository.**
 ## Table of Contents
 
 - [Dgraph Client for Java](#dgraph-client-for-java)
-
   - [Table of Contents](#table-of-contents)
   - [Download](#download)
   - [Supported Versions](#supported-versions)
@@ -60,7 +59,7 @@ this repository.**
     - [Code Style](#code-style)
     - [Running unit tests](#running-unit-tests)
 
-- [Using the Asynchronous Client](#using-the-asynchronous-client) 0
+- [Using the Asynchronous Client](#using-the-asynchronous-client)
 - [Checking the request latency](#checking-the-request-latency)
 
 - [Development](#development)
