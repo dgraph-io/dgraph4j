@@ -8,7 +8,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 buildscript {
     repositories {
         maven {
-            url 'https://plugins.gradle.org/m2/'
+            url = uri('https://plugins.gradle.org/m2/')
         }
     }
     dependencies {
@@ -19,24 +19,15 @@ buildscript {
 plugins {
     id 'java-library'
     id 'jacoco'
-    id 'com.github.kt3k.coveralls' version '2.12.2'
-    id 'com.github.sherter.google-java-format' version '0.8'
     id 'base'
     id 'maven-publish'
     id 'com.gradleup.shadow' version '8.3.5'
 }
 
-// Apply the java plugin to add support for Java
 apply plugin: 'java'
 apply plugin: 'com.google.protobuf'
 apply plugin: 'idea'
-apply plugin: 'com.github.sherter.google-java-format'
 apply plugin: 'signing'
-
-// Configure google-java-format to use Java 11 compatible version
-googleJavaFormat {
-    toolVersion = '1.7' // This version is compatible with Java 11
-}
 
 group = 'io.dgraph'
 version = '24.1.1'
@@ -139,8 +130,6 @@ dependencies {
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
 }
 
-compileJava.dependsOn 'googleJavaFormat'
-
 idea {
     module {
         sourceDirs += file("${projectDir}/src/generated/main/java")
@@ -166,9 +155,9 @@ task fatJar(type: Jar) {
 }
 
 tasks.named('shadowJar', ShadowJar) {
-    enableRelocation true
-    relocationPrefix 'io.dgraph.dgraph4j.shaded'
-    relocate 'google', 'io.dgraph.dgraph4j.shaded.google'
+    enableRelocation = true
+    relocationPrefix = 'io.dgraph.dgraph4j.shaded'
+    relocate('google', 'io.dgraph.dgraph4j.shaded.google')
     archiveClassifier.set('shaded')
     mergeServiceFiles()
 }
@@ -187,11 +176,11 @@ task sourceJar(type: Jar) {
 
 task updateProto(type: Exec) {
     workingDir 'src/main/proto'
-    commandLine 'wget', '-O', 'api.proto', 'https://raw.githubusercontent.com/dgraph-io/dgo/master/protos/api.proto'
+    commandLine 'wget', '-O', 'api.proto', 'https://raw.githubusercontent.com/hypermodeinc/dgo/master/protos/api.proto'
 }
 
 task setupCluster(type: Exec) {
-    workingDir System.getenv('GOPATH') + '/src/github.com/hypermodeinc/dgraph/dgraph'
+    workingDir System.getenv('GOPATH') + '/src/github.com/hypermodeinc/hypermodeinc/dgraph'
 
     commandLine './run.sh'
 }
