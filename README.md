@@ -1,8 +1,5 @@
 # Dgraph Client for Java
 
-[![Build Status](https://teamcity.dgraph.io/guestAuth/app/rest/builds/buildType:%28id:Dgraph4j_Integration%29/statusIcon.svg)](https://teamcity.dgraph.io/viewLog.html?buildTypeId=Dgraph4j_Integration&buildId=lastFinished&guest=1)
-[![Coverage Status](https://coveralls.io/repos/github/hypermodeinc/dgraph4j/badge.svg)](https://coveralls.io/github/hypermodeinc/dgraph4j)
-
 A minimal implementation for a Dgraph client for Java 11 and above, using [grpc].
 
 **Note:** v24.0.0 features an upgraded protobuf dependency which requires an upgrade to JDK 11. On
