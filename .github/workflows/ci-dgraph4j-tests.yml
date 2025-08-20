@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout dgraph4j repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: dgraph4j
       - name: Setup Java
@@ -37,7 +37,7 @@ jobs:
         with:
           gradle-version: current
       - name: Checkout Dgraph repo # use latest dgraph build
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: dgraph
           repository: hypermodeinc/dgraph
