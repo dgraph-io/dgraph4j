@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
+## [Unreleased]
+
+**Added**
+
+- feat: add `runDQL()` methods to `DgraphClient` and `DgraphAsyncClient` for direct DQL query
+  execution
+- feat: add `allocateUIDs()` method to `DgraphClient` and `DgraphAsyncClient` for UID allocation
+- feat: add `allocateTimestamps()` method to `DgraphClient` and `DgraphAsyncClient` for timestamp
+  allocation
+- feat: add `allocateNamespaces()` method to `DgraphClient` and `DgraphAsyncClient` for namespace
+  allocation
+- feat: add `createNamespace()` method to `DgraphClient` and `DgraphAsyncClient` for namespace
+  creation
+- feat: add `dropNamespace()` method to `DgraphClient` and `DgraphAsyncClient` for namespace
+  deletion
+- feat: add `listNamespaces()` method to `DgraphClient` and `DgraphAsyncClient` for listing all
+  namespaces
+- feat: add namespace parameter support in connection strings and ClientOptions
+- feat: add `withNamespace()` method to `ClientOptions` for programmatic namespace configuration
+
 ## [24.2.0] - 2025-04-21
 
 **Added**
