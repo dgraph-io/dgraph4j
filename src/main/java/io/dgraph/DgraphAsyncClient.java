@@ -8,7 +8,18 @@ package io.dgraph;
 import static java.util.Arrays.asList;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import io.dgraph.DgraphProto.AllocateIDsRequest;
+import io.dgraph.DgraphProto.AllocateIDsResponse;
+import io.dgraph.DgraphProto.CreateNamespaceRequest;
+import io.dgraph.DgraphProto.CreateNamespaceResponse;
+import io.dgraph.DgraphProto.DropNamespaceRequest;
+import io.dgraph.DgraphProto.DropNamespaceResponse;
+import io.dgraph.DgraphProto.LeaseType;
+import io.dgraph.DgraphProto.ListNamespacesRequest;
+import io.dgraph.DgraphProto.ListNamespacesResponse;
 import io.dgraph.DgraphProto.Payload;
+import io.dgraph.DgraphProto.Response;
+import io.dgraph.DgraphProto.RunDQLRequest;
 import io.dgraph.DgraphProto.TxnContext;
 import io.dgraph.DgraphProto.Version;
 import io.grpc.Channel;
@@ -19,6 +30,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.MetadataUtils;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -41,6 +53,7 @@ public class DgraphAsyncClient {
   private final Executor executor;
   private final ReadWriteLock jwtLock;
   private DgraphProto.Jwt jwt;
+  private long currentNamespace = 0L; // Default namespace
 
   /**
    * Creates a new client for interacting with a Dgraph store.
@@ -101,6 +114,7 @@ public class DgraphAsyncClient {
     Lock wlock = jwtLock.writeLock();
     wlock.lock();
     try {
+      this.currentNamespace = namespace; // Track the current namespace
       final DgraphGrpc.DgraphStub client = anyClient();
       final DgraphProto.LoginRequest loginRequest =
           DgraphProto.LoginRequest.newBuilder()
@@ -173,14 +187,19 @@ public class DgraphAsyncClient {
     Lock readLock = jwtLock.readLock();
     readLock.lock();
     try {
+      Metadata metadata = new Metadata();
+
+      // Add JWT token if available
       if (jwt != null && !jwt.getAccessJwt().isEmpty()) {
-        Metadata metadata = new Metadata();
         metadata.put(
             Metadata.Key.of("accessJwt", Metadata.ASCII_STRING_MARSHALLER), jwt.getAccessJwt());
-        return stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata));
       }
 
-      return stub;
+      // Add namespace metadata (required for v25 methods like runDQL)
+      metadata.put(
+          Metadata.Key.of("namespace", Metadata.ASCII_STRING_MARSHALLER),
+          String.valueOf(currentNamespace));
+      return stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata));
     } finally {
       readLock.unlock();
     }
@@ -289,6 +308,169 @@ public class DgraphAsyncClient {
           StreamObserverBridge<Version> observerBridge = new StreamObserverBridge<>();
           DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
           localStub.checkVersion(checkRequest, observerBridge);
+          return observerBridge.getDelegate();
+        });
+  }
+
+  /**
+   * runDQL executes a DQL query or mutation.
+   *
+   * @param dqlQuery the DQL query string to execute
+   * @param vars variables to substitute in the query
+   * @param readOnly whether this is a read-only query
+   * @param bestEffort whether to use best effort for read queries
+   * @param respFormat response format (JSON or RDF)
+   * @return A CompletableFuture containing the Response from the query
+   */
+  public CompletableFuture<Response> runDQL(
+      String dqlQuery,
+      Map<String, String> vars,
+      boolean readOnly,
+      boolean bestEffort,
+      DgraphProto.Request.RespFormat respFormat) {
+    final DgraphGrpc.DgraphStub stub = anyClient();
+    final RunDQLRequest.Builder requestBuilder = RunDQLRequest.newBuilder()
+        .setDqlQuery(dqlQuery)
+        .setReadOnly(readOnly)
+        .setBestEffort(bestEffort)
+        .setRespFormat(respFormat);
+
+    if (vars != null) {
+      requestBuilder.putAllVars(vars);
+    }
+
+    final RunDQLRequest request = requestBuilder.build();
+
+    return runWithRetries(
+        "runDQL",
+        () -> {
+          StreamObserverBridge<Response> observerBridge = new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.runDQL(request, observerBridge);
+          return observerBridge.getDelegate();
+        });
+  }
+
+  /**
+   * allocateUIDs allocates a given number of Node UIDs in the Graph and returns a start and end UIDs,
+   * end excluded. The UIDs in the range [start, end) can then be used by the client in the mutations
+   * going forward.
+   *
+   * @param howMany number of UIDs to allocate
+   * @return A CompletableFuture containing the AllocateIDsResponse with start and end UIDs
+   */
+  public CompletableFuture<AllocateIDsResponse> allocateUIDs(long howMany) {
+    return allocateIDs(howMany, LeaseType.UID);
+  }
+
+  /**
+   * allocateTimestamps gets a sequence of timestamps allocated from Dgraph. These timestamps can be
+   * used in bulk loader and similar applications.
+   *
+   * @param howMany number of timestamps to allocate
+   * @return A CompletableFuture containing the AllocateIDsResponse with start and end timestamps
+   */
+  public CompletableFuture<AllocateIDsResponse> allocateTimestamps(long howMany) {
+    return allocateIDs(howMany, LeaseType.TS);
+  }
+
+  /**
+   * allocateNamespaces allocates a given number of namespaces in the Graph and returns a start and end
+   * namespaces, end excluded. The namespaces in the range [start, end) can then be used by the client.
+   *
+   * @param howMany number of namespaces to allocate
+   * @return A CompletableFuture containing the AllocateIDsResponse with start and end namespaces
+   */
+  public CompletableFuture<AllocateIDsResponse> allocateNamespaces(long howMany) {
+    return allocateIDs(howMany, LeaseType.NS);
+  }
+
+  /**
+   * Helper method to allocate IDs of different types (UIDs, timestamps, namespaces).
+   *
+   * @param howMany number of IDs to allocate
+   * @param leaseType type of lease (UID, TS, or NS)
+   * @return A CompletableFuture containing the AllocateIDsResponse
+   */
+  private CompletableFuture<AllocateIDsResponse> allocateIDs(long howMany, LeaseType leaseType) {
+    if (howMany <= 0) {
+      CompletableFuture<AllocateIDsResponse> future = new CompletableFuture<>();
+      future.completeExceptionally(new IllegalArgumentException("howMany must be greater than 0"));
+      return future;
+    }
+
+    final DgraphGrpc.DgraphStub stub = anyClient();
+    final AllocateIDsRequest request = AllocateIDsRequest.newBuilder()
+        .setHowMany(howMany)
+        .setLeaseType(leaseType)
+        .build();
+
+    return runWithRetries(
+        "allocateIDs",
+        () -> {
+          StreamObserverBridge<AllocateIDsResponse> observerBridge = new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.allocateIDs(request, observerBridge);
+          return observerBridge.getDelegate();
+        });
+  }
+
+  /**
+   * createNamespace creates a new namespace and returns its ID.
+   *
+   * @return A CompletableFuture containing the CreateNamespaceResponse with the new namespace ID
+   */
+  public CompletableFuture<CreateNamespaceResponse> createNamespace() {
+    final DgraphGrpc.DgraphStub stub = anyClient();
+    final CreateNamespaceRequest request = CreateNamespaceRequest.newBuilder().build();
+
+    return runWithRetries(
+        "createNamespace",
+        () -> {
+          StreamObserverBridge<CreateNamespaceResponse> observerBridge = new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.createNamespace(request, observerBridge);
+          return observerBridge.getDelegate();
+        });
+  }
+
+  /**
+   * dropNamespace drops the specified namespace. If the namespace does not exist, the request will still succeed.
+   *
+   * @param namespace the ID of the namespace to drop
+   * @return A CompletableFuture containing the DropNamespaceResponse
+   */
+  public CompletableFuture<DropNamespaceResponse> dropNamespace(long namespace) {
+    final DgraphGrpc.DgraphStub stub = anyClient();
+    final DropNamespaceRequest request = DropNamespaceRequest.newBuilder()
+        .setNamespace(namespace)
+        .build();
+
+    return runWithRetries(
+        "dropNamespace",
+        () -> {
+          StreamObserverBridge<DropNamespaceResponse> observerBridge = new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.dropNamespace(request, observerBridge);
+          return observerBridge.getDelegate();
+        });
+  }
+
+  /**
+   * listNamespaces lists all namespaces.
+   *
+   * @return A CompletableFuture containing the ListNamespacesResponse with all namespaces
+   */
+  public CompletableFuture<ListNamespacesResponse> listNamespaces() {
+    final DgraphGrpc.DgraphStub stub = anyClient();
+    final ListNamespacesRequest request = ListNamespacesRequest.newBuilder().build();
+
+    return runWithRetries(
+        "listNamespaces",
+        () -> {
+          StreamObserverBridge<ListNamespacesResponse> observerBridge = new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.listNamespaces(request, observerBridge);
           return observerBridge.getDelegate();
         });
   }

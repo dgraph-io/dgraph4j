@@ -5,7 +5,12 @@
 
 package io.dgraph;
 
+import io.dgraph.DgraphProto.AllocateIDsResponse;
+import io.dgraph.DgraphProto.CreateNamespaceResponse;
+import io.dgraph.DgraphProto.DropNamespaceResponse;
+import io.dgraph.DgraphProto.ListNamespacesResponse;
 import io.dgraph.DgraphProto.Operation;
+import io.dgraph.DgraphProto.Response;
 import io.dgraph.DgraphProto.TxnContext;
 import io.dgraph.DgraphProto.Version;
 import io.grpc.ManagedChannelBuilder;
@@ -61,6 +66,7 @@ public class DgraphClient {
     private String username;
     private String password;
     private String authorizationToken;
+    private Long namespace;
     private final String host;
     private final int port;
 
@@ -119,6 +125,17 @@ public class DgraphClient {
     }
 
     /**
+     * Sets the namespace to login into when using ACL credentials.
+     *
+     * @param namespace The namespace ID to login into.
+     * @return This ClientOptions instance for chaining.
+     */
+    public ClientOptions withNamespace(long namespace) {
+      this.namespace = namespace;
+      return this;
+    }
+
+    /**
      * Configures the client to use plaintext communication (no encryption).
      *
      * @return This ClientOptions instance for chaining.
@@ -156,6 +173,7 @@ public class DgraphClient {
       newOptions.username = this.username;
       newOptions.password = this.password;
       newOptions.authorizationToken = this.authorizationToken;
+      newOptions.namespace = this.namespace;
       return newOptions;
     }
 
@@ -181,8 +199,15 @@ public class DgraphClient {
      * Creates a new DgraphClient with the configured options.
      *
      * @return A new DgraphClient instance.
+     * @throws IllegalArgumentException if namespace is specified without username/password
      */
     public DgraphClient build() {
+      // Validate namespace usage
+      if (namespace != null && (username == null || password == null)) {
+        throw new IllegalArgumentException(
+            "Namespace can only be specified when username and password are provided");
+      }
+
       DgraphGrpc.DgraphStub stub = createStub();
 
       if (authorizationToken != null) {
@@ -196,7 +221,11 @@ public class DgraphClient {
       DgraphClient client = new DgraphClient(stub);
 
       if (username != null && password != null) {
-        client.login(username, password);
+        if (namespace != null) {
+          client.loginIntoNamespace(username, password, namespace);
+        } else {
+          client.login(username, password);
+        }
       }
 
       return client;
@@ -328,6 +357,15 @@ public class DgraphClient {
       options.withDgraphApiKey(params.get("apikey"));
     } else if (params.containsKey("bearertoken")) {
       options.withBearerToken(params.get("bearertoken"));
+    }
+
+    if (params.containsKey("namespace")) {
+      try {
+        long namespace = Long.parseLong(params.get("namespace"));
+        options.withNamespace(namespace);
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException("Invalid namespace: must be a valid integer", e);
+      }
     }
 
     return options.build();
@@ -518,6 +556,129 @@ public class DgraphClient {
    */
   public void loginIntoNamespace(String userid, String password, long namespace) {
     asyncClient.loginIntoNamespace(userid, password, namespace).join();
+  }
+
+  /**
+   * runDQL executes a DQL query or mutation.
+   *
+   * @param dqlQuery the DQL query string to execute
+   * @param vars variables to substitute in the query
+   * @param readOnly whether this is a read-only query
+   * @param bestEffort whether to use best effort for read queries
+   * @param respFormat response format (JSON or RDF)
+   * @return the Response from the query
+   */
+  public Response runDQL(
+      String dqlQuery,
+      Map<String, String> vars,
+      boolean readOnly,
+      boolean bestEffort,
+      DgraphProto.Request.RespFormat respFormat) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          return asyncClient.runDQL(dqlQuery, vars, readOnly, bestEffort, respFormat).join();
+        });
+  }
+
+  /**
+   * runDQL executes a DQL query or mutation with default parameters.
+   *
+   * @param dqlQuery the DQL query string to execute
+   * @return the Response from the query
+   */
+  public Response runDQL(String dqlQuery) {
+    return runDQL(dqlQuery, null, false, false, DgraphProto.Request.RespFormat.JSON);
+  }
+
+  /**
+   * runDQL executes a DQL query or mutation with variables.
+   *
+   * @param dqlQuery the DQL query string to execute
+   * @param vars variables to substitute in the query
+   * @return the Response from the query
+   */
+  public Response runDQL(String dqlQuery, Map<String, String> vars) {
+    return runDQL(dqlQuery, vars, false, false, DgraphProto.Request.RespFormat.JSON);
+  }
+
+  /**
+   * allocateUIDs allocates a given number of Node UIDs in the Graph and returns a start and end UIDs,
+   * end excluded. The UIDs in the range [start, end) can then be used by the client in the mutations
+   * going forward.
+   *
+   * @param howMany number of UIDs to allocate
+   * @return the AllocateIDsResponse with start and end UIDs
+   */
+  public AllocateIDsResponse allocateUIDs(long howMany) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          return asyncClient.allocateUIDs(howMany).join();
+        });
+  }
+
+  /**
+   * allocateTimestamps gets a sequence of timestamps allocated from Dgraph. These timestamps can be
+   * used in bulk loader and similar applications.
+   *
+   * @param howMany number of timestamps to allocate
+   * @return the AllocateIDsResponse with start and end timestamps
+   */
+  public AllocateIDsResponse allocateTimestamps(long howMany) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          return asyncClient.allocateTimestamps(howMany).join();
+        });
+  }
+
+  /**
+   * allocateNamespaces allocates a given number of namespaces in the Graph and returns a start and end
+   * namespaces, end excluded. The namespaces in the range [start, end) can then be used by the client.
+   *
+   * @param howMany number of namespaces to allocate
+   * @return the AllocateIDsResponse with start and end namespaces
+   */
+  public AllocateIDsResponse allocateNamespaces(long howMany) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          return asyncClient.allocateNamespaces(howMany).join();
+        });
+  }
+
+  /**
+   * createNamespace creates a new namespace and returns its ID.
+   *
+   * @return the CreateNamespaceResponse with the new namespace ID
+   */
+  public CreateNamespaceResponse createNamespace() {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          return asyncClient.createNamespace().join();
+        });
+  }
+
+  /**
+   * dropNamespace drops the specified namespace. If the namespace does not exist, the request will still succeed.
+   *
+   * @param namespace the ID of the namespace to drop
+   * @return the DropNamespaceResponse
+   */
+  public DropNamespaceResponse dropNamespace(long namespace) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          return asyncClient.dropNamespace(namespace).join();
+        });
+  }
+
+  /**
+   * listNamespaces lists all namespaces.
+   *
+   * @return the ListNamespacesResponse with all namespaces
+   */
+  public ListNamespacesResponse listNamespaces() {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          return asyncClient.listNamespaces().join();
+        });
   }
 
   /** Calls %{@link io.grpc.ManagedChannel#shutdown} on all connections for this client */

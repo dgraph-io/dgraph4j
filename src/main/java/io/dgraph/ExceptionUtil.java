@@ -45,8 +45,12 @@ public class ExceptionUtil {
 
     if (cause instanceof StatusRuntimeException) {
       StatusRuntimeException runtimeException = (StatusRuntimeException) cause;
-      return runtimeException.getStatus().getCode().equals(Status.Code.UNAUTHENTICATED)
-          && runtimeException.getMessage().contains("Token is expired");
+      Status.Code code = runtimeException.getStatus().getCode();
+      String message = runtimeException.getMessage();
+
+      // Check for JWT expiration in both UNAUTHENTICATED and UNKNOWN status codes
+      return (code.equals(Status.Code.UNAUTHENTICATED) || code.equals(Status.Code.UNKNOWN))
+          && message != null && message.contains("Token is expired");
     }
     return false;
   }
