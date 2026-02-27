@@ -1,6 +1,6 @@
 Sample project demonstrating the use of [dgraph4j], the official Java client for Dgraph.
 
-[dgraph4j]: https://github.com/hypermodeinc/dgraph4
+[dgraph4j]: https://github.com/dgraph-io/dgraph4
 
 ## Running
 
@@ -8,7 +8,7 @@ Sample project demonstrating the use of [dgraph4j], the official Java client for
 
 You will need to install [Dgraph v1.1.0 or above][releases] and run it.
 
-[releases]: https://github.com/hypermodeinc/dgraph/releases
+[releases]: https://github.com/dgraph-io/dgraph/releases
 
 You can run the commands below to start a clean dgraph server everytime, for testing and
 exploration.

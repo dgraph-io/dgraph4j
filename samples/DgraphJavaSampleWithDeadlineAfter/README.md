@@ -1,6 +1,6 @@
 Sample project demonstrating the use of [dgraph4j], the official Java client for Dgraph.
 
-[dgraph4j]: https://github.com/hypermodeinc/dgraph4
+[dgraph4j]: https://github.com/dgraph-io/dgraph4
 
 ## Running
 
@@ -8,7 +8,7 @@ Sample project demonstrating the use of [dgraph4j], the official Java client for
 
 You will need to install [Dgraph v21.03.0 or above][releases] and run it.
 
-[releases]: https://github.com/hypermodeinc/dgraph/releases
+[releases]: https://github.com/dgraph-io/dgraph/releases
 
 You can run the commands below to start a clean dgraph server everytime, for testing and
 exploration.
@@ -46,7 +46,7 @@ instance. So make sure that you don't have any important data on your Dgraph ins
 
 This example in [App.java:34](./src/main/java/App.java#L34) creates the DgraphStub with a deadline
 set for the **entire life of the stub**. This is most likely what you do NOT want to do. For more
-info, see [Setting Deadlines](https://github.com/hypermodeinc/dgraph4j/#setting-deadlines).
+info, see [Setting Deadlines](https://github.com/dgraph-io/dgraph4j/#setting-deadlines).
 
 ```java
 stub = stub.withDeadlineAfter(5, TimeUnit.SECONDS);

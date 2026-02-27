@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: © Hypermode Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: © Istari Digital, Inc.
  * SPDX-License-Identifier: Apache-2.0
  */
 

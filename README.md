@@ -2,8 +2,9 @@
 
 A minimal implementation for a Dgraph client for Java 11 and above, using [grpc].
 
-**Note:** v24.0.0 features an upgraded protobuf dependency which requires an upgrade to JDK 11. On
-account of this breaking change, all legacy applications built upon JDK 8 would be impacted.
+**Note:** v25.0.0 adds RunDQL, ID allocation, and namespace management APIs. v24.0.0 features an
+upgraded protobuf dependency which requires an upgrade to JDK 11. On account of this breaking change,
+all legacy applications built upon JDK 8 would be impacted.
 
 [grpc]: https://grpc.io/
 
@@ -31,7 +32,6 @@ this repository.**
   - [Intro](#intro)
   - [Using the Synchronous Client](#using-the-synchronous-client)
     - [Creating a Client](#creating-a-client)
-    - [Creating a Client for Dgraph Cloud](#creating-a-client-for-dgraph-cloud)
     - [Creating a Secure Client using TLS](#creating-a-secure-client-using-tls)
     - [Check Dgraph version](#check-dgraph-version)
     - [Login Using ACL](#login-using-acl)
@@ -49,6 +49,10 @@ this repository.**
     - [Setting Metadata Headers](#setting-metadata-headers)
     - [Helper Methods](#helper-methods)
       - [Delete multiple edges](#delete-multiple-edges)
+    - [Running DQL Directly](#running-dql-directly)
+    - [Convenience Methods](#convenience-methods)
+    - [Namespace Management](#namespace-management)
+    - [ID Allocation](#id-allocation)
     - [Closing the DB Connection](#closing-the-db-connection)
   - [Using the Asynchronous Client](#using-the-asynchronous-client)
   - [Checking the request latency](#checking-the-request-latency)
@@ -73,14 +77,14 @@ grab via Maven:
 <dependency>
   <groupId>io.dgraph</groupId>
   <artifactId>dgraph4j</artifactId>
-  <version>24.2.0</version>
+  <version>25.0.0</version>
 </dependency>
 ```
 
 or Gradle:
 
 ```groovy
-compile 'io.dgraph:dgraph4j:24.2.0'
+compile 'io.dgraph:dgraph4j:25.0.0'
 ```
 
 ## Supported Versions
@@ -96,6 +100,7 @@ version of this client.
 |     20.11.X     |     20.11.X      |    1.9.X     |
 |   >= 21.XX.X    |     21.XX.X      |    1.9.X     |
 |    >= 24.X.X    |      24.X.X      |      11      |
+|    >= 25.X.X    |      25.X.X      |      11      |
 
 ### Note regarding Java 1.8.x support
 
@@ -148,7 +153,7 @@ The following is only applicable to dgraph4j versions < v24.X.X.
 Build and run the [DgraphJavaSample] project in the `samples` folder, which contains an end-to-end
 example of using the Dgraph Java client. Follow the instructions in the README of that project.
 
-[DgraphJavaSample]: https://github.com/hypermodeinc/dgraph4j/tree/master/samples/DgraphJavaSample
+[DgraphJavaSample]: https://github.com/dgraph-io/dgraph4j/tree/main/samples/DgraphJavaSample
 
 ## Intro
 
@@ -175,7 +180,7 @@ Valid connection string args:
 
 | Arg         | Value                           | Description                                                                                                                                                   |
 | ----------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| apikey      | \<key\>                         | a Dgraph Cloud API Key                                                                                                                                        |
+| apikey      | \<key\>                         | an API key                                                                                                                                                    |
 | bearertoken | \<token\>                       | an access token                                                                                                                                               |
 | sslmode     | disable \| require \| verify-ca | TLS option, the default is `disable`. If `verify-ca` is set, the TLS certificate configured in the Dgraph cluster must be from a valid certificate authority. |
 
@@ -189,8 +194,8 @@ Some example connection strings:
 | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
 | dgraph://localhost:9080                                                                                      | Connect to localhost, no ACL, no TLS                                                |
 | dgraph://sally:supersecret@dg.example.com:443?sslmode=verify-ca                                              | Connect to remote server, use ACL and require TLS and a valid certificate from a CA |
-| dgraph://foo-bar.grpc.us-west-2.aws.cloud.dgraph.io:443?sslmode=verify-ca&apikey=\<your-api-connection-key\> | Connect to a Dgraph Cloud cluster                                                   |
-| dgraph://foo-bar.grpc.hypermode.com?sslmode=verify-ca&bearertoken=\<some access token\>                      | Connect to a Dgraph cluster protected by a secure gateway                           |
+| dgraph://dg.example.com:443?sslmode=verify-ca&apikey=\<your-api-key\>                                        | Connect to a remote cluster with an API key                                         |
+| dgraph://dg.example.com:443?sslmode=verify-ca&bearertoken=\<some-access-token\>                              | Connect to a Dgraph cluster protected by a secure gateway                           |
 
 Using the `DgraphClient.open` function with a connection string:
 
@@ -224,19 +229,6 @@ DgraphStub stub3 = DgraphGrpc.newStub(channel3);
 
 DgraphClient dgraphClient = new DgraphClient(stub1, stub2, stub3);
 ```
-
-### Creating a Client for Dgraph Cloud
-
-If you want to connect to Dgraph running on a [Dgraph Cloud](https://cloud.dgraph.io) instance, then
-all you need is the URL of your Dgraph Cloud instance and the API key. You can get a client with
-them as follows :
-
-```java
-DgraphStub stub = DgraphClient.clientStubFromCloudEndpoint("https://your-instance.cloud.dgraph.io/graphql", "your-api-key");
-DgraphClient dgraphClient = new DgraphClient(stub);
-```
-
-Note the `DgraphClient.open` method can be used if you have a Dgraph connection string (see above).
 
 ### Creating a Secure Client using TLS
 
@@ -287,7 +279,7 @@ System.out.println(v.getTag());
 Checking the version, before doing anything else can be used as a test to find out if the client is
 able to communicate with the Dgraph server. This will also help reduce the latency of the first
 query/mutation which results from some dynamic library loading and linking that happens in JVM (see
-[this issue](https://github.com/hypermodeinc/dgraph4j/issues/108) for more details).
+[this issue](https://github.com/dgraph-io/dgraph4j/issues/108) for more details).
 
 ### Login Using ACL
 
@@ -663,6 +655,83 @@ mutation, and returns a new mutation with the deletions applied.
 Mutation mu = Mutation.newBuilder().build()
 mu = Helpers.deleteEdges(mu, uid, "friends", "loc");
 dgraphClient.newTransaction().mutate(mu);
+```
+
+### Running DQL Directly
+
+The `runDQL` method allows you to run DQL queries and mutations directly without creating a
+transaction. This is useful for simple, self-contained operations.
+
+```java
+// Run a simple query
+Response response = dgraphClient.runDQL("{all(func: has(name)) {uid name}}");
+String json = response.getJson().toStringUtf8();
+```
+
+You can also pass variables, and set read-only or best-effort flags:
+
+```java
+Map<String, String> vars = Collections.singletonMap("$name", "Alice");
+Response response = dgraphClient.runDQL(
+    "query q($name: string) { q(func: eq(name, $name)) { uid name } }",
+    vars,
+    true,   // readOnly
+    false   // bestEffort
+);
+```
+
+### Convenience Methods
+
+The client provides convenience methods for common alter operations:
+
+```java
+// Set schema
+dgraphClient.setSchema("name: string @index(exact) .");
+
+// Drop all data and schema
+dgraphClient.dropAll();
+
+// Drop data only (preserves schema)
+dgraphClient.dropData();
+
+// Drop a specific predicate
+dgraphClient.dropPredicate("name");
+
+// Drop a specific type
+dgraphClient.dropType("Person");
+```
+
+### Namespace Management
+
+Dgraph supports multi-tenancy through namespaces. The client provides methods to manage namespaces:
+
+```java
+// Create a new namespace
+DgraphProto.CreateNamespaceResponse response = dgraphClient.createNamespace();
+long nsId = response.getNsId();
+
+// List all namespaces
+DgraphProto.ListNamespacesResponse response = dgraphClient.listNamespaces();
+
+// Drop a namespace
+dgraphClient.dropNamespace(nsId);
+```
+
+### ID Allocation
+
+You can pre-allocate ranges of UIDs, timestamps, or namespace IDs:
+
+```java
+// Allocate a range of UIDs
+DgraphProto.AllocateIDsResponse response = dgraphClient.allocateUIDs(100);
+long startId = response.getStartId();
+long endId = response.getEndId();
+
+// Allocate timestamps
+DgraphProto.AllocateIDsResponse tsResponse = dgraphClient.allocateTimestamps(50);
+
+// Allocate namespace IDs
+DgraphProto.AllocateIDsResponse nsResponse = dgraphClient.allocateNamespaces(10);
 ```
 
 ### Closing the DB Connection

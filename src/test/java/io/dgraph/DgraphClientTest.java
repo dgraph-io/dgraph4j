@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: © Hypermode Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: © Istari Digital, Inc.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -15,7 +15,6 @@ import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
 import io.dgraph.DgraphProto.TxnContext;
-import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -169,24 +168,6 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     DgraphProto.Version v = dgraphClient.checkVersion();
     assertTrue(v.getTag().length() > 0);
     // assertEquals(v.getTag().charAt(0), 'v');
-  }
-
-  @Test
-  public void testFromCloudEndpoint_ValidURL() {
-    try {
-      DgraphClient.clientStubFromCloudEndpoint("https://your-instance.cloud.dgraph.io/graphql", "");
-    } catch (MalformedURLException e) {
-      fail(e.getMessage());
-    }
-  }
-
-  @Test
-  public void testFromCloudEndpoint_InValidURL() {
-    try {
-      DgraphClient.clientStubFromCloudEndpoint("https://a-bad-url", "");
-      fail("Invalid Slash URL should not be accepted.");
-    } catch (MalformedURLException e) {
-    }
   }
 
   @Test

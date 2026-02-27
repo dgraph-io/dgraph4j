@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: © Hypermode Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: © Istari Digital, Inc.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -45,8 +45,13 @@ public class ExceptionUtil {
 
     if (cause instanceof StatusRuntimeException) {
       StatusRuntimeException runtimeException = (StatusRuntimeException) cause;
-      return runtimeException.getStatus().getCode().equals(Status.Code.UNAUTHENTICATED)
-          && runtimeException.getMessage().contains("Token is expired");
+      Status.Code code = runtimeException.getStatus().getCode();
+      boolean isExpired = runtimeException.getMessage().contains("Token is expired");
+      // Check for both UNAUTHENTICATED and UNKNOWN status codes, as some RPCs
+      // (e.g., namespace operations) return UNKNOWN instead of UNAUTHENTICATED
+      // when the JWT token has expired.
+      return isExpired
+          && (code.equals(Status.Code.UNAUTHENTICATED) || code.equals(Status.Code.UNKNOWN));
     }
     return false;
   }

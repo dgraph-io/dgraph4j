@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: © Hypermode Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: © Istari Digital, Inc.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -247,7 +247,7 @@ public class DgraphClient {
    *       <li>"verify-ca" - Uses TLS encryption with certificate verification</li>
    *     </ul>
    *   </li>
-   *   <li>apikey - API key for authorization from Dgraph Cloud</li>
+   *   <li>apikey - API key for authorization</li>
    *   <li>bearertoken - Bearer token for authorization</li>
    * </ul>
    *
@@ -331,48 +331,6 @@ public class DgraphClient {
     }
 
     return options.build();
-  }
-
-  /**
-   * Creates a gRPC stub that can be used to construct clients to connect with Slash GraphQL.
-   *
-   * @param slashEndpoint The url of the Slash GraphQL endpoint. Example:
-   *     https://your-slash-instance.cloud.dgraph.io/graphql
-   * @param apiKey The API key used to connect to your Slash GraphQL instance.
-   * @return A new DgraphGrpc.DgraphStub object to be used with DgraphClient/DgraphAsyncClient.
-   * @deprecated This method will be removed in v21.07 release. Please use {@link
-   *     #clientStubFromCloudEndpoint(String, String) clientStubFromCloudEndpoint} instead.
-   */
-  @Deprecated
-  public static DgraphGrpc.DgraphStub clientStubFromSlashEndpoint(
-      String slashEndpoint, String apiKey) throws MalformedURLException {
-    return clientStubFromCloudEndpoint(slashEndpoint, apiKey);
-  }
-
-  /**
-   * Creates a gRPC stub that can be used to construct clients to connect with Dgraph Cloud.
-   *
-   * @param cloudEndpoint The url of the Dgraph Cloud instance. Example:
-   *     https://your-instance.cloud.dgraph.io/graphql
-   * @param apiKey The API key used to connect to your Dgraph Cloud instance.
-   * @return A new {@link io.dgraph.DgraphGrpc.DgraphStub} object to be used with {@link
-   *     DgraphClient}/{@link DgraphAsyncClient}.
-   * @since v21.03.1
-   */
-  public static DgraphGrpc.DgraphStub clientStubFromCloudEndpoint(
-      String cloudEndpoint, String apiKey) throws MalformedURLException {
-    String[] parts = new URL(cloudEndpoint).getHost().split("[.]", 2);
-    if (parts.length < 2) {
-      throw new MalformedURLException("Invalid Dgraph Cloud URL.");
-    }
-    String gRPCAddress = parts[0] + ".grpc." + parts[1];
-
-    Metadata metadata = new Metadata();
-    metadata.put(
-        Metadata.Key.of(gRPC_AUTHORIZATION_HEADER_NAME, Metadata.ASCII_STRING_MARSHALLER), apiKey);
-    return DgraphGrpc.newStub(
-            ManagedChannelBuilder.forAddress(gRPCAddress, 443).useTransportSecurity().build())
-        .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata));
   }
 
   /**
@@ -491,6 +449,165 @@ public class DgraphClient {
    */
   public Version checkVersion() {
     return asyncClient.checkVersion().join();
+  }
+
+  // ---------------------------------------------------------------------------
+  // DQL
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Runs a DQL query or mutation with default options.
+   *
+   * @param dqlQuery the DQL query string
+   * @return the Response from the DQL execution
+   */
+  public DgraphProto.Response runDQL(String dqlQuery) {
+    return ExceptionUtil.withExceptionUnwrapped(() -> asyncClient.runDQL(dqlQuery).join());
+  }
+
+  /**
+   * Runs a DQL query or mutation with full control over options.
+   *
+   * @param dqlQuery the DQL query string
+   * @param vars query variables (may be empty)
+   * @param readOnly whether the query is read-only
+   * @param bestEffort whether to use best-effort reads
+   * @return the Response from the DQL execution
+   */
+  public DgraphProto.Response runDQL(
+      String dqlQuery, Map<String, String> vars, boolean readOnly, boolean bestEffort) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> asyncClient.runDQL(dqlQuery, vars, readOnly, bestEffort).join());
+  }
+
+  // ---------------------------------------------------------------------------
+  // ID / Timestamp / Namespace Allocation
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Allocates a range of UIDs from the Dgraph cluster.
+   *
+   * @param howMany the number of UIDs to allocate (must be &gt; 0)
+   * @return the AllocateIDsResponse containing start/end range
+   */
+  public DgraphProto.AllocateIDsResponse allocateUIDs(long howMany) {
+    return ExceptionUtil.withExceptionUnwrapped(() -> asyncClient.allocateUIDs(howMany).join());
+  }
+
+  /**
+   * Allocates a range of timestamps from the Dgraph cluster.
+   *
+   * @param howMany the number of timestamps to allocate (must be &gt; 0)
+   * @return the AllocateIDsResponse containing start/end range
+   */
+  public DgraphProto.AllocateIDsResponse allocateTimestamps(long howMany) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> asyncClient.allocateTimestamps(howMany).join());
+  }
+
+  /**
+   * Allocates a range of namespace IDs from the Dgraph cluster.
+   *
+   * @param howMany the number of namespace IDs to allocate (must be &gt; 0)
+   * @return the AllocateIDsResponse containing start/end range
+   */
+  public DgraphProto.AllocateIDsResponse allocateNamespaces(long howMany) {
+    return ExceptionUtil.withExceptionUnwrapped(
+        () -> asyncClient.allocateNamespaces(howMany).join());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Namespace Management
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Creates a new namespace in the Dgraph cluster.
+   *
+   * @return the CreateNamespaceResponse containing the new namespace ID
+   */
+  public DgraphProto.CreateNamespaceResponse createNamespace() {
+    return ExceptionUtil.withExceptionUnwrapped(() -> asyncClient.createNamespace().join());
+  }
+
+  /**
+   * Drops (deletes) a namespace from the Dgraph cluster.
+   *
+   * @param namespace the namespace ID to drop
+   */
+  public void dropNamespace(long namespace) {
+    ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          asyncClient.dropNamespace(namespace).join();
+        });
+  }
+
+  /**
+   * Lists all namespaces in the Dgraph cluster.
+   *
+   * @return the ListNamespacesResponse
+   */
+  public DgraphProto.ListNamespacesResponse listNamespaces() {
+    return ExceptionUtil.withExceptionUnwrapped(() -> asyncClient.listNamespaces().join());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Convenience Alter Methods
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Drops all data and schema from the Dgraph instance.
+   */
+  public void dropAll() {
+    ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          asyncClient.dropAll().join();
+        });
+  }
+
+  /**
+   * Drops all data but preserves the schema.
+   */
+  public void dropData() {
+    ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          asyncClient.dropData().join();
+        });
+  }
+
+  /**
+   * Drops a single predicate (attribute) from the schema and removes all its data.
+   *
+   * @param predicate the name of the predicate to drop
+   */
+  public void dropPredicate(String predicate) {
+    ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          asyncClient.dropPredicate(predicate).join();
+        });
+  }
+
+  /**
+   * Drops a type from the schema.
+   *
+   * @param typeName the name of the type to drop
+   */
+  public void dropType(String typeName) {
+    ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          asyncClient.dropType(typeName).join();
+        });
+  }
+
+  /**
+   * Sets the schema on the Dgraph instance.
+   *
+   * @param schema the schema definition string
+   */
+  public void setSchema(String schema) {
+    ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          asyncClient.setSchema(schema).join();
+        });
   }
 
   /**
