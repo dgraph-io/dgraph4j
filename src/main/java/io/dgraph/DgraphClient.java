@@ -336,7 +336,7 @@ public class DgraphClient {
   /**
    * Creates a gRPC stub to connect with Dgraph Cloud.
    *
-   * @deprecated Dgraph Cloud has been discontinued. Use {@link #clientStub(String, String)} or
+   * @deprecated Dgraph Cloud has been discontinued. Use {@link #open(String)} or
    *     construct a {@link io.dgraph.DgraphGrpc.DgraphStub} directly.
    * @param slashEndpoint The url of the former Dgraph Cloud instance.
    * @param apiKey The API key.
@@ -353,7 +353,7 @@ public class DgraphClient {
   /**
    * Creates a gRPC stub to connect with Dgraph Cloud.
    *
-   * @deprecated Dgraph Cloud has been discontinued. Use {@link #clientStub(String, String)} or
+   * @deprecated Dgraph Cloud has been discontinued. Use {@link #open(String)} or
    *     construct a {@link io.dgraph.DgraphGrpc.DgraphStub} directly.
    * @param cloudEndpoint The url of the former Dgraph Cloud instance.
    * @param apiKey The API key.
