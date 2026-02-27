@@ -3,8 +3,8 @@
 A minimal implementation for a Dgraph client for Java 11 and above, using [grpc].
 
 **Note:** v25.0.0 adds RunDQL, ID allocation, and namespace management APIs. v24.0.0 features an
-upgraded protobuf dependency which requires an upgrade to JDK 11. On account of this breaking change,
-all legacy applications built upon JDK 8 would be impacted.
+upgraded protobuf dependency which requires an upgrade to JDK 11. On account of this breaking
+change, all legacy applications built upon JDK 8 would be impacted.
 
 [grpc]: https://grpc.io/
 
@@ -190,12 +190,12 @@ environments.
 
 Some example connection strings:
 
-| Value                                                                                                        | Explanation                                                                         |
-| ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| dgraph://localhost:9080                                                                                      | Connect to localhost, no ACL, no TLS                                                |
-| dgraph://sally:supersecret@dg.example.com:443?sslmode=verify-ca                                              | Connect to remote server, use ACL and require TLS and a valid certificate from a CA |
-| dgraph://dg.example.com:443?sslmode=verify-ca&apikey=\<your-api-key\>                                        | Connect to a remote cluster with an API key                                         |
-| dgraph://dg.example.com:443?sslmode=verify-ca&bearertoken=\<some-access-token\>                              | Connect to a Dgraph cluster protected by a secure gateway                           |
+| Value                                                                           | Explanation                                                                         |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| dgraph://localhost:9080                                                         | Connect to localhost, no ACL, no TLS                                                |
+| dgraph://sally:supersecret@dg.example.com:443?sslmode=verify-ca                 | Connect to remote server, use ACL and require TLS and a valid certificate from a CA |
+| dgraph://dg.example.com:443?sslmode=verify-ca&apikey=\<your-api-key\>           | Connect to a remote cluster with an API key                                         |
+| dgraph://dg.example.com:443?sslmode=verify-ca&bearertoken=\<some-access-token\> | Connect to a Dgraph cluster protected by a secure gateway                           |
 
 Using the `DgraphClient.open` function with a connection string:
 
@@ -497,7 +497,7 @@ Response response = dgraphClient.newReadOnlyTransaction().queryWithVars(query, v
 People ppl = gson.fromJson(response.getJson().toStringUtf8(), People.class);
 
 // Print results
-System.out.printf("people found: %d\n", ppl.all.size());
+    System.out.printf("people found: %d\n", ppl.all.size());
 ppl.all.forEach(person -> System.out.println(person.name));
 ```
 
@@ -571,7 +571,8 @@ The upsert block also allows specifying a conditional mutation block using an `@
 mutation is executed only when the specified condition is true. If the condition is false, the
 mutation is silently ignored.
 
-See more about Conditional Upsert [Here](https://docs.dgraph.io/dql/dql-mutation#conditional-upsert).
+See more about Conditional Upsert
+[Here](https://docs.dgraph.io/dql/dql-mutation#conditional-upsert).
 
 ```java
 String query = "query {\n" +
