@@ -233,7 +233,7 @@ DgraphClient dgraphClient = new DgraphClient(stub1, stub2, stub3);
 ### Creating a Secure Client using TLS
 
 To setup a client using TLS, you could use the following code snippet. The server needs to be setup
-using the instructions provided [here](https://docs.dgraph.io/deploy/#tls-configuration).
+using the instructions provided [here](https://docs.dgraph.io/admin/security/tls-configuration).
 
 If you are doing client verification, you need to convert the client key from PKCS#1 format to
 PKCS#8 format. By default, grpc doesn't support reading PKCS#1 format keys. To convert the format,
@@ -310,7 +310,7 @@ dgraphClient.alter(operation);
 
 Starting Dgraph version 20.03.0, indexes can be computed in the background. You can call the
 function `setRunInBackground(true)` as shown below before calling `alter`. You can find more details
-[here](https://docs.dgraph.io/master/query-language/#indexes-in-background).
+[here](https://docs.dgraph.io/dql/dql-schema/#predicate-indexing).
 
 ```java
 String schema = "name: string @index(exact) .";
@@ -548,7 +548,7 @@ Variables can be defined in the query and used in the mutation. You could also u
 to perform a query followed by a mutation.
 
 To know more about upsert, we highly recommend going through the docs at
-https://docs.dgraph.io/mutations/#upsert-block.
+https://docs.dgraph.io/dql/dql-mutation#upsert-block.
 
 ```java
 String query = "query {\n" +
@@ -571,7 +571,7 @@ The upsert block also allows specifying a conditional mutation block using an `@
 mutation is executed only when the specified condition is true. If the condition is false, the
 mutation is silently ignored.
 
-See more about Conditional Upsert [Here](https://docs.dgraph.io/mutations/#conditional-upsert).
+See more about Conditional Upsert [Here](https://docs.dgraph.io/dql/dql-mutation#conditional-upsert).
 
 ```java
 String query = "query {\n" +

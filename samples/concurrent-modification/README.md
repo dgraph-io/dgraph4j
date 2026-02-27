@@ -1,5 +1,5 @@
 This example shows how to handle concurrent modifications using a multi-threaded Java program. The
-example demonstrates [transaction](https://docs.dgraph.io/clients/overview/#transactions) conflicts
+example demonstrates [transaction](https://docs.dgraph.io/clients/#transactions) conflicts
 in Dgraph.
 
 ## Steps to run this example

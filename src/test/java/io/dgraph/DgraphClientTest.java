@@ -218,4 +218,14 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     name = data.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
     assertEquals("Alice", name);
   }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testFromSlashEndpointThrows() throws Exception {
+    DgraphClient.clientStubFromSlashEndpoint("https://example.cloud.dgraph.io/graphql", "key");
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testFromCloudEndpointThrows() throws Exception {
+    DgraphClient.clientStubFromCloudEndpoint("https://example.cloud.dgraph.io/graphql", "key");
+  }
 }

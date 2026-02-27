@@ -19,9 +19,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 - Updated copyright from Hypermode Inc. to Istari Digital, Inc.
 - Updated GitHub organization references from hypermodeinc to dgraph-io
 
-**Removed**
+**Deprecated**
 
-- Removed clientStubFromSlashEndpoint and clientStubFromCloudEndpoint methods
+- Deprecated clientStubFromSlashEndpoint and clientStubFromCloudEndpoint (now throw UnsupportedOperationException)
 - Removed Dgraph Cloud section from documentation
 
 ## [24.2.0] - 2025-04-21

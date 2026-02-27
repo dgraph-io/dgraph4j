@@ -334,6 +334,40 @@ public class DgraphClient {
   }
 
   /**
+   * Creates a gRPC stub to connect with Dgraph Cloud.
+   *
+   * @deprecated Dgraph Cloud has been discontinued. Use {@link #clientStub(String, String)} or
+   *     construct a {@link io.dgraph.DgraphGrpc.DgraphStub} directly.
+   * @param slashEndpoint The url of the former Dgraph Cloud instance.
+   * @param apiKey The API key.
+   * @return Never returns — always throws.
+   * @throws UnsupportedOperationException always
+   */
+  @Deprecated
+  public static DgraphGrpc.DgraphStub clientStubFromSlashEndpoint(
+      String slashEndpoint, String apiKey) throws MalformedURLException {
+    throw new UnsupportedOperationException(
+        "Dgraph Cloud has been discontinued. Use DgraphClient.clientStub() instead.");
+  }
+
+  /**
+   * Creates a gRPC stub to connect with Dgraph Cloud.
+   *
+   * @deprecated Dgraph Cloud has been discontinued. Use {@link #clientStub(String, String)} or
+   *     construct a {@link io.dgraph.DgraphGrpc.DgraphStub} directly.
+   * @param cloudEndpoint The url of the former Dgraph Cloud instance.
+   * @param apiKey The API key.
+   * @return Never returns — always throws.
+   * @throws UnsupportedOperationException always
+   */
+  @Deprecated
+  public static DgraphGrpc.DgraphStub clientStubFromCloudEndpoint(
+      String cloudEndpoint, String apiKey) throws MalformedURLException {
+    throw new UnsupportedOperationException(
+        "Dgraph Cloud has been discontinued. Use DgraphClient.clientStub() instead.");
+  }
+
+  /**
    * Creates a new client for interacting with a Dgraph store.
    *
    * <p>A single client is thread safe.
