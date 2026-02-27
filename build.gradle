@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: © Istari Digital, Inc.
+ * SPDX-FileCopyrightText: © Istari Digital, Inc. <dgraph-admin@istaridigital.com>
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -247,6 +247,7 @@ if (project.hasProperty('ossrhUsername')) {
                     developers {
                         developer {
                             name = 'Istari Digital, Inc.'
+                            email = 'dgraph-admin@istaridigital.com'
                         }
                     }
                     scm {
