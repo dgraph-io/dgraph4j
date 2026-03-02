@@ -39,15 +39,21 @@ public class ExceptionUtil {
 
   /**
    * Finds a StatusRuntimeException in the cause chain of the given throwable. Returns null if none
-   * is found.
+   * is found. Guards against circular cause chains.
    */
   public static StatusRuntimeException findStatusRuntimeException(Throwable t) {
     Throwable cause = t;
-    while (cause != null) {
+    int depth = 0;
+    while (cause != null && depth < 20) {
       if (cause instanceof StatusRuntimeException) {
         return (StatusRuntimeException) cause;
       }
-      cause = cause.getCause();
+      Throwable next = cause.getCause();
+      if (next == cause) {
+        break; // self-referencing cause chain
+      }
+      cause = next;
+      depth++;
     }
     return null;
   }
@@ -58,6 +64,11 @@ public class ExceptionUtil {
    * maps it to the appropriate typed exception. Otherwise wraps it in a generic DgraphException.
    */
   public static DgraphException translate(Throwable t) {
+    // Unwrap CompletionException to get at the real cause
+    if (t instanceof CompletionException && t.getCause() != null) {
+      return translate(t.getCause());
+    }
+
     if (t instanceof DgraphException) {
       return (DgraphException) t;
     }

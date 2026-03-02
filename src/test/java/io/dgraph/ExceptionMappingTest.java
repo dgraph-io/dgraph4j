@@ -10,6 +10,7 @@ import static org.testng.Assert.*;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import java.util.concurrent.CompletionException;
 import org.testng.annotations.Test;
 
 public class ExceptionMappingTest {
@@ -250,5 +251,44 @@ public class ExceptionMappingTest {
     DgraphException ex = ExceptionUtil.translate(cause);
     assertEquals(ex.getClass(), DgraphException.class);
     assertEquals(ex.getStatus().getCode(), Status.Code.DATA_LOSS);
+  }
+
+  // --- CompletionException unwrapping ---
+
+  @Test
+  public void testCompletionExceptionUnwrapsDgraphException() {
+    TxnFinishedException original = new TxnFinishedException();
+    CompletionException ce = new CompletionException(original);
+    DgraphException ex = ExceptionUtil.translate(ce);
+    assertSame(ex, original);
+  }
+
+  @Test
+  public void testCompletionExceptionUnwrapsStatusRuntimeException() {
+    StatusRuntimeException cause = sre(Status.Code.DEADLINE_EXCEEDED, "timeout");
+    CompletionException ce = new CompletionException(cause);
+    DgraphException ex = ExceptionUtil.translate(ce);
+    assertTrue(ex instanceof DgraphDeadlineExceededException);
+  }
+
+  @Test
+  public void testCompletionExceptionWithNullCauseFallsThrough() {
+    CompletionException ce = new CompletionException(null);
+    DgraphException ex = ExceptionUtil.translate(ce);
+    // CompletionException with null cause is treated as non-gRPC exception
+    assertEquals(ex.getClass(), DgraphException.class);
+  }
+
+  // --- Cause chain safety ---
+
+  @Test
+  public void testFindStatusRuntimeExceptionWithNullChain() {
+    RuntimeException cause = new RuntimeException("no sre in chain");
+    assertNull(ExceptionUtil.findStatusRuntimeException(cause));
+  }
+
+  @Test
+  public void testFindStatusRuntimeExceptionNull() {
+    assertNull(ExceptionUtil.findStatusRuntimeException(null));
   }
 }
