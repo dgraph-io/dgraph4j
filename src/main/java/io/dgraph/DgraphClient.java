@@ -677,6 +677,80 @@ public class DgraphClient {
         });
   }
 
+  // ---------------------------------------------------------------------------
+  // Retry helpers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Executes a synchronous operation in a managed transaction with automatic retry on retryable
+   * failures, using {@link RetryPolicy#DEFAULT}.
+   *
+   * <p>A fresh transaction is created for each attempt. The transaction is always discarded after
+   * the operation completes or fails.
+   *
+   * <pre>{@code
+   * Response resp = client.withRetry(txn -> {
+   *     txn.mutate(mutation);
+   *     txn.commit();
+   *     return txn.queryAndCommit(query);
+   * });
+   * }</pre>
+   *
+   * @param op the operation to execute
+   * @param <T> the return type
+   * @return the result of the operation
+   * @throws DgraphException if the operation fails after all retries are exhausted, or if a
+   *     non-retryable error occurs
+   */
+  public <T> T withRetry(TransactionOp<T> op) {
+    return withRetry(RetryPolicy.DEFAULT, op);
+  }
+
+  /**
+   * Executes a synchronous operation in a managed transaction with automatic retry on retryable
+   * failures.
+   *
+   * @param policy the retry policy to use
+   * @param op the operation to execute
+   * @param <T> the return type
+   * @return the result of the operation
+   * @throws DgraphException if the operation fails after all retries are exhausted, or if a
+   *     non-retryable error occurs
+   */
+  public <T> T withRetry(RetryPolicy policy, TransactionOp<T> op) {
+    DgraphException lastError = null;
+    for (int attempt = 0; attempt <= policy.getMaxRetries(); attempt++) {
+      Transaction txn = policy.isReadOnly() ? newReadOnlyTransaction() : newTransaction();
+      if (policy.isBestEffort()) {
+        txn.setBestEffort(true);
+      }
+      try {
+        T result = op.execute(txn);
+        return result;
+      } catch (DgraphException e) {
+        lastError = e;
+        if (!e.isRetryable() || attempt >= policy.getMaxRetries()) {
+          throw e;
+        }
+        try {
+          Thread.sleep(policy.calculateDelay(attempt));
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          throw new DgraphException("Retry interrupted", ie);
+        }
+      } catch (Exception e) {
+        throw Exceptions.translate(e);
+      } finally {
+        try {
+          txn.discard();
+        } catch (Exception ignored) {
+          // discard is best-effort cleanup
+        }
+      }
+    }
+    throw lastError; // unreachable, but compiler needs it
+  }
+
   /** Calls %{@link io.grpc.ManagedChannel#shutdown} on all connections for this client */
   public void shutdown() {
     Exceptions.withExceptionUnwrapped(

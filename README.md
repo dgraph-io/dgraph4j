@@ -524,6 +524,47 @@ try {
 }
 ```
 
+### Automatic Retry
+
+`withRetry` executes an operation in a managed transaction with automatic retry on
+retryable failures. A fresh transaction is created for each attempt, and the transaction
+is always discarded after the operation completes or fails.
+
+```java
+// Default: 5 retries, 100ms base delay, exponential backoff up to 5s
+Response resp = client.withRetry(txn -> {
+    txn.mutate(mutation);
+    txn.commit();
+    return txn.query(query);
+});
+```
+
+```java
+// Custom retry policy
+Response resp = client.withRetry(
+    RetryPolicy.builder()
+        .maxRetries(10)
+        .baseDelay(Duration.ofMillis(200))
+        .build(),
+    txn -> {
+        txn.mutate(mutation);
+        txn.commit();
+        return txn.query(query);
+    });
+```
+
+```java
+// Read-only or best-effort
+Response resp = client.withRetry(RetryPolicy.readOnly(), txn -> txn.query(query));
+Response resp = client.withRetry(RetryPolicy.bestEffort(), txn -> txn.query(query));
+```
+
+```java
+// Async
+CompletableFuture<Response> future = asyncClient.withRetry(txn ->
+    txn.mutate(mutation).thenCompose(resp -> txn.commit().thenApply(v -> resp)));
+```
+
 ### Running a Query
 
 You can run a query by calling `Transaction#query()`. You will need to pass in a GraphQL+- query

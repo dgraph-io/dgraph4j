@@ -23,6 +23,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -622,6 +623,90 @@ public class DgraphAsyncClient {
    */
   public AsyncTransaction newReadOnlyTransaction(TxnContext context) {
     return new AsyncTransaction(this, this.anyClient(), context, true);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Retry helpers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Executes an asynchronous operation in a managed transaction with automatic retry on retryable
+   * failures, using {@link RetryPolicy#DEFAULT}.
+   *
+   * <p>A fresh transaction is created for each attempt. The transaction is always discarded after
+   * the operation completes or fails. Backoff delays are non-blocking.
+   *
+   * @param op the operation to execute
+   * @param <T> the return type
+   * @return a future that completes with the operation result
+   */
+  public <T> CompletableFuture<T> withRetry(AsyncTransactionOp<T> op) {
+    return withRetry(RetryPolicy.DEFAULT, op);
+  }
+
+  /**
+   * Executes an asynchronous operation in a managed transaction with automatic retry on retryable
+   * failures.
+   *
+   * <p>A fresh transaction is created for each attempt. The transaction is always discarded after
+   * the operation completes or fails. Backoff delays are non-blocking.
+   *
+   * @param policy the retry policy to use
+   * @param op the operation to execute
+   * @param <T> the return type
+   * @return a future that completes with the operation result
+   */
+  public <T> CompletableFuture<T> withRetry(RetryPolicy policy, AsyncTransactionOp<T> op) {
+    return attemptAsync(policy, op, 0);
+  }
+
+  private <T> CompletableFuture<T> attemptAsync(
+      RetryPolicy policy, AsyncTransactionOp<T> op, int attempt) {
+    AsyncTransaction txn =
+        policy.isReadOnly() ? newReadOnlyTransaction() : newTransaction();
+    if (policy.isBestEffort()) {
+      txn.setBestEffort(true);
+    }
+
+    CompletableFuture<T> result = new CompletableFuture<>();
+
+    op.execute(txn)
+        .whenComplete(
+            (value, throwable) -> {
+              try {
+                txn.discard();
+              } catch (Exception ignored) {
+                // discard is best-effort cleanup
+              }
+
+              if (throwable == null) {
+                result.complete(value);
+                return;
+              }
+
+              DgraphException ex = Exceptions.translate(throwable);
+              if (!ex.isRetryable() || attempt >= policy.getMaxRetries()) {
+                result.completeExceptionally(ex);
+                return;
+              }
+
+              // Schedule retry after backoff delay
+              long delayMs = policy.calculateDelay(attempt);
+              Executor delayed =
+                  CompletableFuture.delayedExecutor(delayMs, TimeUnit.MILLISECONDS);
+              CompletableFuture.supplyAsync(() -> null, delayed)
+                  .thenCompose(ignored -> attemptAsync(policy, op, attempt + 1))
+                  .whenComplete(
+                      (retryValue, retryThrowable) -> {
+                        if (retryThrowable != null) {
+                          result.completeExceptionally(retryThrowable);
+                        } else {
+                          result.complete(retryValue);
+                        }
+                      });
+            });
+
+    return result;
   }
 
   /** Calls %{@link io.grpc.ManagedChannel#shutdown} on all connections for this client */

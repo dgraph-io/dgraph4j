@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
   `DisallowedOperationException`, `AuthException`)
 - feat: `isRetryable()` method on all `DgraphException` subclasses
 - feat: `Exceptions` utility class (`ExceptionUtil` retained as deprecated alias)
+- feat: `withRetry()` on `DgraphClient` and `DgraphAsyncClient` for managed transaction
+  retry with exponential backoff. Configurable via `RetryPolicy`.
 
 **Changed**
 
