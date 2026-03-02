@@ -15,8 +15,6 @@ import io.grpc.Channel;
 import io.grpc.Context;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import io.grpc.stub.MetadataUtils;
 import java.util.Collections;
 import java.util.List;
@@ -123,7 +121,7 @@ public class DgraphAsyncClient {
                 } catch (InvalidProtocolBufferException e) {
                   String errmsg = "error while parsing jwt from the response: ";
                   LOG.error(errmsg, e);
-                  throw new RuntimeException(errmsg, e);
+                  throw new DgraphAuthException(errmsg, e);
                 }
               });
     } finally {
@@ -210,39 +208,29 @@ public class DgraphAsyncClient {
             return ctxCallable.call().get();
           } catch (InterruptedException e) {
             LOG.error("The " + operation + " got interrupted:", e);
-            throw new RuntimeException(e);
+            throw new DgraphInterruptedException("The " + operation + " got interrupted", e);
           } catch (ExecutionException e) {
             if (ExceptionUtil.isJwtExpired(e.getCause())) {
               try {
-                // retry the login
                 retryLogin().get();
-                // retry the supplied logic
                 return ctxCallable.call().get();
               } catch (InterruptedException ie) {
                 LOG.error("The retried " + operation + " got interrupted:", ie);
-                throw new RuntimeException(ie);
+                throw new DgraphInterruptedException(
+                    "The retried " + operation + " got interrupted", ie);
               } catch (ExecutionException ie) {
-                LOG.error("The retried " + operation + " encounters an execution exception:", ie);
-                throw new RuntimeException(ie);
+                LOG.error(
+                    "The retried " + operation + " encounters an execution exception:", ie);
+                throw new CompletionException(ExceptionUtil.translate(ie.getCause()));
               } catch (Exception ie) {
-                LOG.error("The retried " + operation + " encounters a completion exception:", ie);
-                throw new CompletionException(ie);
-              }
-            } else if (e.getCause() instanceof StatusRuntimeException) {
-              StatusRuntimeException ex1 = (StatusRuntimeException) e.getCause();
-              Status.Code code = ex1.getStatus().getCode();
-              String desc = ex1.getStatus().getDescription();
-
-              if (code.equals(Status.Code.ABORTED)
-                  || code.equals(Status.Code.FAILED_PRECONDITION)) {
-                throw new CompletionException(new TxnConflictException(desc));
+                LOG.error(
+                    "The retried " + operation + " encounters a completion exception:", ie);
+                throw new CompletionException(ExceptionUtil.translate(ie));
               }
             }
-            // Handle the case when the outer exception is not caused by JWT expiration
-            throw new RuntimeException(
-                "The " + operation + " encountered an execution exception:", e);
+            throw new CompletionException(ExceptionUtil.translate(e.getCause()));
           } catch (Exception e) {
-            throw new CompletionException(e);
+            throw new CompletionException(ExceptionUtil.translate(e));
           }
         },
         this.executor);

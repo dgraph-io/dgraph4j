@@ -482,7 +482,7 @@ public class DgraphClient {
    * @return A Version object which represents the version of Dgraph instance.
    */
   public Version checkVersion() {
-    return asyncClient.checkVersion().join();
+    return ExceptionUtil.withExceptionUnwrapped(() -> asyncClient.checkVersion().join());
   }
 
   // ---------------------------------------------------------------------------
@@ -654,7 +654,10 @@ public class DgraphClient {
    * @param password the password of the user
    */
   public void login(String userid, String password) {
-    asyncClient.login(userid, password).join();
+    ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          asyncClient.login(userid, password).join();
+        });
   }
 
   /**
@@ -668,11 +671,17 @@ public class DgraphClient {
    * @param namespace the namespace in which to login
    */
   public void loginIntoNamespace(String userid, String password, long namespace) {
-    asyncClient.loginIntoNamespace(userid, password, namespace).join();
+    ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          asyncClient.loginIntoNamespace(userid, password, namespace).join();
+        });
   }
 
   /** Calls %{@link io.grpc.ManagedChannel#shutdown} on all connections for this client */
   public void shutdown() {
-    asyncClient.shutdown().join();
+    ExceptionUtil.withExceptionUnwrapped(
+        () -> {
+          asyncClient.shutdown().join();
+        });
   }
 }

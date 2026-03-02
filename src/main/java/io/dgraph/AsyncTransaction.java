@@ -199,7 +199,7 @@ public class AsyncTransaction implements AutoCloseable {
    */
   public void setBestEffort(boolean bestEffort) {
     if (!this.readOnly) {
-      throw new RuntimeException("Best effort only works for read-only queries");
+      throw new IllegalStateException("Best effort only works for read-only queries");
     }
 
     this.bestEffort = bestEffort;
@@ -300,7 +300,7 @@ public class AsyncTransaction implements AutoCloseable {
             (Response response, Throwable throwable) -> {
               if (throwable != null) {
                 discard();
-                throw new RuntimeException(throwable);
+                throw ExceptionUtil.translate(throwable);
               }
 
               return response;
