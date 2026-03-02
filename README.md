@@ -451,6 +451,52 @@ try {
 }
 ```
 
+### Exception Handling
+
+All exceptions thrown by the Dgraph client extend `DgraphException`, which itself extends
+`io.grpc.StatusRuntimeException`. This means existing code that catches `StatusRuntimeException`
+continues to work, while new code can catch specific typed exceptions for more precise error
+handling.
+
+Each exception carries:
+- The gRPC `Status` (accessible via `getStatus()`)
+- An `isRetryable()` method indicating whether the operation is safe to retry
+
+```java
+try {
+    txn.mutate(mutation);
+    txn.commit();
+} catch (TxnConflictException e) {
+    // Transaction conflict — retry with a new transaction
+} catch (DgraphDeadlineExceededException e) {
+    // Timeout — consider increasing deadline or retrying
+} catch (DgraphConnectionException e) {
+    // Transient connectivity issue — retry after backoff
+} catch (DgraphQueryException e) {
+    // Invalid query syntax — fix the query before retrying
+} catch (DgraphException e) {
+    // Catch-all for any Dgraph error
+    if (e.isRetryable()) {
+        // Safe to retry
+    }
+}
+```
+
+**Available exception types:**
+
+| Exception | Retryable | Description |
+|-----------|-----------|-------------|
+| `DgraphConnectionException` | Yes | Connection lost or server unavailable |
+| `DgraphDeadlineExceededException` | Yes | Operation timed out |
+| `DgraphOverloadedException` | Yes | Server overloaded with pending proposals |
+| `TxnConflictException` | Yes | Transaction conflicts with another |
+| `DgraphResourceExhaustedException` | No | Resource limit exceeded (e.g., message size) |
+| `DgraphQueryException` | No | Invalid query or mutation syntax |
+| `DgraphAuthException` | No | Authentication or authorization failure |
+| `DgraphInterruptedException` | No | Operation was interrupted |
+| `TxnFinishedException` | No | Transaction already committed or discarded |
+| `TxnReadOnlyException` | No | Mutation attempted on read-only transaction |
+
 ### Running a Query
 
 You can run a query by calling `Transaction#query()`. You will need to pass in a GraphQL+- query

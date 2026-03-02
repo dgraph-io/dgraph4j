@@ -13,11 +13,34 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 - feat: add namespace management (createNamespace, dropNamespace, listNamespaces)
 - feat: add convenience methods (dropAll, dropData, dropPredicate, dropType, setSchema)
 - feat: updated proto definitions to Dgraph v25
+- feat: typed exception hierarchy with 7 new exception classes for specific error conditions
+  (`DgraphConnectionException`, `DgraphDeadlineExceededException`, `DgraphOverloadedException`,
+  `DgraphResourceExhaustedException`, `DgraphQueryException`, `DgraphAuthException`,
+  `DgraphInterruptedException`)
+- feat: `isRetryable()` method on all `DgraphException` subclasses
 
 **Changed**
 
 - Updated copyright from Hypermode Inc. to Istari Digital, Inc.
 - Updated GitHub organization references from hypermodeinc to dgraph-io
+- **Breaking:** `DgraphException` now extends `StatusRuntimeException` instead of
+  `RuntimeException`. All Dgraph exceptions are now `StatusRuntimeException` instances, so
+  existing `catch (StatusRuntimeException e)` blocks continue to catch them.
+- **Breaking:** `TxnException` now extends `DgraphException` instead of `RuntimeException`.
+  Code that catches `DgraphException` will now also catch `TxnConflictException`,
+  `TxnFinishedException`, and `TxnReadOnlyException`. If you handle these separately, place
+  their catch blocks before `catch (DgraphException e)`.
+- **Breaking:** `getMessage()` format has changed. Exception messages now use the gRPC format
+  `"CODE: description"` (e.g., `"INTERNAL: Transaction has already been committed or
+  discarded"`). Use `getStatus().getDescription()` for the plain description.
+- gRPC errors are now translated to typed `DgraphException` subclasses instead of being thrown
+  as raw `StatusRuntimeException`. The original `Status` and trailers are preserved on the
+  exception.
+
+**Fixed**
+
+- fix: `checkVersion()`, `login()`, `loginIntoNamespace()`, and `shutdown()` now properly
+  unwrap `CompletionException`, matching the behavior of all other sync methods
 
 **Deprecated**
 
