@@ -9,17 +9,13 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 
 /**
- * Abstract base for transaction-related exceptions. These are client-side errors indicating invalid
- * transaction state.
+ * Thrown when a query or mutation contains invalid syntax or input. This is not retryable — the
+ * query must be corrected before retrying.
  */
-public abstract class TxnException extends DgraphException {
+public class DgraphQueryException extends DgraphException {
   private static final long serialVersionUID = 1L;
 
-  TxnException(String message) {
-    super(message);
-  }
-
-  TxnException(Status status, Metadata trailers) {
+  DgraphQueryException(Status status, Metadata trailers) {
     super(status, trailers);
   }
 }

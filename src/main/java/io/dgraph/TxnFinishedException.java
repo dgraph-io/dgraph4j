@@ -6,6 +6,8 @@
 package io.dgraph;
 
 public class TxnFinishedException extends TxnException {
+  private static final long serialVersionUID = 1L;
+
   TxnFinishedException() {
     super("Transaction has already been committed or discarded");
   }
