@@ -110,8 +110,8 @@ public class ExceptionHierarchyTest {
 
   @Test
   public void testConnectionExceptionIsRetryable() {
-    DgraphConnectionException ex =
-        new DgraphConnectionException(
+    ConnectionException ex =
+        new ConnectionException(
             Status.UNAVAILABLE.withDescription("no connection"), null);
     assertTrue(ex instanceof DgraphException);
     assertTrue(ex instanceof StatusRuntimeException);
@@ -120,26 +120,48 @@ public class ExceptionHierarchyTest {
   }
 
   @Test
+  public void testServerNotReadyExtendsServerException() {
+    AlphaNotReadyException ex =
+        new AlphaNotReadyException(
+            Status.UNKNOWN.withDescription("server is not ready"), null);
+    assertTrue(ex instanceof AlphaException);
+    assertTrue(ex instanceof DgraphException);
+    assertTrue(ex.isRetryable());
+  }
+
+  @Test
+  public void testServerShutdownExtendsServerException() {
+    AlphaShutdownException ex =
+        new AlphaShutdownException(
+            Status.UNKNOWN.withDescription("draining mode"), null);
+    assertTrue(ex instanceof AlphaException);
+    assertTrue(ex instanceof DgraphException);
+    assertTrue(ex.isRetryable());
+  }
+
+  @Test
   public void testDeadlineExceededIsRetryable() {
-    DgraphDeadlineExceededException ex =
-        new DgraphDeadlineExceededException(
+    DeadlineExceededException ex =
+        new DeadlineExceededException(
             Status.DEADLINE_EXCEEDED.withDescription("timeout"), null);
     assertTrue(ex.isRetryable());
     assertEquals(ex.getStatus().getCode(), Status.Code.DEADLINE_EXCEEDED);
   }
 
   @Test
-  public void testOverloadedIsRetryable() {
-    DgraphOverloadedException ex =
-        new DgraphOverloadedException(
+  public void testServerOverloadedExtendsServerException() {
+    AlphaOverloadedException ex =
+        new AlphaOverloadedException(
             Status.UNKNOWN.withDescription("overloaded"), null);
+    assertTrue(ex instanceof AlphaException);
+    assertTrue(ex instanceof DgraphException);
     assertTrue(ex.isRetryable());
   }
 
   @Test
   public void testResourceExhaustedNotRetryable() {
-    DgraphResourceExhaustedException ex =
-        new DgraphResourceExhaustedException(
+    ResourceExhaustedException ex =
+        new ResourceExhaustedException(
             Status.RESOURCE_EXHAUSTED.withDescription("too big"), null);
     assertFalse(ex.isRetryable());
     assertEquals(ex.getStatus().getCode(), Status.Code.RESOURCE_EXHAUSTED);
@@ -147,16 +169,16 @@ public class ExceptionHierarchyTest {
 
   @Test
   public void testQueryExceptionNotRetryable() {
-    DgraphQueryException ex =
-        new DgraphQueryException(
+    QueryException ex =
+        new QueryException(
             Status.UNKNOWN.withDescription("bad syntax"), null);
     assertFalse(ex.isRetryable());
   }
 
   @Test
   public void testAuthExceptionNotRetryable() {
-    DgraphAuthException ex =
-        new DgraphAuthException(
+    AuthException ex =
+        new AuthException(
             Status.UNAUTHENTICATED.withDescription("denied"), null);
     assertFalse(ex.isRetryable());
   }
@@ -164,19 +186,10 @@ public class ExceptionHierarchyTest {
   @Test
   public void testAuthExceptionWithCause() {
     RuntimeException cause = new RuntimeException("parse error");
-    DgraphAuthException ex = new DgraphAuthException("jwt failed", cause);
+    AuthException ex = new AuthException("jwt failed", cause);
     assertFalse(ex.isRetryable());
     assertSame(ex.getCause(), cause);
     assertEquals(ex.getStatus().getCode(), Status.Code.INTERNAL);
-  }
-
-  @Test
-  public void testInterruptedExceptionNotRetryable() {
-    InterruptedException cause = new InterruptedException("interrupted");
-    DgraphInterruptedException ex = new DgraphInterruptedException("op interrupted", cause);
-    assertFalse(ex.isRetryable());
-    assertSame(ex.getCause(), cause);
-    assertEquals(ex.getStatus().getCode(), Status.Code.CANCELLED);
   }
 
   // --- getMessage() format ---
@@ -190,14 +203,30 @@ public class ExceptionHierarchyTest {
   @Test
   public void testGetMessageFormatForTxnFinished() {
     TxnFinishedException ex = new TxnFinishedException();
+    // TxnException overrides getMessage() to return plain description for backward compatibility
+    assertEquals(ex.getMessage(), "Transaction has already been committed or discarded");
+  }
+
+  @Test
+  public void testGetMessageFormatForTxnConflict() {
+    TxnConflictException ex = new TxnConflictException("Transaction conflict");
+    assertEquals(ex.getMessage(), "Transaction conflict");
+    // Status code still accessible via getStatus()
+    assertEquals(ex.getStatus().getCode(), Status.Code.ABORTED);
+  }
+
+  @Test
+  public void testGetMessageFormatForTxnReadOnly() {
+    TxnReadOnlyException ex = new TxnReadOnlyException();
     assertEquals(
-        ex.getMessage(), "INTERNAL: Transaction has already been committed or discarded");
+        ex.getMessage(),
+        "Transaction is read only. No mutate or commit operation is allowed.");
   }
 
   @Test
   public void testGetMessageFormatForGrpcOrigin() {
-    DgraphConnectionException ex =
-        new DgraphConnectionException(
+    ConnectionException ex =
+        new ConnectionException(
             Status.UNAVAILABLE.withDescription("connection lost"), null);
     assertEquals(ex.getMessage(), "UNAVAILABLE: connection lost");
   }

@@ -12,10 +12,10 @@ import io.grpc.Status;
  * Thrown when a resource limit is exceeded, such as the maximum gRPC message size. This is not
  * retryable without changing the request (e.g., reducing payload size).
  */
-public class DgraphResourceExhaustedException extends DgraphException {
+public class ResourceExhaustedException extends DgraphException {
   private static final long serialVersionUID = 1L;
 
-  DgraphResourceExhaustedException(Status status, Metadata trailers) {
+  ResourceExhaustedException(Status status, Metadata trailers) {
     super(status, trailers);
   }
 }

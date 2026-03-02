@@ -469,7 +469,7 @@ public class DgraphClient {
    * @param op a protocol buffer Operation object representing the operation being performed.
    */
   public void alter(Operation op) {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncClient.alter(op).join();
         });
@@ -482,7 +482,7 @@ public class DgraphClient {
    * @return A Version object which represents the version of Dgraph instance.
    */
   public Version checkVersion() {
-    return ExceptionUtil.withExceptionUnwrapped(() -> asyncClient.checkVersion().join());
+    return Exceptions.withExceptionUnwrapped(() -> asyncClient.checkVersion().join());
   }
 
   // ---------------------------------------------------------------------------
@@ -496,7 +496,7 @@ public class DgraphClient {
    * @return the Response from the DQL execution
    */
   public DgraphProto.Response runDQL(String dqlQuery) {
-    return ExceptionUtil.withExceptionUnwrapped(() -> asyncClient.runDQL(dqlQuery).join());
+    return Exceptions.withExceptionUnwrapped(() -> asyncClient.runDQL(dqlQuery).join());
   }
 
   /**
@@ -510,7 +510,7 @@ public class DgraphClient {
    */
   public DgraphProto.Response runDQL(
       String dqlQuery, Map<String, String> vars, boolean readOnly, boolean bestEffort) {
-    return ExceptionUtil.withExceptionUnwrapped(
+    return Exceptions.withExceptionUnwrapped(
         () -> asyncClient.runDQL(dqlQuery, vars, readOnly, bestEffort).join());
   }
 
@@ -525,7 +525,7 @@ public class DgraphClient {
    * @return the AllocateIDsResponse containing start/end range
    */
   public DgraphProto.AllocateIDsResponse allocateUIDs(long howMany) {
-    return ExceptionUtil.withExceptionUnwrapped(() -> asyncClient.allocateUIDs(howMany).join());
+    return Exceptions.withExceptionUnwrapped(() -> asyncClient.allocateUIDs(howMany).join());
   }
 
   /**
@@ -535,7 +535,7 @@ public class DgraphClient {
    * @return the AllocateIDsResponse containing start/end range
    */
   public DgraphProto.AllocateIDsResponse allocateTimestamps(long howMany) {
-    return ExceptionUtil.withExceptionUnwrapped(
+    return Exceptions.withExceptionUnwrapped(
         () -> asyncClient.allocateTimestamps(howMany).join());
   }
 
@@ -546,7 +546,7 @@ public class DgraphClient {
    * @return the AllocateIDsResponse containing start/end range
    */
   public DgraphProto.AllocateIDsResponse allocateNamespaces(long howMany) {
-    return ExceptionUtil.withExceptionUnwrapped(
+    return Exceptions.withExceptionUnwrapped(
         () -> asyncClient.allocateNamespaces(howMany).join());
   }
 
@@ -560,7 +560,7 @@ public class DgraphClient {
    * @return the CreateNamespaceResponse containing the new namespace ID
    */
   public DgraphProto.CreateNamespaceResponse createNamespace() {
-    return ExceptionUtil.withExceptionUnwrapped(() -> asyncClient.createNamespace().join());
+    return Exceptions.withExceptionUnwrapped(() -> asyncClient.createNamespace().join());
   }
 
   /**
@@ -569,7 +569,7 @@ public class DgraphClient {
    * @param namespace the namespace ID to drop
    */
   public void dropNamespace(long namespace) {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncClient.dropNamespace(namespace).join();
         });
@@ -581,7 +581,7 @@ public class DgraphClient {
    * @return the ListNamespacesResponse
    */
   public DgraphProto.ListNamespacesResponse listNamespaces() {
-    return ExceptionUtil.withExceptionUnwrapped(() -> asyncClient.listNamespaces().join());
+    return Exceptions.withExceptionUnwrapped(() -> asyncClient.listNamespaces().join());
   }
 
   // ---------------------------------------------------------------------------
@@ -592,7 +592,7 @@ public class DgraphClient {
    * Drops all data and schema from the Dgraph instance.
    */
   public void dropAll() {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncClient.dropAll().join();
         });
@@ -602,7 +602,7 @@ public class DgraphClient {
    * Drops all data but preserves the schema.
    */
   public void dropData() {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncClient.dropData().join();
         });
@@ -614,7 +614,7 @@ public class DgraphClient {
    * @param predicate the name of the predicate to drop
    */
   public void dropPredicate(String predicate) {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncClient.dropPredicate(predicate).join();
         });
@@ -626,7 +626,7 @@ public class DgraphClient {
    * @param typeName the name of the type to drop
    */
   public void dropType(String typeName) {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncClient.dropType(typeName).join();
         });
@@ -638,7 +638,7 @@ public class DgraphClient {
    * @param schema the schema definition string
    */
   public void setSchema(String schema) {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncClient.setSchema(schema).join();
         });
@@ -654,7 +654,7 @@ public class DgraphClient {
    * @param password the password of the user
    */
   public void login(String userid, String password) {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncClient.login(userid, password).join();
         });
@@ -671,7 +671,7 @@ public class DgraphClient {
    * @param namespace the namespace in which to login
    */
   public void loginIntoNamespace(String userid, String password, long namespace) {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncClient.loginIntoNamespace(userid, password, namespace).join();
         });
@@ -679,7 +679,7 @@ public class DgraphClient {
 
   /** Calls %{@link io.grpc.ManagedChannel#shutdown} on all connections for this client */
   public void shutdown() {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncClient.shutdown().join();
         });

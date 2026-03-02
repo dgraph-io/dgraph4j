@@ -9,13 +9,14 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 
 /**
- * Thrown when a connection to the Dgraph server is lost or unavailable. This is typically a
- * transient error that can be resolved by retrying.
+ * Thrown when a Dgraph Alpha is reachable but temporarily unable to serve requests. This covers
+ * transient Alpha-side conditions such as startup, draining, and overload. All subclasses are
+ * retryable.
  */
-public class DgraphConnectionException extends DgraphException {
+public class AlphaException extends DgraphException {
   private static final long serialVersionUID = 1L;
 
-  DgraphConnectionException(Status status, Metadata trailers) {
+  AlphaException(Status status, Metadata trailers) {
     super(status, trailers);
   }
 

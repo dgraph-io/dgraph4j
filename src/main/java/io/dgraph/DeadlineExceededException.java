@@ -9,13 +9,13 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 
 /**
- * Thrown when the Dgraph server is overloaded with pending proposals. This is a transient error that
- * can be resolved by retrying after a backoff period.
+ * Thrown when a Dgraph operation exceeds its deadline or timeout. This is typically a transient
+ * error that can be resolved by retrying, possibly with a longer deadline.
  */
-public class DgraphOverloadedException extends DgraphException {
+public class DeadlineExceededException extends DgraphException {
   private static final long serialVersionUID = 1L;
 
-  DgraphOverloadedException(Status status, Metadata trailers) {
+  DeadlineExceededException(Status status, Metadata trailers) {
     super(status, trailers);
   }
 

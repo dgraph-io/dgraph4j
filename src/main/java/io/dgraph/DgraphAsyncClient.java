@@ -121,7 +121,7 @@ public class DgraphAsyncClient {
                 } catch (InvalidProtocolBufferException e) {
                   String errmsg = "error while parsing jwt from the response: ";
                   LOG.error(errmsg, e);
-                  throw new DgraphAuthException(errmsg, e);
+                  throw new AuthException(errmsg, e);
                 }
               });
     } finally {
@@ -207,30 +207,32 @@ public class DgraphAsyncClient {
           try {
             return ctxCallable.call().get();
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             LOG.error("The " + operation + " got interrupted:", e);
-            throw new DgraphInterruptedException("The " + operation + " got interrupted", e);
+            throw new DgraphException("The " + operation + " got interrupted", e);
           } catch (ExecutionException e) {
-            if (ExceptionUtil.isJwtExpired(e.getCause())) {
+            if (Exceptions.isJwtExpired(e.getCause())) {
               try {
                 retryLogin().get();
                 return ctxCallable.call().get();
               } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
                 LOG.error("The retried " + operation + " got interrupted:", ie);
-                throw new DgraphInterruptedException(
+                throw new DgraphException(
                     "The retried " + operation + " got interrupted", ie);
               } catch (ExecutionException ie) {
                 LOG.error(
                     "The retried " + operation + " encounters an execution exception:", ie);
-                throw new CompletionException(ExceptionUtil.translate(ie.getCause()));
+                throw new CompletionException(Exceptions.translate(ie.getCause()));
               } catch (Exception ie) {
                 LOG.error(
                     "The retried " + operation + " encounters a completion exception:", ie);
-                throw new CompletionException(ExceptionUtil.translate(ie));
+                throw new CompletionException(Exceptions.translate(ie));
               }
             }
-            throw new CompletionException(ExceptionUtil.translate(e.getCause()));
+            throw new CompletionException(Exceptions.translate(e.getCause()));
           } catch (Exception e) {
-            throw new CompletionException(ExceptionUtil.translate(e));
+            throw new CompletionException(Exceptions.translate(e));
           }
         },
         this.executor);

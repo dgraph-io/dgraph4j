@@ -300,7 +300,7 @@ public class AsyncTransaction implements AutoCloseable {
             (Response response, Throwable throwable) -> {
               if (throwable != null) {
                 discard();
-                throw ExceptionUtil.translate(throwable);
+                throw Exceptions.translate(throwable);
               }
 
               return response;

@@ -12,14 +12,14 @@ import io.grpc.Status;
  * Thrown when authentication or authorization fails. This includes expired tokens, invalid
  * credentials, and permission denied errors.
  */
-public class DgraphAuthException extends DgraphException {
+public class AuthException extends DgraphException {
   private static final long serialVersionUID = 1L;
 
-  DgraphAuthException(Status status, Metadata trailers) {
+  AuthException(Status status, Metadata trailers) {
     super(status, trailers);
   }
 
-  DgraphAuthException(String message, Throwable cause) {
+  AuthException(String message, Throwable cause) {
     super(message, cause);
   }
 }
