@@ -134,6 +134,11 @@ public class AlterConvenienceTest extends DgraphIntegrationTest {
 
   @Test
   public void testDropType() {
+    // Clean slate: previous tests may leave predicates that cause Dgraph to
+    // skip the alter when no predicate changes are detected, silently
+    // ignoring the type definition.
+    dgraphClient.dropAll();
+
     // Set schema with a type definition
     dgraphClient.setSchema(
         "name: string @index(exact) .\n" + "type Person {\n" + "  name\n" + "}");
