@@ -577,7 +577,7 @@ decode it before you can do anything useful with it.
 
 Let’s run the following query:
 
-```java
+```dql
 query all($a: string) {
   all(func: eq(name, $a)) {
             name
