@@ -12,7 +12,6 @@ import io.dgraph.DgraphProto.Payload;
 import io.dgraph.DgraphProto.TxnContext;
 import io.dgraph.DgraphProto.Version;
 import io.grpc.Channel;
-import io.grpc.Context;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.stub.MetadataUtils;
@@ -23,7 +22,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -201,42 +199,7 @@ public class DgraphAsyncClient {
    */
   protected <T> CompletableFuture<T> runWithRetries(
       String operation, Callable<CompletableFuture<T>> callable) {
-    final Callable<CompletableFuture<T>> ctxCallable = Context.current().wrap(callable);
-
-    return CompletableFuture.supplyAsync(
-        () -> {
-          try {
-            return ctxCallable.call().get();
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOG.error("The " + operation + " got interrupted:", e);
-            throw new DgraphException("The " + operation + " got interrupted", e);
-          } catch (ExecutionException e) {
-            if (Exceptions.isJwtExpired(e.getCause())) {
-              try {
-                retryLogin().get();
-                return ctxCallable.call().get();
-              } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                LOG.error("The retried " + operation + " got interrupted:", ie);
-                throw new DgraphException(
-                    "The retried " + operation + " got interrupted", ie);
-              } catch (ExecutionException ie) {
-                LOG.error(
-                    "The retried " + operation + " encounters an execution exception:", ie);
-                throw new CompletionException(Exceptions.translate(ie.getCause()));
-              } catch (Exception ie) {
-                LOG.error(
-                    "The retried " + operation + " encounters a completion exception:", ie);
-                throw new CompletionException(Exceptions.translate(ie));
-              }
-            }
-            throw new CompletionException(Exceptions.translate(e.getCause()));
-          } catch (Exception e) {
-            throw new CompletionException(Exceptions.translate(e));
-          }
-        },
-        this.executor);
+    return CompletableFutures.runWithRetries(operation, callable, this::retryLogin, this.executor);
   }
 
   /**
@@ -657,56 +620,15 @@ public class DgraphAsyncClient {
    * @return a future that completes with the operation result
    */
   public <T> CompletableFuture<T> withRetry(RetryPolicy policy, AsyncTransactionOp<T> op) {
-    return attemptAsync(policy, op, 0);
-  }
-
-  private <T> CompletableFuture<T> attemptAsync(
-      RetryPolicy policy, AsyncTransactionOp<T> op, int attempt) {
-    AsyncTransaction txn =
-        policy.isReadOnly() ? newReadOnlyTransaction() : newTransaction();
-    if (policy.isBestEffort()) {
-      txn.setBestEffort(true);
-    }
-
-    CompletableFuture<T> result = new CompletableFuture<>();
-
-    op.execute(txn)
-        .whenComplete(
-            (value, throwable) -> {
-              try {
-                txn.discard();
-              } catch (Exception ignored) {
-                // discard is best-effort cleanup
-              }
-
-              if (throwable == null) {
-                result.complete(value);
-                return;
-              }
-
-              DgraphException ex = Exceptions.translate(throwable);
-              if (!ex.isRetryable() || attempt >= policy.getMaxRetries()) {
-                result.completeExceptionally(ex);
-                return;
-              }
-
-              // Schedule retry after backoff delay
-              long delayMs = policy.calculateDelay(attempt);
-              Executor delayed =
-                  CompletableFuture.delayedExecutor(delayMs, TimeUnit.MILLISECONDS);
-              CompletableFuture.supplyAsync(() -> null, delayed)
-                  .thenCompose(ignored -> attemptAsync(policy, op, attempt + 1))
-                  .whenComplete(
-                      (retryValue, retryThrowable) -> {
-                        if (retryThrowable != null) {
-                          result.completeExceptionally(retryThrowable);
-                        } else {
-                          result.complete(retryValue);
-                        }
-                      });
-            });
-
-    return result;
+    return CompletableFutures.attemptAsync(
+        policy,
+        op,
+        0,
+        () -> {
+          AsyncTransaction txn =
+              policy.isReadOnly() ? newReadOnlyTransaction() : newTransaction();
+          return txn;
+        });
   }
 
   /** Calls %{@link io.grpc.ManagedChannel#shutdown} on all connections for this client */
