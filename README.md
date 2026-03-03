@@ -455,12 +455,13 @@ try {
 
 All exceptions thrown by the Dgraph client extend `DgraphException`, which itself extends
 `io.grpc.StatusRuntimeException`. Every exception carries:
+
 - The gRPC `Status` (via `getStatus()`)
 - An `isRetryable()` flag
 
 **Exception hierarchy:**
 
-```
+```text
 DgraphException (extends StatusRuntimeException)
 ├── AlphaException [retryable] — server reachable but temporarily unable to serve
 │   ├── AlphaNotReadyException — startup, indexing, Raft init
@@ -478,8 +479,8 @@ DgraphException (extends StatusRuntimeException)
 └── AuthException — authentication or authorization failure
 ```
 
-**Most code only needs one catch block.** Add specific catches only when you need
-to handle a particular error differently:
+**Most code only needs one catch block.** Add specific catches only when you need to handle a
+particular error differently:
 
 ```java
 // Simple — handles everything
@@ -526,9 +527,9 @@ try {
 
 ### Automatic Retry
 
-`withRetry` executes an operation in a managed transaction with automatic retry on
-retryable failures. A fresh transaction is created for each attempt, and the transaction
-is always discarded after the operation completes or fails.
+`withRetry` executes an operation in a managed transaction with automatic retry on retryable
+failures. A fresh transaction is created for each attempt, and the transaction is always discarded
+after the operation completes or fails.
 
 ```java
 // Default: 5 retries, 100ms base delay, exponential backoff up to 5s

@@ -13,35 +13,34 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 - feat: add namespace management (createNamespace, dropNamespace, listNamespaces)
 - feat: add convenience methods (dropAll, dropData, dropPredicate, dropType, setSchema)
 - feat: updated proto definitions to Dgraph v25
-- feat: typed exception hierarchy with specific error conditions
-  (`ConnectionException`, `AlphaException`, `AlphaNotReadyException`,
-  `AlphaShutdownException`, `AlphaOverloadedException`,
+- feat: typed exception hierarchy with specific error conditions (`ConnectionException`,
+  `AlphaException`, `AlphaNotReadyException`, `AlphaShutdownException`, `AlphaOverloadedException`,
   `DeadlineExceededException`, `ResourceExhaustedException`, `QueryException`,
   `DisallowedOperationException`, `AuthException`)
 - feat: `isRetryable()` method on all `DgraphException` subclasses
 - feat: `Exceptions` utility class (`ExceptionUtil` retained as deprecated alias)
-- feat: `withRetry()` on `DgraphClient` and `DgraphAsyncClient` for managed transaction
-  retry with exponential backoff. Configurable via `RetryPolicy`.
+- feat: `withRetry()` on `DgraphClient` and `DgraphAsyncClient` for managed transaction retry with
+  exponential backoff. Configurable via `RetryPolicy`.
 
 **Changed**
 
 - Updated copyright from Hypermode Inc. to Istari Digital, Inc.
 - Updated GitHub organization references from hypermodeinc to dgraph-io
-- `DgraphException` now extends `StatusRuntimeException` instead of `RuntimeException`.
-  Existing `catch (StatusRuntimeException e)` and `catch (RuntimeException e)` blocks still
-  catch all Dgraph exceptions. Only breaks code that does exact class checks like
+- `DgraphException` now extends `StatusRuntimeException` instead of `RuntimeException`. Existing
+  `catch (StatusRuntimeException e)` and `catch (RuntimeException e)` blocks still catch all Dgraph
+  exceptions. Only breaks code that does exact class checks like
   `e.getClass() == RuntimeException.class`.
-- `TxnException` now extends `DgraphException` instead of `RuntimeException`. A `catch
-  (DgraphException e)` block now also catches `TxnConflictException`, `TxnFinishedException`,
-  and `TxnReadOnlyException`. Place specific catches before `catch (DgraphException e)` if
-  you handle them differently.
-- gRPC errors are now translated to typed `DgraphException` subclasses instead of being thrown
-  as raw `StatusRuntimeException`. The original `Status` and trailers are preserved.
+- `TxnException` now extends `DgraphException` instead of `RuntimeException`. A
+  `catch (DgraphException e)` block now also catches `TxnConflictException`, `TxnFinishedException`,
+  and `TxnReadOnlyException`. Place specific catches before `catch (DgraphException e)` if you
+  handle them differently.
+- gRPC errors are now translated to typed `DgraphException` subclasses instead of being thrown as
+  raw `StatusRuntimeException`. The original `Status` and trailers are preserved.
 
 **Fixed**
 
-- fix: `checkVersion()`, `login()`, `loginIntoNamespace()`, and `shutdown()` now properly
-  unwrap `CompletionException`, matching the behavior of all other sync methods
+- fix: `checkVersion()`, `login()`, `loginIntoNamespace()`, and `shutdown()` now properly unwrap
+  `CompletionException`, matching the behavior of all other sync methods
 
 **Deprecated**
 

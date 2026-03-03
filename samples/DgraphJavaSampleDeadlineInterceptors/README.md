@@ -1,6 +1,6 @@
 Sample project demonstrating the use of [dgraph4j], the official Java client for Dgraph.
 
-[dgraph4j]: https://github.com/dgraph-io/dgraph4
+[dgraph4j]: https://github.com/dgraph-io/dgraph4j
 
 ## Running
 
