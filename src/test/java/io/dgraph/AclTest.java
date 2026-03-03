@@ -172,22 +172,32 @@ public class AclTest extends DgraphIntegrationTest {
     } catch (RuntimeException e) {
       assertTrue(shouldFail, "the " + operation + " should have succeed");
       // if there is an exception, we assert that it must be caused by permission being denied
-      Throwable cause = e;
-      while (cause.getCause() != null && !(cause.getCause() instanceof StatusRuntimeException)) {
-        cause = cause.getCause();
-      }
-
-      assertTrue(
-          cause.getCause() != null && cause.getCause() instanceof io.grpc.StatusRuntimeException);
-      StatusRuntimeException statusRuntimeException = (StatusRuntimeException) cause.getCause();
+      StatusRuntimeException statusRuntimeException = findStatusRuntimeException(e);
+      assertNotNull(statusRuntimeException, "expected a StatusRuntimeException");
       assertEquals(Status.Code.PERMISSION_DENIED, statusRuntimeException.getStatus().getCode());
       return;
     }
 
-    // assertFalse(shouldFail, );
-    if (shouldFail != false) {
-      throw new RuntimeException("the " + operation + " should have failed");
+    assertFalse(shouldFail, "the " + operation + " should have failed");
+  }
+
+  /**
+   * Finds a StatusRuntimeException either as the exception itself or in its cause chain. This
+   * handles both the case where typed exceptions (e.g., AuthException) are thrown directly and the
+   * legacy case where they are wrapped in other RuntimeExceptions.
+   */
+  private StatusRuntimeException findStatusRuntimeException(Throwable t) {
+    if (t instanceof StatusRuntimeException) {
+      return (StatusRuntimeException) t;
     }
+    Throwable cause = t;
+    while (cause.getCause() != null) {
+      cause = cause.getCause();
+      if (cause instanceof StatusRuntimeException) {
+        return (StatusRuntimeException) cause;
+      }
+    }
+    return null;
   }
 
   private void resetUser() throws Exception {

@@ -138,8 +138,8 @@ public class AlterConvenienceTest extends DgraphIntegrationTest {
     dgraphClient.setSchema(
         "name: string @index(exact) .\n" + "type Person {\n" + "  name\n" + "}");
 
-    // Verify the type exists in the schema
-    String schemaQuery = "schema(type: Person) {}";
+    // Verify the type exists in the schema by querying all types
+    String schemaQuery = "schema { types }";
     Response schemaBefore =
         dgraphClient.newReadOnlyTransaction().query(schemaQuery);
     String schemaBJson = schemaBefore.getJson().toStringUtf8();
