@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: © 2017-2026 Istari Digital, Inc.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package io.dgraph.example;
 
 import com.google.gson.Gson;
@@ -80,14 +84,21 @@ public class MultiThreadedMutation implements Runnable {
     Gson gson = new Gson();
     // Query
     String query =
-        "query all($a: string){\n"
-            + "  all(func: eq(name, $a)) {\n"
+        "query all($a: string){
+"
+            + "  all(func: eq(name, $a)) {
+"
             + "    "
-            + "uid\n"
-            + "name\n"
-            + "clickCount\n"
-            + "  }\n"
-            + "}\n";
+            + "uid
+"
+            + "name
+"
+            + "clickCount
+"
+            + "  }
+"
+            + "}
+";
 
     Map<String, String> vars = Collections.singletonMap("$a", "Alice");
 
@@ -109,7 +120,10 @@ public class MultiThreadedMutation implements Runnable {
       try {
         // find and update alice's clickCount in a transaction
         String upsertQuery =
-            "query {\n" + "user as var(func: eq(name, \"" + person.name + "\"))\n" + "}\n";
+            "query {
+" + "user as var(func: eq(name, \"" + person.name + "\"))
+" + "}
+";
         Mutation mu2 =
             Mutation.newBuilder()
                 .setSetNquads(

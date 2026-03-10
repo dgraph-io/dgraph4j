@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: © 2017-2026 Istari Digital, Inc.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package io.dgraph.example;
 
 import com.google.gson.Gson;
@@ -92,7 +96,9 @@ public class MultiThreadedMutationLauncher {
    * The schema for this example
    */
   private void createSchema() {
-    String schema = "name: string @index(exact) .\n " + "clickCount: int  .\n";
+    String schema = "name: string @index(exact) .
+ " + "clickCount: int  .
+";
 
     Operation operation = Operation.newBuilder().setSchema(schema).setRunInBackground(true).build();
     dgraphClient.alter(operation);
