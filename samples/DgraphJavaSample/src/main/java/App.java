@@ -1,3 +1,7 @@
+/*
+ * SPDX-FileCopyrightText: © 2017-2026 Istari Digital, Inc.
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import io.dgraph.DgraphClient;
@@ -66,7 +70,11 @@ public class App {
     }
     // Query
     String query =
-        "query all($a: string){\n" + "all(func: eq(name, $a)) {\n" + "    name\n" + "  }\n" + "}";
+        "query all($a: string){
+" + "all(func: eq(name, $a)) {
+" + "    name
+" + "  }
+" + "}";
     Map<String, String> vars = Collections.singletonMap("$a", "Alice");
     Response res = dgraphClient.newTransaction().queryWithVars(query, vars);
 
@@ -74,7 +82,8 @@ public class App {
     People ppl = gson.fromJson(res.getJson().toStringUtf8(), People.class);
 
     // Print results
-    System.out.printf("people found: %d\n", ppl.all.size());
+    System.out.printf("people found: %d
+", ppl.all.size());
     ppl.all.forEach(person -> System.out.println(person.name));
   }
 

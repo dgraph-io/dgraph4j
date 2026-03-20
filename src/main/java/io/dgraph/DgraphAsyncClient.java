@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: © Hypermode Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: © 2017-2026 Istari Digital, Inc.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -12,13 +12,12 @@ import io.dgraph.DgraphProto.Payload;
 import io.dgraph.DgraphProto.TxnContext;
 import io.dgraph.DgraphProto.Version;
 import io.grpc.Channel;
-import io.grpc.Context;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import io.grpc.stub.MetadataUtils;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -121,7 +120,7 @@ public class DgraphAsyncClient {
                 } catch (InvalidProtocolBufferException e) {
                   String errmsg = "error while parsing jwt from the response: ";
                   LOG.error(errmsg, e);
-                  throw new RuntimeException(errmsg, e);
+                  throw new AuthException(errmsg, e);
                 }
               });
     } finally {
@@ -200,50 +199,7 @@ public class DgraphAsyncClient {
    */
   protected <T> CompletableFuture<T> runWithRetries(
       String operation, Callable<CompletableFuture<T>> callable) {
-    final Callable<CompletableFuture<T>> ctxCallable = Context.current().wrap(callable);
-
-    return CompletableFuture.supplyAsync(
-        () -> {
-          try {
-            return ctxCallable.call().get();
-          } catch (InterruptedException e) {
-            LOG.error("The " + operation + " got interrupted:", e);
-            throw new RuntimeException(e);
-          } catch (ExecutionException e) {
-            if (ExceptionUtil.isJwtExpired(e.getCause())) {
-              try {
-                // retry the login
-                retryLogin().get();
-                // retry the supplied logic
-                return ctxCallable.call().get();
-              } catch (InterruptedException ie) {
-                LOG.error("The retried " + operation + " got interrupted:", ie);
-                throw new RuntimeException(ie);
-              } catch (ExecutionException ie) {
-                LOG.error("The retried " + operation + " encounters an execution exception:", ie);
-                throw new RuntimeException(ie);
-              } catch (Exception ie) {
-                LOG.error("The retried " + operation + " encounters a completion exception:", ie);
-                throw new CompletionException(ie);
-              }
-            } else if (e.getCause() instanceof StatusRuntimeException) {
-              StatusRuntimeException ex1 = (StatusRuntimeException) e.getCause();
-              Status.Code code = ex1.getStatus().getCode();
-              String desc = ex1.getStatus().getDescription();
-
-              if (code.equals(Status.Code.ABORTED)
-                  || code.equals(Status.Code.FAILED_PRECONDITION)) {
-                throw new CompletionException(new TxnConflictException(desc));
-              }
-            }
-            // Handle the case when the outer exception is not caused by JWT expiration
-            throw new RuntimeException(
-                "The " + operation + " encountered an execution exception:", e);
-          } catch (Exception e) {
-            throw new CompletionException(e);
-          }
-        },
-        this.executor);
+    return CompletableFutures.runWithRetries(operation, callable, this::retryLogin, this.executor);
   }
 
   /**
@@ -291,6 +247,274 @@ public class DgraphAsyncClient {
           localStub.checkVersion(checkRequest, observerBridge);
           return observerBridge.getDelegate();
         });
+  }
+
+  // ---------------------------------------------------------------------------
+  // DQL
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Runs a DQL query or mutation using the RunDQL RPC.
+   *
+   * @param request a fully-built RunDQLRequest
+   * @return CompletableFuture with the Response
+   */
+  public CompletableFuture<DgraphProto.Response> runDQL(DgraphProto.RunDQLRequest request) {
+    final DgraphGrpc.DgraphStub stub = anyClient();
+
+    return runWithRetries(
+        "runDQL",
+        () -> {
+          StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.runDQL(request, bridge);
+          return bridge.getDelegate();
+        });
+  }
+
+  /**
+   * Runs a DQL query or mutation with default options.
+   *
+   * @param dqlQuery the DQL query string
+   * @return CompletableFuture with the Response
+   */
+  public CompletableFuture<DgraphProto.Response> runDQL(String dqlQuery) {
+    return runDQL(dqlQuery, Collections.emptyMap(), false, false);
+  }
+
+  /**
+   * Runs a DQL query or mutation with full control over options.
+   *
+   * @param dqlQuery the DQL query string
+   * @param vars query variables (may be empty)
+   * @param readOnly whether the query is read-only
+   * @param bestEffort whether to use best-effort reads
+   * @return CompletableFuture with the Response
+   */
+  public CompletableFuture<DgraphProto.Response> runDQL(
+      String dqlQuery, Map<String, String> vars, boolean readOnly, boolean bestEffort) {
+    DgraphProto.RunDQLRequest.Builder builder =
+        DgraphProto.RunDQLRequest.newBuilder().setDqlQuery(dqlQuery);
+    if (vars != null && !vars.isEmpty()) {
+      builder.putAllVars(vars);
+    }
+    builder.setReadOnly(readOnly);
+    builder.setBestEffort(bestEffort);
+    return runDQL(builder.build());
+  }
+
+  // ---------------------------------------------------------------------------
+  // ID / Timestamp / Namespace Allocation
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Allocates IDs of the given type from the Dgraph cluster.
+   *
+   * @param request a fully-built AllocateIDsRequest
+   * @return CompletableFuture with the AllocateIDsResponse containing start/end range
+   */
+  public CompletableFuture<DgraphProto.AllocateIDsResponse> allocateIDs(
+      DgraphProto.AllocateIDsRequest request) {
+    final DgraphGrpc.DgraphStub stub = anyClient();
+
+    return runWithRetries(
+        "allocateIDs",
+        () -> {
+          StreamObserverBridge<DgraphProto.AllocateIDsResponse> bridge =
+              new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.allocateIDs(request, bridge);
+          return bridge.getDelegate();
+        });
+  }
+
+  /**
+   * Allocates a range of UIDs from the Dgraph cluster.
+   *
+   * @param howMany the number of UIDs to allocate (must be &gt; 0)
+   * @return CompletableFuture with the AllocateIDsResponse containing start/end range
+   */
+  public CompletableFuture<DgraphProto.AllocateIDsResponse> allocateUIDs(long howMany) {
+    if (howMany <= 0) {
+      throw new IllegalArgumentException("howMany must be greater than 0");
+    }
+    return allocateIDs(
+        DgraphProto.AllocateIDsRequest.newBuilder()
+            .setHowMany(howMany)
+            .setLeaseType(DgraphProto.LeaseType.UID)
+            .build());
+  }
+
+  /**
+   * Allocates a range of timestamps from the Dgraph cluster.
+   *
+   * @param howMany the number of timestamps to allocate (must be &gt; 0)
+   * @return CompletableFuture with the AllocateIDsResponse containing start/end range
+   */
+  public CompletableFuture<DgraphProto.AllocateIDsResponse> allocateTimestamps(long howMany) {
+    if (howMany <= 0) {
+      throw new IllegalArgumentException("howMany must be greater than 0");
+    }
+    return allocateIDs(
+        DgraphProto.AllocateIDsRequest.newBuilder()
+            .setHowMany(howMany)
+            .setLeaseType(DgraphProto.LeaseType.TS)
+            .build());
+  }
+
+  /**
+   * Allocates a range of namespace IDs from the Dgraph cluster.
+   *
+   * @param howMany the number of namespace IDs to allocate (must be &gt; 0)
+   * @return CompletableFuture with the AllocateIDsResponse containing start/end range
+   */
+  public CompletableFuture<DgraphProto.AllocateIDsResponse> allocateNamespaces(long howMany) {
+    if (howMany <= 0) {
+      throw new IllegalArgumentException("howMany must be greater than 0");
+    }
+    return allocateIDs(
+        DgraphProto.AllocateIDsRequest.newBuilder()
+            .setHowMany(howMany)
+            .setLeaseType(DgraphProto.LeaseType.NS)
+            .build());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Namespace Management
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Creates a new namespace in the Dgraph cluster.
+   *
+   * @return CompletableFuture with the CreateNamespaceResponse containing the new namespace ID
+   */
+  public CompletableFuture<DgraphProto.CreateNamespaceResponse> createNamespace() {
+    final DgraphGrpc.DgraphStub stub = anyClient();
+
+    return runWithRetries(
+        "createNamespace",
+        () -> {
+          StreamObserverBridge<DgraphProto.CreateNamespaceResponse> bridge =
+              new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.createNamespace(
+              DgraphProto.CreateNamespaceRequest.newBuilder().build(), bridge);
+          return bridge.getDelegate();
+        });
+  }
+
+  /**
+   * Drops (deletes) a namespace from the Dgraph cluster.
+   *
+   * @param namespace the namespace ID to drop
+   * @return CompletableFuture with the DropNamespaceResponse
+   */
+  public CompletableFuture<DgraphProto.DropNamespaceResponse> dropNamespace(long namespace) {
+    final DgraphGrpc.DgraphStub stub = anyClient();
+
+    return runWithRetries(
+        "dropNamespace",
+        () -> {
+          StreamObserverBridge<DgraphProto.DropNamespaceResponse> bridge =
+              new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.dropNamespace(
+              DgraphProto.DropNamespaceRequest.newBuilder().setNamespace(namespace).build(),
+              bridge);
+          return bridge.getDelegate();
+        });
+  }
+
+  /**
+   * Lists all namespaces in the Dgraph cluster.
+   *
+   * @return CompletableFuture with the ListNamespacesResponse
+   */
+  public CompletableFuture<DgraphProto.ListNamespacesResponse> listNamespaces() {
+    final DgraphGrpc.DgraphStub stub = anyClient();
+
+    return runWithRetries(
+        "listNamespaces",
+        () -> {
+          StreamObserverBridge<DgraphProto.ListNamespacesResponse> bridge =
+              new StreamObserverBridge<>();
+          DgraphGrpc.DgraphStub localStub = getStubWithJwt(stub);
+          localStub.listNamespaces(
+              DgraphProto.ListNamespacesRequest.newBuilder().build(), bridge);
+          return bridge.getDelegate();
+        });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Convenience Alter Methods
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Drops all data and schema from the Dgraph instance.
+   *
+   * @return CompletableFuture with Payload
+   */
+  public CompletableFuture<Payload> dropAll() {
+    return alter(DgraphProto.Operation.newBuilder().setDropAll(true).build());
+  }
+
+  /**
+   * Drops all data but preserves the schema.
+   *
+   * @return CompletableFuture with Payload
+   */
+  public CompletableFuture<Payload> dropData() {
+    return alter(
+        DgraphProto.Operation.newBuilder()
+            .setDropOp(DgraphProto.Operation.DropOp.DATA)
+            .build());
+  }
+
+  /**
+   * Drops a single predicate (attribute) from the schema and removes all its data.
+   *
+   * @param predicate the name of the predicate to drop
+   * @return CompletableFuture with Payload
+   */
+  public CompletableFuture<Payload> dropPredicate(String predicate) {
+    if (predicate == null || predicate.isEmpty()) {
+      throw new IllegalArgumentException("predicate must not be null or empty");
+    }
+    return alter(
+        DgraphProto.Operation.newBuilder()
+            .setDropOp(DgraphProto.Operation.DropOp.ATTR)
+            .setDropValue(predicate)
+            .build());
+  }
+
+  /**
+   * Drops a type from the schema.
+   *
+   * @param typeName the name of the type to drop
+   * @return CompletableFuture with Payload
+   */
+  public CompletableFuture<Payload> dropType(String typeName) {
+    if (typeName == null || typeName.isEmpty()) {
+      throw new IllegalArgumentException("typeName must not be null or empty");
+    }
+    return alter(
+        DgraphProto.Operation.newBuilder()
+            .setDropOp(DgraphProto.Operation.DropOp.TYPE)
+            .setDropValue(typeName)
+            .build());
+  }
+
+  /**
+   * Sets the schema on the Dgraph instance.
+   *
+   * @param schema the schema definition string
+   * @return CompletableFuture with Payload
+   */
+  public CompletableFuture<Payload> setSchema(String schema) {
+    if (schema == null || schema.isEmpty()) {
+      throw new IllegalArgumentException("schema must not be null or empty");
+    }
+    return alter(DgraphProto.Operation.newBuilder().setSchema(schema).build());
   }
 
   private DgraphGrpc.DgraphStub anyClient() {
@@ -362,6 +586,49 @@ public class DgraphAsyncClient {
    */
   public AsyncTransaction newReadOnlyTransaction(TxnContext context) {
     return new AsyncTransaction(this, this.anyClient(), context, true);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Retry helpers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Executes an asynchronous operation in a managed transaction with automatic retry on retryable
+   * failures, using {@link RetryPolicy#DEFAULT}.
+   *
+   * <p>A fresh transaction is created for each attempt. The transaction is always discarded after
+   * the operation completes or fails. Backoff delays are non-blocking.
+   *
+   * @param op the operation to execute
+   * @param <T> the return type
+   * @return a future that completes with the operation result
+   */
+  public <T> CompletableFuture<T> withRetry(AsyncTransactionOp<T> op) {
+    return withRetry(RetryPolicy.DEFAULT, op);
+  }
+
+  /**
+   * Executes an asynchronous operation in a managed transaction with automatic retry on retryable
+   * failures.
+   *
+   * <p>A fresh transaction is created for each attempt. The transaction is always discarded after
+   * the operation completes or fails. Backoff delays are non-blocking.
+   *
+   * @param policy the retry policy to use
+   * @param op the operation to execute
+   * @param <T> the return type
+   * @return a future that completes with the operation result
+   */
+  public <T> CompletableFuture<T> withRetry(RetryPolicy policy, AsyncTransactionOp<T> op) {
+    return CompletableFutures.attemptAsync(
+        policy,
+        op,
+        0,
+        () -> {
+          AsyncTransaction txn =
+              policy.isReadOnly() ? newReadOnlyTransaction() : newTransaction();
+          return txn;
+        });
   }
 
   /** Calls %{@link io.grpc.ManagedChannel#shutdown} on all connections for this client */

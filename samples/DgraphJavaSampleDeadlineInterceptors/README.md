@@ -1,6 +1,6 @@
 Sample project demonstrating the use of [dgraph4j], the official Java client for Dgraph.
 
-[dgraph4j]: https://github.com/hypermodeinc/dgraph4
+[dgraph4j]: https://github.com/dgraph-io/dgraph4j
 
 ## Running
 
@@ -9,7 +9,7 @@ Sample project demonstrating the use of [dgraph4j], the official Java client for
 You will need to install [Dgraph v21.3.0 or above][releases] and start a local cluster as shown
 below.
 
-[releases]: https://github.com/hypermodeinc/dgraph/releases
+[releases]: https://github.com/dgraph-io/dgraph/releases
 
 First, create two separate directories for `dgraph zero` and `dgraph server`.
 
@@ -45,7 +45,7 @@ instance. So make sure that you don't have any important data on your Dgraph ins
 This example in [App.java:39](./src/main/java/App.java#L39-L47) creates the DgraphStub with a
 deadline using a call interceptor to set timeouts **per request**. This is most likely what you want
 to do. For more info, see
-[Setting Deadlines](https://github.com/hypermodeinc/dgraph4j/#setting-deadlines).
+[Setting Deadlines](https://github.com/dgraph-io/dgraph4j/#setting-deadlines).
 
 ```java
 stub =

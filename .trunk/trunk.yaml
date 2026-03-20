@@ -25,7 +25,7 @@ lint:
         - samples/*/gradlew
         - samples/*/gradle/*/*
   enabled:
-    - trivy@0.59.1
+    - trivy@0.69.3
     - actionlint@1.7.7
     - checkov@3.2.365
     - git-diff-check

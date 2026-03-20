@@ -34,13 +34,11 @@ jobs:
           java-version-file: dgraph4j/.java-version
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: current
       - name: Checkout Dgraph repo # use latest dgraph build
         uses: actions/checkout@v5
         with:
           path: dgraph
-          repository: hypermodeinc/dgraph
+          repository: dgraph-io/dgraph
           ref: main
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -51,6 +49,6 @@ jobs:
       - name: Spin up local dgraph cluster
         run: cd dgraph4j && docker compose -f docker-compose.test.yml up -d
       - name: Run tests
-        run: cd dgraph4j && gradle build -i
+        run: cd dgraph4j && ./gradlew build -i
       - name: Tear down cluster
         run: cd dgraph4j && docker compose -f docker-compose.test.yml down

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: © Hypermode Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: © 2017-2026 Istari Digital, Inc.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -15,7 +15,6 @@ import io.dgraph.DgraphProto.Mutation;
 import io.dgraph.DgraphProto.Operation;
 import io.dgraph.DgraphProto.Response;
 import io.dgraph.DgraphProto.TxnContext;
-import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -172,24 +171,6 @@ public class DgraphClientTest extends DgraphIntegrationTest {
   }
 
   @Test
-  public void testFromCloudEndpoint_ValidURL() {
-    try {
-      DgraphClient.clientStubFromCloudEndpoint("https://your-instance.cloud.dgraph.io/graphql", "");
-    } catch (MalformedURLException e) {
-      fail(e.getMessage());
-    }
-  }
-
-  @Test
-  public void testFromCloudEndpoint_InValidURL() {
-    try {
-      DgraphClient.clientStubFromCloudEndpoint("https://a-bad-url", "");
-      fail("Invalid Slash URL should not be accepted.");
-    } catch (MalformedURLException e) {
-    }
-  }
-
-  @Test
   public void testTimeouts() {
     // Set schema
     Operation op = Operation.newBuilder().setSchema("name: string @index(exact) @upsert .").build();
@@ -236,5 +217,15 @@ public class DgraphClientTest extends DgraphIntegrationTest {
     assertTrue(data.has("me"));
     name = data.getAsJsonArray("me").get(0).getAsJsonObject().get("name").getAsString();
     assertEquals("Alice", name);
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testFromSlashEndpointThrows() throws Exception {
+    DgraphClient.clientStubFromSlashEndpoint("https://example.cloud.dgraph.io/graphql", "key");
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testFromCloudEndpointThrows() throws Exception {
+    DgraphClient.clientStubFromCloudEndpoint("https://example.cloud.dgraph.io/graphql", "key");
   }
 }

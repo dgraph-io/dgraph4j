@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: © Hypermode Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: © 2017-2026 Istari Digital, Inc.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -247,7 +247,7 @@ public class DgraphClient {
    *       <li>"verify-ca" - Uses TLS encryption with certificate verification</li>
    *     </ul>
    *   </li>
-   *   <li>apikey - API key for authorization from Dgraph Cloud</li>
+   *   <li>apikey - API key for authorization</li>
    *   <li>bearertoken - Bearer token for authorization</li>
    * </ul>
    *
@@ -334,45 +334,37 @@ public class DgraphClient {
   }
 
   /**
-   * Creates a gRPC stub that can be used to construct clients to connect with Slash GraphQL.
+   * Creates a gRPC stub to connect with Dgraph Cloud.
    *
-   * @param slashEndpoint The url of the Slash GraphQL endpoint. Example:
-   *     https://your-slash-instance.cloud.dgraph.io/graphql
-   * @param apiKey The API key used to connect to your Slash GraphQL instance.
-   * @return A new DgraphGrpc.DgraphStub object to be used with DgraphClient/DgraphAsyncClient.
-   * @deprecated This method will be removed in v21.07 release. Please use {@link
-   *     #clientStubFromCloudEndpoint(String, String) clientStubFromCloudEndpoint} instead.
+   * @deprecated Dgraph Cloud has been discontinued. Use {@link #open(String)} or
+   *     construct a {@link io.dgraph.DgraphGrpc.DgraphStub} directly.
+   * @param slashEndpoint The url of the former Dgraph Cloud instance.
+   * @param apiKey The API key.
+   * @return Never returns — always throws.
+   * @throws UnsupportedOperationException always
    */
   @Deprecated
   public static DgraphGrpc.DgraphStub clientStubFromSlashEndpoint(
       String slashEndpoint, String apiKey) throws MalformedURLException {
-    return clientStubFromCloudEndpoint(slashEndpoint, apiKey);
+    throw new UnsupportedOperationException(
+        "Dgraph Cloud has been discontinued. Use DgraphClient.clientStub() instead.");
   }
 
   /**
-   * Creates a gRPC stub that can be used to construct clients to connect with Dgraph Cloud.
+   * Creates a gRPC stub to connect with Dgraph Cloud.
    *
-   * @param cloudEndpoint The url of the Dgraph Cloud instance. Example:
-   *     https://your-instance.cloud.dgraph.io/graphql
-   * @param apiKey The API key used to connect to your Dgraph Cloud instance.
-   * @return A new {@link io.dgraph.DgraphGrpc.DgraphStub} object to be used with {@link
-   *     DgraphClient}/{@link DgraphAsyncClient}.
-   * @since v21.03.1
+   * @deprecated Dgraph Cloud has been discontinued. Use {@link #open(String)} or
+   *     construct a {@link io.dgraph.DgraphGrpc.DgraphStub} directly.
+   * @param cloudEndpoint The url of the former Dgraph Cloud instance.
+   * @param apiKey The API key.
+   * @return Never returns — always throws.
+   * @throws UnsupportedOperationException always
    */
+  @Deprecated
   public static DgraphGrpc.DgraphStub clientStubFromCloudEndpoint(
       String cloudEndpoint, String apiKey) throws MalformedURLException {
-    String[] parts = new URL(cloudEndpoint).getHost().split("[.]", 2);
-    if (parts.length < 2) {
-      throw new MalformedURLException("Invalid Dgraph Cloud URL.");
-    }
-    String gRPCAddress = parts[0] + ".grpc." + parts[1];
-
-    Metadata metadata = new Metadata();
-    metadata.put(
-        Metadata.Key.of(gRPC_AUTHORIZATION_HEADER_NAME, Metadata.ASCII_STRING_MARSHALLER), apiKey);
-    return DgraphGrpc.newStub(
-            ManagedChannelBuilder.forAddress(gRPCAddress, 443).useTransportSecurity().build())
-        .withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata));
+    throw new UnsupportedOperationException(
+        "Dgraph Cloud has been discontinued. Use DgraphClient.clientStub() instead.");
   }
 
   /**
@@ -477,7 +469,7 @@ public class DgraphClient {
    * @param op a protocol buffer Operation object representing the operation being performed.
    */
   public void alter(Operation op) {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncClient.alter(op).join();
         });
@@ -490,7 +482,166 @@ public class DgraphClient {
    * @return A Version object which represents the version of Dgraph instance.
    */
   public Version checkVersion() {
-    return asyncClient.checkVersion().join();
+    return Exceptions.withExceptionUnwrapped(() -> asyncClient.checkVersion().join());
+  }
+
+  // ---------------------------------------------------------------------------
+  // DQL
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Runs a DQL query or mutation with default options.
+   *
+   * @param dqlQuery the DQL query string
+   * @return the Response from the DQL execution
+   */
+  public DgraphProto.Response runDQL(String dqlQuery) {
+    return Exceptions.withExceptionUnwrapped(() -> asyncClient.runDQL(dqlQuery).join());
+  }
+
+  /**
+   * Runs a DQL query or mutation with full control over options.
+   *
+   * @param dqlQuery the DQL query string
+   * @param vars query variables (may be empty)
+   * @param readOnly whether the query is read-only
+   * @param bestEffort whether to use best-effort reads
+   * @return the Response from the DQL execution
+   */
+  public DgraphProto.Response runDQL(
+      String dqlQuery, Map<String, String> vars, boolean readOnly, boolean bestEffort) {
+    return Exceptions.withExceptionUnwrapped(
+        () -> asyncClient.runDQL(dqlQuery, vars, readOnly, bestEffort).join());
+  }
+
+  // ---------------------------------------------------------------------------
+  // ID / Timestamp / Namespace Allocation
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Allocates a range of UIDs from the Dgraph cluster.
+   *
+   * @param howMany the number of UIDs to allocate (must be &gt; 0)
+   * @return the AllocateIDsResponse containing start/end range
+   */
+  public DgraphProto.AllocateIDsResponse allocateUIDs(long howMany) {
+    return Exceptions.withExceptionUnwrapped(() -> asyncClient.allocateUIDs(howMany).join());
+  }
+
+  /**
+   * Allocates a range of timestamps from the Dgraph cluster.
+   *
+   * @param howMany the number of timestamps to allocate (must be &gt; 0)
+   * @return the AllocateIDsResponse containing start/end range
+   */
+  public DgraphProto.AllocateIDsResponse allocateTimestamps(long howMany) {
+    return Exceptions.withExceptionUnwrapped(
+        () -> asyncClient.allocateTimestamps(howMany).join());
+  }
+
+  /**
+   * Allocates a range of namespace IDs from the Dgraph cluster.
+   *
+   * @param howMany the number of namespace IDs to allocate (must be &gt; 0)
+   * @return the AllocateIDsResponse containing start/end range
+   */
+  public DgraphProto.AllocateIDsResponse allocateNamespaces(long howMany) {
+    return Exceptions.withExceptionUnwrapped(
+        () -> asyncClient.allocateNamespaces(howMany).join());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Namespace Management
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Creates a new namespace in the Dgraph cluster.
+   *
+   * @return the CreateNamespaceResponse containing the new namespace ID
+   */
+  public DgraphProto.CreateNamespaceResponse createNamespace() {
+    return Exceptions.withExceptionUnwrapped(() -> asyncClient.createNamespace().join());
+  }
+
+  /**
+   * Drops (deletes) a namespace from the Dgraph cluster.
+   *
+   * @param namespace the namespace ID to drop
+   */
+  public void dropNamespace(long namespace) {
+    Exceptions.withExceptionUnwrapped(
+        () -> {
+          asyncClient.dropNamespace(namespace).join();
+        });
+  }
+
+  /**
+   * Lists all namespaces in the Dgraph cluster.
+   *
+   * @return the ListNamespacesResponse
+   */
+  public DgraphProto.ListNamespacesResponse listNamespaces() {
+    return Exceptions.withExceptionUnwrapped(() -> asyncClient.listNamespaces().join());
+  }
+
+  // ---------------------------------------------------------------------------
+  // Convenience Alter Methods
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Drops all data and schema from the Dgraph instance.
+   */
+  public void dropAll() {
+    Exceptions.withExceptionUnwrapped(
+        () -> {
+          asyncClient.dropAll().join();
+        });
+  }
+
+  /**
+   * Drops all data but preserves the schema.
+   */
+  public void dropData() {
+    Exceptions.withExceptionUnwrapped(
+        () -> {
+          asyncClient.dropData().join();
+        });
+  }
+
+  /**
+   * Drops a single predicate (attribute) from the schema and removes all its data.
+   *
+   * @param predicate the name of the predicate to drop
+   */
+  public void dropPredicate(String predicate) {
+    Exceptions.withExceptionUnwrapped(
+        () -> {
+          asyncClient.dropPredicate(predicate).join();
+        });
+  }
+
+  /**
+   * Drops a type from the schema.
+   *
+   * @param typeName the name of the type to drop
+   */
+  public void dropType(String typeName) {
+    Exceptions.withExceptionUnwrapped(
+        () -> {
+          asyncClient.dropType(typeName).join();
+        });
+  }
+
+  /**
+   * Sets the schema on the Dgraph instance.
+   *
+   * @param schema the schema definition string
+   */
+  public void setSchema(String schema) {
+    Exceptions.withExceptionUnwrapped(
+        () -> {
+          asyncClient.setSchema(schema).join();
+        });
   }
 
   /**
@@ -503,7 +654,10 @@ public class DgraphClient {
    * @param password the password of the user
    */
   public void login(String userid, String password) {
-    asyncClient.login(userid, password).join();
+    Exceptions.withExceptionUnwrapped(
+        () -> {
+          asyncClient.login(userid, password).join();
+        });
   }
 
   /**
@@ -517,11 +671,91 @@ public class DgraphClient {
    * @param namespace the namespace in which to login
    */
   public void loginIntoNamespace(String userid, String password, long namespace) {
-    asyncClient.loginIntoNamespace(userid, password, namespace).join();
+    Exceptions.withExceptionUnwrapped(
+        () -> {
+          asyncClient.loginIntoNamespace(userid, password, namespace).join();
+        });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Retry helpers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Executes a synchronous operation in a managed transaction with automatic retry on retryable
+   * failures, using {@link RetryPolicy#DEFAULT}.
+   *
+   * <p>A fresh transaction is created for each attempt. The transaction is always discarded after
+   * the operation completes or fails.
+   *
+   * <pre>{@code
+   * Response resp = client.withRetry(txn -> {
+   *     txn.mutate(mutation);
+   *     txn.commit();
+   *     return txn.queryAndCommit(query);
+   * });
+   * }</pre>
+   *
+   * @param op the operation to execute
+   * @param <T> the return type
+   * @return the result of the operation
+   * @throws DgraphException if the operation fails after all retries are exhausted, or if a
+   *     non-retryable error occurs
+   */
+  public <T> T withRetry(TransactionOp<T> op) {
+    return withRetry(RetryPolicy.DEFAULT, op);
+  }
+
+  /**
+   * Executes a synchronous operation in a managed transaction with automatic retry on retryable
+   * failures.
+   *
+   * @param policy the retry policy to use
+   * @param op the operation to execute
+   * @param <T> the return type
+   * @return the result of the operation
+   * @throws DgraphException if the operation fails after all retries are exhausted, or if a
+   *     non-retryable error occurs
+   */
+  public <T> T withRetry(RetryPolicy policy, TransactionOp<T> op) {
+    DgraphException lastError = null;
+    for (int attempt = 0; attempt <= policy.getMaxRetries(); attempt++) {
+      Transaction txn = policy.isReadOnly() ? newReadOnlyTransaction() : newTransaction();
+      if (policy.isBestEffort()) {
+        txn.setBestEffort(true);
+      }
+      try {
+        T result = op.execute(txn);
+        return result;
+      } catch (DgraphException e) {
+        lastError = e;
+        if (!e.isRetryable() || attempt >= policy.getMaxRetries()) {
+          throw e;
+        }
+        try {
+          Thread.sleep(policy.calculateDelay(attempt));
+        } catch (InterruptedException ie) {
+          Thread.currentThread().interrupt();
+          throw new DgraphException("Retry interrupted", ie);
+        }
+      } catch (Exception e) {
+        throw Exceptions.translate(e);
+      } finally {
+        try {
+          txn.discard();
+        } catch (Exception ignored) {
+          // discard is best-effort cleanup
+        }
+      }
+    }
+    throw lastError; // unreachable, but compiler needs it
   }
 
   /** Calls %{@link io.grpc.ManagedChannel#shutdown} on all connections for this client */
   public void shutdown() {
-    asyncClient.shutdown().join();
+    Exceptions.withExceptionUnwrapped(
+        () -> {
+          asyncClient.shutdown().join();
+        });
   }
 }

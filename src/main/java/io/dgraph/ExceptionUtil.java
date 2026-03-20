@@ -1,53 +1,48 @@
 /*
- * SPDX-FileCopyrightText: © Hypermode Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: © 2017-2026 Istari Digital, Inc.
  * SPDX-License-Identifier: Apache-2.0
  */
 
 package io.dgraph;
 
-import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import java.util.concurrent.CompletionException;
 import java.util.function.Supplier;
 
+/**
+ * @deprecated Use {@link Exceptions} instead. This class will be removed in a future release.
+ */
+@Deprecated
 public class ExceptionUtil {
+
+  private ExceptionUtil() {}
+
+  /** @deprecated Use {@link Exceptions#unwrapException(CompletionException)} instead. */
+  @Deprecated
   public static RuntimeException unwrapException(CompletionException ex) {
-    if (ex.getCause() instanceof RuntimeException) {
-      return (RuntimeException) ex.getCause();
-    }
-    return ex;
+    return Exceptions.unwrapException(ex);
   }
 
+  /** @deprecated Use {@link Exceptions#withExceptionUnwrapped(Supplier)} instead. */
+  @Deprecated
   public static <R> R withExceptionUnwrapped(Supplier<R> s) {
-    try {
-      return s.get();
-    } catch (CompletionException ex) {
-      // here we are trying to fish out any Dgraph-specific exceptions and pass them up
-      throw unwrapException(ex);
-    }
+    return Exceptions.withExceptionUnwrapped(s);
   }
 
+  /** @deprecated Use {@link Exceptions#withExceptionUnwrapped(Runnable)} instead. */
+  @Deprecated
   public static void withExceptionUnwrapped(Runnable r) {
-    try {
-      r.run();
-    } catch (CompletionException ex) {
-      // here we are trying to fish out any Dgraph-specific exceptions and pass them up
-      throw unwrapException(ex);
-    }
+    Exceptions.withExceptionUnwrapped(r);
   }
 
-  public static boolean isJwtExpired(Throwable e) {
-    // search the cause stack to try to find a StatusRuntimeException
-    Throwable cause = e;
-    while (cause.getCause() != null && !(cause instanceof StatusRuntimeException)) {
-      cause = cause.getCause();
-    }
+  /** @deprecated Use {@link Exceptions#translate(Throwable)} instead. */
+  @Deprecated
+  public static DgraphException translate(Throwable t) {
+    return Exceptions.translate(t);
+  }
 
-    if (cause instanceof StatusRuntimeException) {
-      StatusRuntimeException runtimeException = (StatusRuntimeException) cause;
-      return runtimeException.getStatus().getCode().equals(Status.Code.UNAUTHENTICATED)
-          && runtimeException.getMessage().contains("Token is expired");
-    }
-    return false;
+  /** @deprecated Use {@link Exceptions#isJwtExpired(Throwable)} instead. */
+  @Deprecated
+  public static boolean isJwtExpired(Throwable e) {
+    return Exceptions.isJwtExpired(e);
   }
 }

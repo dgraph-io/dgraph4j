@@ -4,6 +4,50 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
+## [25.0.0] - 2026-02-26
+
+**Added**
+
+- feat: add RunDQL API for running DQL queries and mutations directly
+- feat: add allocateUIDs, allocateTimestamps, and allocateNamespaces methods
+- feat: add namespace management (createNamespace, dropNamespace, listNamespaces)
+- feat: add convenience methods (dropAll, dropData, dropPredicate, dropType, setSchema)
+- feat: updated proto definitions to Dgraph v25
+- feat: typed exception hierarchy with specific error conditions (`ConnectionException`,
+  `AlphaException`, `AlphaNotReadyException`, `AlphaShutdownException`, `AlphaOverloadedException`,
+  `DeadlineExceededException`, `ResourceExhaustedException`, `QueryException`,
+  `DisallowedOperationException`, `AuthException`)
+- feat: `isRetryable()` method on all `DgraphException` subclasses
+- feat: `Exceptions` utility class (`ExceptionUtil` retained as deprecated alias)
+- feat: `withRetry()` on `DgraphClient` and `DgraphAsyncClient` for managed transaction retry with
+  exponential backoff. Configurable via `RetryPolicy`.
+
+**Changed**
+
+- Updated copyright from Hypermode Inc. to Istari Digital, Inc.
+- Updated GitHub organization references from hypermodeinc to dgraph-io
+- `DgraphException` now extends `StatusRuntimeException` instead of `RuntimeException`. Existing
+  `catch (StatusRuntimeException e)` and `catch (RuntimeException e)` blocks still catch all Dgraph
+  exceptions. Only breaks code that does exact class checks like
+  `e.getClass() == RuntimeException.class`.
+- `TxnException` now extends `DgraphException` instead of `RuntimeException`. A
+  `catch (DgraphException e)` block now also catches `TxnConflictException`, `TxnFinishedException`,
+  and `TxnReadOnlyException`. Place specific catches before `catch (DgraphException e)` if you
+  handle them differently.
+- gRPC errors are now translated to typed `DgraphException` subclasses instead of being thrown as
+  raw `StatusRuntimeException`. The original `Status` and trailers are preserved.
+
+**Fixed**
+
+- fix: `checkVersion()`, `login()`, `loginIntoNamespace()`, and `shutdown()` now properly unwrap
+  `CompletionException`, matching the behavior of all other sync methods
+
+**Deprecated**
+
+- Deprecated clientStubFromSlashEndpoint and clientStubFromCloudEndpoint (now throw
+  UnsupportedOperationException)
+- Removed Dgraph Cloud section from documentation
+
 ## [24.2.0] - 2025-04-21
 
 **Added**
@@ -287,26 +331,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 - Fully compatible with Dgraph v1.0
 
-[Unreleased]: https://github.com/hypermodeinc/dgraph4j/compare/v21.12.0...HEAD
-[21.12.0]: https://github.com/hypermodeinc/dgraph4j/compare/v21.03.2...v21.12.0
-[21.03.2]: https://github.com/hypermodeinc/dgraph4j/compare/v21.03.1...v21.03.2
-[21.03.1]: https://github.com/hypermodeinc/dgraph4j/compare/v21.03.0...v21.03.1
-[21.03.0]: https://github.com/hypermodeinc/dgraph4j/compare/v20.11.0...v21.03.0
-[20.11.0]: https://github.com/hypermodeinc/dgraph4j/compare/v20.03.3...v20.11.0
-[20.03.3]: https://github.com/hypermodeinc/dgraph4j/compare/v20.03.2...v20.03.3
-[20.03.2]: https://github.com/hypermodeinc/dgraph4j/compare/v20.03.1...v20.03.2
-[20.03.1]: https://github.com/hypermodeinc/dgraph4j/compare/v20.03.0...v20.03.1
-[20.03.0]: https://github.com/hypermodeinc/dgraph4j/compare/v2.1.0...v20.03.0
-[2.1.0]: https://github.com/hypermodeinc/dgraph4j/compare/v2.0.2...v2.1.0
-[2.0.2]: https://github.com/hypermodeinc/dgraph4j/compare/v2.0.1...v2.0.2
-[2.0.1]: https://github.com/hypermodeinc/dgraph4j/compare/v1.7.4...v2.0.1
-[1.7.4]: https://github.com/hypermodeinc/dgraph4j/compare/v1.7.3...v1.7.4
-[1.7.3]: https://github.com/hypermodeinc/dgraph4j/compare/v1.7.0...v1.7.3
-[1.7.0]: https://github.com/hypermodeinc/dgraph4j/compare/v1.6.0...v1.7.0
-[1.6.0]: https://github.com/hypermodeinc/dgraph4j/compare/v1.5.0...v1.6.0
-[1.5.0]: https://github.com/hypermodeinc/dgraph4j/compare/v1.4.2...v1.5.0
-[1.4.2]: https://github.com/hypermodeinc/dgraph4j/compare/v1.3.0...v1.4.2
-[1.3.0]: https://github.com/hypermodeinc/dgraph4j/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/hypermodeinc/dgraph4j/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/hypermodeinc/dgraph4j/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/hypermodeinc/dgraph4j/tree/v1.0.0
+[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v25.0.0...HEAD
+[25.0.0]: https://github.com/dgraph-io/dgraph4j/compare/v24.2.0...v25.0.0
+[24.2.0]: https://github.com/dgraph-io/dgraph4j/compare/v24.1.1...v24.2.0
+[24.1.1]: https://github.com/dgraph-io/dgraph4j/compare/v24.0.0...v24.1.1
+[24.0.0]: https://github.com/dgraph-io/dgraph4j/compare/v21.12.0...v24.0.0
+[21.12.0]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.2...v21.12.0
+[21.03.2]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.1...v21.03.2
+[21.03.1]: https://github.com/dgraph-io/dgraph4j/compare/v21.03.0...v21.03.1
+[21.03.0]: https://github.com/dgraph-io/dgraph4j/compare/v20.11.0...v21.03.0
+[20.11.0]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.3...v20.11.0
+[20.03.3]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.2...v20.03.3
+[20.03.2]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.1...v20.03.2
+[20.03.1]: https://github.com/dgraph-io/dgraph4j/compare/v20.03.0...v20.03.1
+[20.03.0]: https://github.com/dgraph-io/dgraph4j/compare/v2.1.0...v20.03.0
+[2.1.0]: https://github.com/dgraph-io/dgraph4j/compare/v2.0.2...v2.1.0
+[2.0.2]: https://github.com/dgraph-io/dgraph4j/compare/v2.0.1...v2.0.2
+[2.0.1]: https://github.com/dgraph-io/dgraph4j/compare/v1.7.4...v2.0.1
+[1.7.4]: https://github.com/dgraph-io/dgraph4j/compare/v1.7.3...v1.7.4
+[1.7.3]: https://github.com/dgraph-io/dgraph4j/compare/v1.7.0...v1.7.3
+[1.7.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.6.0...v1.7.0
+[1.6.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.5.0...v1.6.0
+[1.5.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.4.2...v1.5.0
+[1.4.2]: https://github.com/dgraph-io/dgraph4j/compare/v1.3.0...v1.4.2
+[1.3.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/dgraph-io/dgraph4j/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/dgraph-io/dgraph4j/tree/v1.0.0

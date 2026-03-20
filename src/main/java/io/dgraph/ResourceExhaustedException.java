@@ -1,0 +1,21 @@
+/*
+ * SPDX-FileCopyrightText: © 2017-2026 Istari Digital, Inc.
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+package io.dgraph;
+
+import io.grpc.Metadata;
+import io.grpc.Status;
+
+/**
+ * Thrown when a resource limit is exceeded, such as the maximum gRPC message size. This is not
+ * retryable without changing the request (e.g., reducing payload size).
+ */
+public class ResourceExhaustedException extends DgraphException {
+  private static final long serialVersionUID = 1L;
+
+  ResourceExhaustedException(Status status, Metadata trailers) {
+    super(status, trailers);
+  }
+}

@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: © Hypermode Inc. <hello@hypermode.com>
+ * SPDX-FileCopyrightText: © 2017-2026 Istari Digital, Inc.
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -37,7 +37,7 @@ public class Transaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public Response queryWithVars(final String query, final Map<String, String> vars) {
-    return ExceptionUtil.withExceptionUnwrapped(
+    return Exceptions.withExceptionUnwrapped(
         () -> asyncTransaction.queryWithVars(query, vars).join());
   }
 
@@ -55,7 +55,7 @@ public class Transaction implements AutoCloseable {
    */
   public Response queryWithVars(
       final String query, final Map<String, String> vars, long duration, TimeUnit units) {
-    return ExceptionUtil.withExceptionUnwrapped(
+    return Exceptions.withExceptionUnwrapped(
         () -> asyncTransaction.queryWithVars(query, vars, duration, units).join());
   }
 
@@ -92,7 +92,7 @@ public class Transaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public Response queryRDFWithVars(final String query, final Map<String, String> vars) {
-    return ExceptionUtil.withExceptionUnwrapped(
+    return Exceptions.withExceptionUnwrapped(
         () -> asyncTransaction.queryRDFWithVars(query, vars).join());
   }
 
@@ -110,7 +110,7 @@ public class Transaction implements AutoCloseable {
    */
   public Response queryRDFWithVars(
       final String query, final Map<String, String> vars, long duration, TimeUnit units) {
-    return ExceptionUtil.withExceptionUnwrapped(
+    return Exceptions.withExceptionUnwrapped(
         () -> asyncTransaction.queryRDFWithVars(query, vars, duration, units).join());
   }
 
@@ -147,7 +147,7 @@ public class Transaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public Response mutate(Mutation mutation) {
-    return ExceptionUtil.withExceptionUnwrapped(() -> asyncTransaction.mutate(mutation).join());
+    return Exceptions.withExceptionUnwrapped(() -> asyncTransaction.mutate(mutation).join());
   }
 
   /**
@@ -163,7 +163,7 @@ public class Transaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public Response mutate(Mutation mutation, long duration, TimeUnit units) {
-    return ExceptionUtil.withExceptionUnwrapped(
+    return Exceptions.withExceptionUnwrapped(
         () -> asyncTransaction.mutate(mutation, duration, units).join());
   }
 
@@ -175,7 +175,7 @@ public class Transaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public Response doRequest(Request request) {
-    return ExceptionUtil.withExceptionUnwrapped(() -> asyncTransaction.doRequest(request).join());
+    return Exceptions.withExceptionUnwrapped(() -> asyncTransaction.doRequest(request).join());
   }
 
   /**
@@ -189,7 +189,7 @@ public class Transaction implements AutoCloseable {
    * @return a Response protocol buffer object.
    */
   public Response doRequest(Request request, long duration, TimeUnit units) {
-    return ExceptionUtil.withExceptionUnwrapped(
+    return Exceptions.withExceptionUnwrapped(
         () -> asyncTransaction.doRequest(request, duration, units).join());
   }
 
@@ -202,7 +202,7 @@ public class Transaction implements AutoCloseable {
    * user to decide if they wish to retry. In this case, the user should create a new transaction.
    */
   public void commit() {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncTransaction.commit().join();
         });
@@ -217,7 +217,7 @@ public class Transaction implements AutoCloseable {
    * In these cases, the server will eventually do the transaction clean up.
    */
   public void discard() {
-    ExceptionUtil.withExceptionUnwrapped(
+    Exceptions.withExceptionUnwrapped(
         () -> {
           asyncTransaction.discard().join();
         });
@@ -237,6 +237,6 @@ public class Transaction implements AutoCloseable {
 
   @Override
   public void close() {
-    ExceptionUtil.withExceptionUnwrapped(this::discard);
+    Exceptions.withExceptionUnwrapped(this::discard);
   }
 }
