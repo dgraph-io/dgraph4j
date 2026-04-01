@@ -8,12 +8,12 @@ Dgraph owns the `io.dgraph` namespace on Maven Central. Releases are published a
 
 The following GitHub Actions secrets must be configured in the repository:
 
-| Secret               | Description                                                                 |
-| -------------------- | --------------------------------------------------------------------------- |
-| `OSSRH_USERNAME`     | Sonatype Central Portal user token username                                 |
-| `OSSRH_PASSWORD`     | Sonatype Central Portal user token password                                 |
-| `GPG_SIGNING_KEY`    | ASCII-armored GPG private key (`gpg --armor --export-secret-keys <key-id>`) |
-| `GPG_SIGNING_PASSWORD` | Passphrase for the GPG signing key                                        |
+| Secret                 | Description                                                                 |
+| ---------------------- | --------------------------------------------------------------------------- |
+| `OSSRH_USERNAME`       | Sonatype Central Portal user token username                                 |
+| `OSSRH_PASSWORD`       | Sonatype Central Portal user token password                                 |
+| `GPG_SIGNING_KEY`      | ASCII-armored GPG private key (`gpg --armor --export-secret-keys <key-id>`) |
+| `GPG_SIGNING_PASSWORD` | Passphrase for the GPG signing key                                          |
 
 Portal user tokens can be generated at https://central.sonatype.com/usertoken.
 
@@ -60,4 +60,3 @@ Then run:
 - [Generating a Portal Token](https://central.sonatype.org/publish/generate-portal-token/)
 - [Publishing via the OSSRH Staging API](https://central.sonatype.org/publish/publish-portal-gradle/)
 - [gradle-nexus/publish-plugin](https://github.com/gradle-nexus/publish-plugin)
-````
