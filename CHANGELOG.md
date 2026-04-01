@@ -105,7 +105,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 - chore: added a test for best effort queries ([#182])
 
 [#287]: https://github.com/dgraph-io/dgraph4j/pull/287
-
 [#220]: https://github.com/hypermodeinc/dgraph4j/pull/220
 [#215]: https://github.com/hypermodeinc/dgraph4j/pull/215
 [#214]: https://github.com/hypermodeinc/dgraph4j/pull/214
