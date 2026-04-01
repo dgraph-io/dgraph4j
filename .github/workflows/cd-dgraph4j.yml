@@ -1,0 +1,55 @@
+name: cd-dgraph4j
+
+on:
+  workflow_dispatch:
+    inputs:
+      releasetag:
+        description: Release tag to build and publish
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout dgraph4j repo
+        uses: actions/checkout@v5
+        with:
+          ref: "${{ github.event.inputs.releasetag }}"
+          path: dgraph4j
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: microsoft
+          java-version-file: dgraph4j/.java-version
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+      - name: Checkout Dgraph repo
+        uses: actions/checkout@v5
+        with:
+          path: dgraph
+          repository: dgraph-io/dgraph
+          ref: main
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: dgraph/go.mod
+      - name: Build dgraph binary
+        run: cd dgraph && make docker-image
+      - name: Spin up local dgraph cluster
+        run: cd dgraph4j && docker compose -f docker-compose.test.yml up -d
+      - name: Run tests
+        run: cd dgraph4j && ./gradlew build -i
+      - name: Tear down cluster
+        run: cd dgraph4j && docker compose -f docker-compose.test.yml down
+      - name: Publish to Maven Central
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+          GPG_SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
+        run: cd dgraph4j && ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository

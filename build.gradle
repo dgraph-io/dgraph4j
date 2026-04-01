@@ -22,6 +22,7 @@ plugins {
     id 'base'
     id 'maven-publish'
     id 'com.gradleup.shadow' version '8.3.6'
+    id 'io.github.gradle-nexus.publish-plugin' version '2.0.0'
 }
 
 apply plugin: 'java'
@@ -203,65 +204,61 @@ jacocoTestReport {
     }
 }
 
-if (project.hasProperty('ossrhUsername')) {
-    publishing {
-        java {
-            withSourcesJar()
-            withJavadocJar()
-        }
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
 
-        repositories {
-            maven {
-                def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
-                credentials {
-                    username = ossrhUsername
-                    password = ossrhPassword
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'dgraph4j'
+            from components.java
+
+            pom {
+                name = 'dgraph4j'
+                description = 'Dgraph Java Client'
+                url = 'https://github.com/dgraph-io/dgraph4j'
+
+                licenses {
+                    license {
+                        name = 'Apache License 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
                 }
-
-                def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
-                credentials {
-                    username = ossrhUsername
-                    password = ossrhPassword
+                developers {
+                    developer {
+                        name = 'Istari Digital, Inc.'
+                        email = 'dgraph-admin@istaridigital.com'
+                    }
                 }
-
-                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-            }
-        }
-
-        publications {
-            mavenJava(MavenPublication) {
-                artifactId = 'dgraph4j'
-                from components.java
-
-                pom {
-                    name = 'dgraph4j'
-                    description = 'Dgraph Java Client'
+                scm {
+                    connection = 'https://github.com/dgraph-io/dgraph4j.git'
                     url = 'https://github.com/dgraph-io/dgraph4j'
-
-                    licenses {
-                        license {
-                            name = 'Apache License 2.0'
-                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                        }
-                    }
-                    developers {
-                        developer {
-                            name = 'Istari Digital, Inc.'
-                            email = 'dgraph-admin@istaridigital.com'
-                        }
-                    }
-                    scm {
-                        connection = 'https://github.com/dgraph-io/dgraph4j.git'
-                        url = 'https://github.com/dgraph-io/dgraph4j'
-                    }
                 }
             }
         }
     }
+}
 
-    signing {
-        sign publishing.publications.mavenJava
+nexusPublishing {
+    repositories {
+        sonatype {
+            nexusUrl.set(uri('https://ossrh-staging-api.central.sonatype.com/service/local/'))
+            snapshotRepositoryUrl.set(uri('https://central.sonatype.com/repository/maven-snapshots/'))
+            username.set(System.getenv('OSSRH_USERNAME') ?: findProperty('ossrhUsername')?.toString())
+            password.set(System.getenv('OSSRH_PASSWORD') ?: findProperty('ossrhPassword')?.toString())
+        }
     }
+}
+
+signing {
+    def signingKey = System.getenv('GPG_SIGNING_KEY')
+    def signingPassword = System.getenv('GPG_SIGNING_PASSWORD')
+    if (signingKey) {
+        useInMemoryPgpKeys(signingKey, signingPassword)
+    }
+    sign publishing.publications.mavenJava
 }
 
 task version {

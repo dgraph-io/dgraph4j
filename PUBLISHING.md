@@ -1,49 +1,62 @@
-## Publishing artefacts to Maven Central
+## Publishing Artifacts to Maven Central
 
-Dgraph owns the `io.dgraph` namespace on Maven Central. See [JIRA ticket][jira] for details. This
-document contains instructions to publish dgraph4j build artefacts to Maven central.
+Dgraph owns the `io.dgraph` namespace on Maven Central. Releases are published automatically via the
+`cd-dgraph4j` GitHub Actions workflow, which uploads to Maven Central through the
+[Sonatype Central Publisher Portal](https://central.sonatype.com).
 
-[jira]: https://issues.sonatype.org/browse/OSSRH-35895
+### Prerequisites
 
-### Before Deploying
+The following GitHub Actions secrets must be configured in the repository:
 
-- Get access to credentials for `dgraph` JIRA account on Maven Central.
-- Generate GPG credentials. Make sure you set a passphrase. You can use this
-  [guide](https://help.github.com/en/articles/generating-a-new-gpg-key).
-- Note down the short version of the Key ID: `gpg --list-keys --keyid-format short`.
-- Generate a secret key ring file if not present:
-  `gpg --export-secret-keys -o /path/to/.gnupg/secring.gpg`.
-- Publish the keys to the MIT server: `gpg --send-keys <key-id>` (Maven Central will check for keys
-  here).
-- Create `~/.gradle/gradle.properties` and populate it with all the credentials
-- Get the credentials from `profile` section after loggin into [Sonatype](https://oss.sonatype.org/)
+| Secret                 | Description                                                                 |
+| ---------------------- | --------------------------------------------------------------------------- |
+| `OSSRH_USERNAME`       | Sonatype Central Portal user token username                                 |
+| `OSSRH_PASSWORD`       | Sonatype Central Portal user token password                                 |
+| `GPG_SIGNING_KEY`      | ASCII-armored GPG private key (`gpg --armor --export-secret-keys <key-id>`) |
+| `GPG_SIGNING_PASSWORD` | Passphrase for the GPG signing key                                          |
 
-```sh
-signing.keyId=<…keyId…>
-signing.password=<…password…>
+Portal user tokens can be generated at https://central.sonatype.com/usertoken.
+
+The GPG public key must be published to a well-known keyserver (e.g. `keys.openpgp.org`,
+`keyserver.ubuntu.com`, or `pgp.mit.edu`) so that Maven Central can verify artifact signatures.
+
+### Release Process
+
+1. Create a `prepare-for-release-vXX.X.X` branch from `main`.
+2. Bump the `version` in `build.gradle`.
+3. Update the download version in README for both Maven and Gradle.
+4. Update the `Supported Versions` table in README.
+5. Update the `dgraph4j version` in the `grpc-netty` table in README.
+6. Update `CHANGELOG.md`.
+7. Open a PR, get it reviewed, and merge to `main`.
+8. Create a release tag on GitHub (e.g. `v25.0.0`) from the merged `main`.
+9. Go to **Actions** → **cd-dgraph4j** → **Run workflow** and enter the release tag.
+10. The workflow will build, test, sign, and publish the artifacts to Maven Central.
+11. Verify the release at https://central.sonatype.com/namespace/io.dgraph.
+
+### Local Publishing (for testing)
+
+Developers can still publish from a local machine by setting credentials in
+`~/.gradle/gradle.properties`:
+
+```properties
+ossrhUsername=<portal-token-username>
+ossrhPassword=<portal-token-password>
+
+signing.keyId=<gpg-key-id>
+signing.password=<gpg-passphrase>
 signing.secretKeyRingFile=</path/to/.gnupg/secring.gpg>
-
-ossrhUsername=<username>
-ossrhPassword=<token>
 ```
 
-### Deploying
+Then run:
 
-- Build and test the code that needs to be published.
-- Bump version by modifying the `version` variable in `build.gradle` file.
-- Update download version in README for both Maven and Gradle.
-- Update `Supported Versions` table in README.
-- Update `dgraph4j version` in `grpc-netty` table in README.
-- Update CHANGELOG.
-- Raise a PR for the above changes. Put the changelog in PR description and merge it.
-- Run `./gradlew publishMavenJavaPublicationToMavenRepository`.
-- Release the deployment by following the steps on the page _Releasing the Deployment_ (link in
-  references below).
-- Also cut a release tag on GitHub with the new version.
+```sh
+./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+```
 
 ### References
 
-- [Publishing a project on Maven Central](https://medium.com/@nmauti/publishing-a-project-on-maven-central-8106393db2c3)
-- [Deploying to OSSRH with Gradle - Introduction](http://central.sonatype.org/pages/gradle.html)
-- [StackOverflow thread on issues during signing artefacts](https://stackoverflow.com/questions/27936119/gradle-uploadarchives-task-unable-to-read-secret-key)
-- [Releasing the Deployment](http://central.sonatype.org/pages/releasing-the-deployment.html)
+- [Sonatype Central Publisher Portal](https://central.sonatype.com)
+- [Generating a Portal Token](https://central.sonatype.org/publish/generate-portal-token/)
+- [Publishing via the OSSRH Staging API](https://central.sonatype.org/publish/publish-portal-gradle/)
+- [gradle-nexus/publish-plugin](https://github.com/gradle-nexus/publish-plugin)
