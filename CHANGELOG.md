@@ -4,7 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
-## [25.0.0] - 2026-02-26
+## [Unreleased]
+
+## [25.0.0] - 2026-04-01
 
 **Added**
 
@@ -12,7 +14,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 - feat: add allocateUIDs, allocateTimestamps, and allocateNamespaces methods
 - feat: add namespace management (createNamespace, dropNamespace, listNamespaces)
 - feat: add convenience methods (dropAll, dropData, dropPredicate, dropType, setSchema)
-- feat: updated proto definitions to Dgraph v25
+- feat: updated proto definitions to Dgraph v25 (8 new RPCs)
 - feat: typed exception hierarchy with specific error conditions (`ConnectionException`,
   `AlphaException`, `AlphaNotReadyException`, `AlphaShutdownException`, `AlphaOverloadedException`,
   `DeadlineExceededException`, `ResourceExhaustedException`, `QueryException`,
@@ -21,6 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 - feat: `Exceptions` utility class (`ExceptionUtil` retained as deprecated alias)
 - feat: `withRetry()` on `DgraphClient` and `DgraphAsyncClient` for managed transaction retry with
   exponential backoff. Configurable via `RetryPolicy`.
+- feat: add CD workflow to publish releases to Maven Central ([#287])
 
 **Changed**
 
@@ -41,6 +44,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 - fix: `checkVersion()`, `login()`, `loginIntoNamespace()`, and `shutdown()` now properly unwrap
   `CompletionException`, matching the behavior of all other sync methods
+- fix: `isJwtExpired()` now handles `UNKNOWN` status code
 
 **Deprecated**
 
@@ -100,6 +104,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 - chore: added a test for best effort queries ([#182])
 
+[#287]: https://github.com/dgraph-io/dgraph4j/pull/287
+
 [#220]: https://github.com/hypermodeinc/dgraph4j/pull/220
 [#215]: https://github.com/hypermodeinc/dgraph4j/pull/215
 [#214]: https://github.com/hypermodeinc/dgraph4j/pull/214
@@ -109,8 +115,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 [#195]: https://github.com/hypermodeinc/dgraph4j/pull/195
 [#193]: https://github.com/hypermodeinc/dgraph4j/pull/193
 [#182]: https://github.com/hypermodeinc/dgraph4j/pull/182
-
-## [Unreleased]
 
 ## [21.12.0] - 2021-12-24
 
