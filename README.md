@@ -956,3 +956,4 @@ Make sure you have a Dgraph server running on localhost before you run this task
 ```sh
 ./gradlew test
 ```
+
