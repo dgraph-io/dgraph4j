@@ -97,64 +97,65 @@ public class DgraphAsyncClient {
    */
   public CompletableFuture<Void> loginIntoNamespace(
       String userid, String password, long namespace) {
-    Lock wlock = jwtLock.writeLock();
-    wlock.lock();
-    try {
-      final DgraphGrpc.DgraphStub client = anyClient();
-      final DgraphProto.LoginRequest loginRequest =
-          DgraphProto.LoginRequest.newBuilder()
-              .setUserid(userid)
-              .setPassword(password)
-              .setNamespace(namespace)
-              .build();
+    final DgraphGrpc.DgraphStub client = anyClient();
+    final DgraphProto.LoginRequest loginRequest =
+        DgraphProto.LoginRequest.newBuilder()
+            .setUserid(userid)
+            .setPassword(password)
+            .setNamespace(namespace)
+            .build();
 
-      StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
-      client.login(loginRequest, bridge);
-      return bridge
-          .getDelegate()
-          .thenAccept(
-              (DgraphProto.Response response) -> {
-                try {
-                  // set the jwt field
-                  jwt = DgraphProto.Jwt.parseFrom(response.getJson());
-                } catch (InvalidProtocolBufferException e) {
-                  String errmsg = "error while parsing jwt from the response: ";
-                  LOG.error(errmsg, e);
-                  throw new AuthException(errmsg, e);
-                }
-              });
-    } finally {
-      wlock.unlock();
-    }
+    StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
+    client.login(loginRequest, bridge);
+    return bridge.getDelegate().thenAccept(response -> setJwt(response, true));
   }
 
   protected CompletableFuture<Void> retryLogin() {
-    Lock wlock = jwtLock.writeLock();
-    wlock.lock();
+    final String refreshJwt;
+    Lock rlock = jwtLock.readLock();
+    rlock.lock();
     try {
-      if (jwt.getRefreshJwt().isEmpty()) {
+      if (jwt == null || jwt.getRefreshJwt().isEmpty()) {
         CompletableFuture<Void> future = new CompletableFuture<>();
         future.completeExceptionally(new Exception("refresh JWT should not be empty"));
         return future;
       }
+      refreshJwt = jwt.getRefreshJwt();
+    } finally {
+      rlock.unlock();
+    }
 
-      final DgraphGrpc.DgraphStub client = anyClient();
-      final DgraphProto.LoginRequest loginRequest =
-          DgraphProto.LoginRequest.newBuilder().setRefreshToken(jwt.getRefreshJwt()).build();
+    final DgraphGrpc.DgraphStub client = anyClient();
+    final DgraphProto.LoginRequest loginRequest =
+        DgraphProto.LoginRequest.newBuilder().setRefreshToken(refreshJwt).build();
 
-      StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
-      client.login(loginRequest, bridge);
-      return bridge
-          .getDelegate()
-          .thenAccept(
-              (DgraphProto.Response response) -> {
-                try {
-                  // set the jwt field
-                  jwt = DgraphProto.Jwt.parseFrom(response.getJson());
-                } catch (InvalidProtocolBufferException e) {
-                  LOG.error("error while parsing jwt from the response: ", e);
-                }
-              });
+    StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
+    client.login(loginRequest, bridge);
+    return bridge.getDelegate().thenAccept(response -> setJwt(response, false));
+  }
+
+  /**
+   * Parses the JWT from a login/refresh response and stores it under the write lock. This is the
+   * only writer of the {@code jwt} field; running it under the write lock (rather than around the
+   * RPC setup, as before) is what makes the write safely published to readers that hold the read
+   * lock in {@link #getStubWithJwt}.
+   *
+   * @param response the login or refresh response
+   * @param throwOnError if true (initial login), a parse failure throws AuthException; if false
+   *     (token refresh), it is logged and swallowed, preserving prior behavior
+   */
+  private void setJwt(DgraphProto.Response response, boolean throwOnError) {
+    Lock wlock = jwtLock.writeLock();
+    wlock.lock();
+    try {
+      jwt = DgraphProto.Jwt.parseFrom(response.getJson());
+    } catch (InvalidProtocolBufferException e) {
+      if (throwOnError) {
+        String errmsg = "error while parsing jwt from the response: ";
+        LOG.error(errmsg, e);
+        throw new AuthException(errmsg, e);
+      }
+      LOG.error("error while parsing jwt from the response: ", e);
     } finally {
       wlock.unlock();
     }
