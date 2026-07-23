@@ -7,6 +7,7 @@ package io.dgraph;
 
 import io.grpc.Context;
 import java.util.concurrent.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,40 +41,79 @@ final class CompletableFutures {
       Executor executor) {
     final Callable<CompletableFuture<T>> ctxCallable = Context.current().wrap(callable);
 
-    return CompletableFuture.supplyAsync(
-        () -> {
-          try {
-            return ctxCallable.call().get();
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOG.error("The " + operation + " got interrupted:", e);
-            throw new DgraphException("The " + operation + " got interrupted", e);
-          } catch (ExecutionException e) {
-            if (Exceptions.isJwtExpired(e.getCause())) {
-              try {
-                retryLogin.get().get();
-                return ctxCallable.call().get();
-              } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                LOG.error("The retried " + operation + " got interrupted:", ie);
-                throw new DgraphException(
-                    "The retried " + operation + " got interrupted", ie);
-              } catch (ExecutionException ie) {
-                LOG.error(
-                    "The retried " + operation + " encounters an execution exception:", ie);
-                throw new CompletionException(Exceptions.translate(ie.getCause()));
-              } catch (Exception ie) {
-                LOG.error(
-                    "The retried " + operation + " encounters a completion exception:", ie);
-                throw new CompletionException(Exceptions.translate(ie));
-              }
-            }
-            throw new CompletionException(Exceptions.translate(e.getCause()));
-          } catch (Exception e) {
-            throw new CompletionException(Exceptions.translate(e));
-          }
-        },
-        executor);
+    // Fire the RPC (non-blocking) and compose on the resulting future. No thread is
+    // parked waiting for the round trip; the executor only runs the callback stages.
+    return invoke(ctxCallable)
+        .handleAsync(
+            (value, error) ->
+                classify(operation, value, error, ctxCallable, retryLogin, executor),
+            executor)
+        .thenCompose(Function.identity());
+  }
+
+  /**
+   * Invokes the callable, converting a thrown exception or a null result into an
+   * already-failed future so the caller never sees a synchronous throw.
+   */
+  private static <T> CompletableFuture<T> invoke(Callable<CompletableFuture<T>> callable) {
+    try {
+      CompletableFuture<T> future = callable.call();
+      if (future != null) {
+        return future;
+      }
+      CompletableFuture<T> failed = new CompletableFuture<>();
+      failed.completeExceptionally(new DgraphException("operation returned a null future"));
+      return failed;
+    } catch (Exception e) {
+      CompletableFuture<T> failed = new CompletableFuture<>();
+      failed.completeExceptionally(e);
+      return failed;
+    }
+  }
+
+  /** Strips one CompletionException wrapper so error classification sees the real cause. */
+  private static Throwable unwrap(Throwable t) {
+    if (t instanceof CompletionException && t.getCause() != null) {
+      return t.getCause();
+    }
+    return t;
+  }
+
+  /**
+   * Classifies the outcome of the first attempt: success passes through; a JWT-expiry
+   * failure triggers a single login refresh and retry; any other failure is translated.
+   * Always yields a future that completes with {@code CompletionException(DgraphException)}
+   * on failure.
+   */
+  private static <T> CompletableFuture<T> classify(
+      String operation,
+      T value,
+      Throwable error,
+      Callable<CompletableFuture<T>> ctxCallable,
+      Supplier<CompletableFuture<Void>> retryLogin,
+      Executor executor) {
+    if (error == null) {
+      return CompletableFuture.completedFuture(value);
+    }
+
+    Throwable cause = unwrap(error);
+    if (Exceptions.isJwtExpired(cause)) {
+      return retryLogin
+          .get()
+          .thenComposeAsync(ignored -> invoke(ctxCallable), executor)
+          .handle(
+              (retryValue, retryError) -> {
+                if (retryError != null) {
+                  LOG.error("The retried {} failed", operation, unwrap(retryError));
+                  throw new CompletionException(Exceptions.translate(unwrap(retryError)));
+                }
+                return retryValue;
+              });
+    }
+
+    CompletableFuture<T> failed = new CompletableFuture<>();
+    failed.completeExceptionally(new CompletionException(Exceptions.translate(cause)));
+    return failed;
   }
 
   /**
