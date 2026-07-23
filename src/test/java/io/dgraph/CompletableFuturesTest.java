@@ -75,6 +75,22 @@ public class CompletableFuturesTest {
   }
 
   @Test
+  public void nullFutureFromCallableIsTranslated() throws Exception {
+    Executor executor = ForkJoinPool.commonPool();
+    Callable<CompletableFuture<String>> callable = () -> null;
+
+    CompletableFuture<String> result =
+        CompletableFutures.runWithRetries("op", callable, NO_RETRY_NEEDED, executor);
+
+    try {
+      result.get(2, TimeUnit.SECONDS);
+      fail("expected failure");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof DgraphException, "cause was " + e.getCause());
+    }
+  }
+
+  @Test
   public void nonJwtErrorIsTranslatedAndNotRetried() throws Exception {
     Executor executor = ForkJoinPool.commonPool();
     AtomicInteger logins = new AtomicInteger();

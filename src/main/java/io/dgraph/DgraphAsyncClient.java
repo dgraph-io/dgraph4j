@@ -46,6 +46,11 @@ public class DgraphAsyncClient {
    *
    * <p>A single client is thread safe.
    *
+   * <p>Uses {@link ForkJoinPool#commonPool()} as the callback executor. This is safe because the
+   * client's callbacks never block; use
+   * {@link #DgraphAsyncClient(Executor, DgraphGrpc.DgraphStub...)} to supply a dedicated executor
+   * if you want to isolate this client's callback work.
+   *
    * @param stubs - an array of grpc stubs to be used by this client. The stubs to be used are
    *     chosen at random per transaction.
    */
@@ -60,7 +65,14 @@ public class DgraphAsyncClient {
    *
    * <p>A single client is thread safe.
    *
-   * @param executor - the executor to use for various asynchronous tasks executed by this client.
+   * <p>The executor is a <em>callback executor</em>: the client runs its continuation logic (JWT
+   * refresh handling, exception translation, retries) on it, and returned futures complete on it.
+   * gRPC I/O runs on the channel's own threads, and the client never blocks an executor thread for
+   * the duration of a call. Because these callbacks never block, the no-arg constructor's default
+   * of {@link ForkJoinPool#commonPool()} is safe; supply your own executor to isolate this
+   * client's callback work from the common pool.
+   *
+   * @param executor the callback executor for this client's continuation logic
    * @param stubs - an array of grpc stubs to be used by this client. The stubs to be used are
    *     chosen at random per transaction.
    */
@@ -150,12 +162,11 @@ public class DgraphAsyncClient {
     try {
       jwt = DgraphProto.Jwt.parseFrom(response.getJson());
     } catch (InvalidProtocolBufferException e) {
+      String errmsg = "error while parsing jwt from the response: ";
+      LOG.error(errmsg, e);
       if (throwOnError) {
-        String errmsg = "error while parsing jwt from the response: ";
-        LOG.error(errmsg, e);
         throw new AuthException(errmsg, e);
       }
-      LOG.error("error while parsing jwt from the response: ", e);
     } finally {
       wlock.unlock();
     }
