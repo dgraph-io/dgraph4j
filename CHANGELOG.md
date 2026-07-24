@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+**Fixed**
+
+- fix: `DgraphAsyncClient` no longer blocks a `ForkJoinPool.commonPool()` thread for the full
+  duration of each gRPC call, which could starve the JVM-wide common pool under load.
+  `CompletableFutures.runWithRetries` now composes on the gRPC future instead of calling a blocking
+  `.get()`, and `jwt` writes are guarded by the write lock. ([#294])
+
 ## [25.0.0] - 2026-04-01
 
 **Added**
@@ -104,6 +111,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 - chore: added a test for best effort queries ([#182])
 
+[#294]: https://github.com/dgraph-io/dgraph4j/pull/294
 [#287]: https://github.com/dgraph-io/dgraph4j/pull/287
 [#220]: https://github.com/hypermodeinc/dgraph4j/pull/220
 [#215]: https://github.com/hypermodeinc/dgraph4j/pull/215
