@@ -119,10 +119,15 @@ public class AbortReasonLiveTest {
   }
 
   /**
-   * A transaction's start ts becomes "stale" when it predates the current Zero leader's lease — i.e.
-   * after a leader change. We force that by opening a transaction and then restarting Zero (via the
-   * configured command): on restart Zero renews its lease and advances startTxnTs past every
-   * previously-leased start ts, so committing the now-old txn aborts with STALE_STARTTS.
+   * A transaction's start timestamp becomes "stale" when it falls below the oldest timestamp Zero
+   * can still validate against (its startTxnTs floor). Zero raises that floor on a leader change,
+   * and also when it trims its conflict map at a snapshot — the second is not a leader change at
+   * all, which is why the server message names both causes.
+   *
+   * <p>A leader change is simply the one that can be forced deterministically: open a transaction,
+   * then restart Zero (via the configured command). On restart Zero renews its lease and advances
+   * startTxnTs past every previously-leased start timestamp, so committing the now-old transaction
+   * aborts with STALE_STARTTS.
    */
   @Test
   public void liveStaleStartTsReportsStaleReason() throws Exception {
