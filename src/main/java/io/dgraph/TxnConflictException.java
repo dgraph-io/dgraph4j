@@ -20,14 +20,29 @@ public class TxnConflictException extends TxnException {
    *
    * <ul>
    *   <li>{@link #CONFLICT} — a write-write conflict with another concurrent transaction; retrying
-   *       with a fresh transaction is the expected response.
+   *       with a fresh transaction is the expected response. The server cannot say <em>which</em>
+   *       key collided: conflict keys are one-way fingerprints by the time they are compared, so
+   *       the culprit may be the data key written directly, or an index or count key derived from
+   *       it. On an {@code @upsert} predicate the uid is excluded from the comparison, so any two
+   *       transactions writing the same value conflict.
    *   <li>{@link #PREDICATE_MOVE} — a predicate is being moved between groups and commits on it are
-   *       temporarily blocked; back off and retry once the move completes.
-   *   <li>{@link #STALE_STARTTS} — the transaction's start timestamp predates the current Zero
-   *       leader (a leader change); retry with a fresh transaction.
-   *   <li>{@link #UNKNOWN} — no reason was reported. Returned for aborts from older servers that do
-   *       not yet categorize the reason, so callers degrade gracefully.
+   *       temporarily blocked, or it finished moving while the transaction was open; back off and
+   *       retry once the move completes.
+   *   <li>{@link #STALE_STARTTS} — the transaction's start timestamp is older than the oldest
+   *       timestamp the server can still validate against. That happens on a Zero leader change,
+   *       and also when Zero trims its conflict map at a snapshot, which is not a leader change at
+   *       all. Retry with a fresh transaction.
+   *   <li>{@link #UNKNOWN} — no category was reported. This covers aborts from older servers that
+   *       do not categorize at all, and aborts a current server declines to categorize because no
+   *       published category fits — for example a transaction already aborted out of band by a
+   *       schema change or the idle-transaction reaper, a cancelled context, or a predicate no
+   *       group currently serves. The description still explains what happened; only the machine
+   *       readable category is absent, so callers degrade gracefully.
    * </ul>
+   *
+   * <p>Categories are matched on the description prefix, and an unrecognized prefix degrades to
+   * {@link #UNKNOWN}. A newer server may therefore introduce categories this enum does not name
+   * without breaking this client.
    */
   public enum AbortReason {
     CONFLICT,
