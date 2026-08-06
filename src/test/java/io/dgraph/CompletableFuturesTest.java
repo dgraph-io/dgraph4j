@@ -41,9 +41,8 @@ public class CompletableFuturesTest {
   private static final Supplier<CompletableFuture<Void>> NO_RETRY_NEEDED =
       () -> CompletableFuture.completedFuture(null);
 
-  // The regression test for #293: an in-flight (never-completing) call must not
-  // hold an executor thread hostage. On the old blocking implementation the
-  // single executor thread parks on .get() and the marker never runs.
+  // Regression test for #293: an in-flight call must not hold an executor thread hostage.
+  // On the old blocking implementation the lone executor thread parks and the marker never runs.
   @Test
   public void inFlightCallDoesNotHoldExecutorThread() throws Exception {
     ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -163,6 +162,42 @@ public class CompletableFuturesTest {
           e.getCause() instanceof ConnectionException, "cause was " + e.getCause());
     }
     assertEquals(calls.get(), 2);
+  }
+
+  // The callback executor is the documented completion thread for every path, including the
+  // JWT-retry path, whose gRPC future completes on a channel thread we do not control.
+  @Test
+  public void retryPathCompletesOnCallbackExecutor() throws Exception {
+    ExecutorService executor =
+        Executors.newSingleThreadExecutor(r -> new Thread(r, "callback-executor"));
+    try {
+      CompletableFuture<String> first = new CompletableFuture<>();
+      CompletableFuture<String> retry = new CompletableFuture<>();
+      CountDownLatch retryInvoked = new CountDownLatch(1);
+      AtomicInteger calls = new AtomicInteger();
+      Callable<CompletableFuture<String>> callable =
+          () -> {
+            if (calls.incrementAndGet() == 1) {
+              return first;
+            }
+            retryInvoked.countDown();
+            return retry;
+          };
+
+      CompletableFuture<String> completedOn =
+          CompletableFutures.runWithRetries("op", callable, NO_RETRY_NEEDED, executor)
+              .thenApply(ignored -> Thread.currentThread().getName());
+
+      first.completeExceptionally(jwtExpired());
+      assertTrue(retryInvoked.await(2, TimeUnit.SECONDS), "retry was never attempted");
+      // FIFO on a single-thread executor: by the time this task runs, runWithRetries has
+      // composed on the retry future, so completing it off-executor exercises the hop back.
+      executor.execute(() -> new Thread(() -> retry.complete("ok"), "grpc-thread").start());
+
+      assertEquals(completedOn.get(2, TimeUnit.SECONDS), "callback-executor");
+    } finally {
+      executor.shutdownNow();
+    }
   }
 
   @Test

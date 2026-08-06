@@ -46,10 +46,9 @@ public class DgraphAsyncClient {
    *
    * <p>A single client is thread safe.
    *
-   * <p>Uses {@link ForkJoinPool#commonPool()} as the callback executor. This is safe because the
-   * client's callbacks never block; use
-   * {@link #DgraphAsyncClient(Executor, DgraphGrpc.DgraphStub...)} to supply a dedicated executor
-   * if you want to isolate this client's callback work.
+   * <p>Uses {@link ForkJoinPool#commonPool()} as the callback executor. Use {@link
+   * #DgraphAsyncClient(Executor, DgraphGrpc.DgraphStub...)} to isolate this client's callback work
+   * from the common pool.
    *
    * @param stubs - an array of grpc stubs to be used by this client. The stubs to be used are
    *     chosen at random per transaction.
@@ -66,11 +65,10 @@ public class DgraphAsyncClient {
    * <p>A single client is thread safe.
    *
    * <p>The executor is a <em>callback executor</em>: the client runs its continuation logic (JWT
-   * refresh handling, exception translation, retries) on it, and returned futures complete on it.
-   * gRPC I/O runs on the channel's own threads, and the client never blocks an executor thread for
-   * the duration of a call. Because these callbacks never block, the no-arg constructor's default
-   * of {@link ForkJoinPool#commonPool()} is safe; supply your own executor to isolate this
-   * client's callback work from the common pool.
+   * refresh handling, exception translation, retries) on it, and the futures it returns complete on
+   * it. gRPC I/O runs on the channel's own threads, and no executor thread is held for the duration
+   * of a call. Note that the client issues the first attempt of each call on the calling thread, so
+   * request serialization happens there rather than on the executor.
    *
    * @param executor the callback executor for this client's continuation logic
    * @param stubs - an array of grpc stubs to be used by this client. The stubs to be used are
@@ -128,9 +126,8 @@ public class DgraphAsyncClient {
     rlock.lock();
     try {
       if (jwt == null || jwt.getRefreshJwt().isEmpty()) {
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        future.completeExceptionally(new Exception("refresh JWT should not be empty"));
-        return future;
+        return CompletableFuture.failedFuture(
+            new Exception("no refresh JWT available; call login first"));
       }
       refreshJwt = jwt.getRefreshJwt();
     } finally {
@@ -147,14 +144,13 @@ public class DgraphAsyncClient {
   }
 
   /**
-   * Parses the JWT from a login/refresh response and stores it under the write lock. This is the
-   * only writer of the {@code jwt} field; running it under the write lock (rather than around the
-   * RPC setup, as before) is what makes the write safely published to readers that hold the read
-   * lock in {@link #getStubWithJwt}.
+   * Parses the JWT from a login or refresh response and stores it. This is the only writer of the
+   * {@code jwt} field, and it holds the write lock so the write is published to readers in {@link
+   * #getStubWithJwt}.
    *
    * @param response the login or refresh response
    * @param throwOnError if true (initial login), a parse failure throws AuthException; if false
-   *     (token refresh), it is logged and swallowed, preserving prior behavior
+   *     (token refresh), it is logged and swallowed
    */
   private void setJwt(DgraphProto.Response response, boolean throwOnError) {
     Lock wlock = jwtLock.writeLock();

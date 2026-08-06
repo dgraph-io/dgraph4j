@@ -41,9 +41,9 @@ final class CompletableFutures {
       Executor executor) {
     final Callable<CompletableFuture<T>> ctxCallable = Context.current().wrap(callable);
 
-    // Fire the RPC (non-blocking) and compose on the resulting future. No thread is
-    // parked waiting for the round trip; the executor only runs the callback stages.
-    return invoke(ctxCallable)
+    // Composing on the gRPC future rather than blocking on it keeps every stage off the
+    // critical path: no thread is parked for the round trip.
+    return invoke(operation, ctxCallable)
         .handleAsync(
             (value, error) ->
                 classify(operation, value, error, ctxCallable, retryLogin, executor),
@@ -51,23 +51,18 @@ final class CompletableFutures {
         .thenCompose(Function.identity());
   }
 
-  /**
-   * Invokes the callable, converting a thrown exception or a null result into an
-   * already-failed future so the caller never sees a synchronous throw.
-   */
-  private static <T> CompletableFuture<T> invoke(Callable<CompletableFuture<T>> callable) {
+  /** Runs the callable, turning a synchronous throw or a null result into a failed future. */
+  private static <T> CompletableFuture<T> invoke(
+      String operation, Callable<CompletableFuture<T>> callable) {
     try {
       CompletableFuture<T> future = callable.call();
       if (future != null) {
         return future;
       }
-      CompletableFuture<T> failed = new CompletableFuture<>();
-      failed.completeExceptionally(new DgraphException("operation returned a null future"));
-      return failed;
+      return CompletableFuture.failedFuture(
+          new DgraphException("The " + operation + " returned a null future"));
     } catch (Exception e) {
-      CompletableFuture<T> failed = new CompletableFuture<>();
-      failed.completeExceptionally(e);
-      return failed;
+      return CompletableFuture.failedFuture(e);
     }
   }
 
@@ -80,10 +75,9 @@ final class CompletableFutures {
   }
 
   /**
-   * Classifies the outcome of the first attempt: success passes through; a JWT-expiry
-   * failure triggers a single login refresh and retry; any other failure is translated.
-   * Always yields a future that completes with {@code CompletionException(DgraphException)}
-   * on failure.
+   * Passes a success through, retries once after a JWT refresh on an expired-token failure, and
+   * translates every other failure to {@code CompletionException(DgraphException)}. All paths
+   * complete on {@code executor}.
    */
   private static <T> CompletableFuture<T> classify(
       String operation,
@@ -100,20 +94,19 @@ final class CompletableFutures {
     if (Exceptions.isJwtExpired(cause)) {
       return retryLogin
           .get()
-          .thenComposeAsync(ignored -> invoke(ctxCallable), executor)
-          .handle(
+          .thenComposeAsync(ignored -> invoke(operation, ctxCallable), executor)
+          .handleAsync(
               (retryValue, retryError) -> {
                 if (retryError != null) {
                   LOG.error("The retried {} failed", operation, unwrap(retryError));
                   throw new CompletionException(Exceptions.translate(unwrap(retryError)));
                 }
                 return retryValue;
-              });
+              },
+              executor);
     }
 
-    CompletableFuture<T> failed = new CompletableFuture<>();
-    failed.completeExceptionally(new CompletionException(Exceptions.translate(cause)));
-    return failed;
+    return CompletableFuture.failedFuture(new CompletionException(Exceptions.translate(cause)));
   }
 
   /**
