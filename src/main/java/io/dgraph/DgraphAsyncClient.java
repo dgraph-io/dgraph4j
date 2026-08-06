@@ -632,11 +632,8 @@ public class DgraphAsyncClient {
         policy,
         op,
         0,
-        () -> {
-          AsyncTransaction txn =
-              policy.isReadOnly() ? newReadOnlyTransaction() : newTransaction();
-          return txn;
-        });
+        () -> policy.isReadOnly() ? newReadOnlyTransaction() : newTransaction(),
+        this.executor);
   }
 
   /** Calls %{@link io.grpc.ManagedChannel#shutdown} on all connections for this client */

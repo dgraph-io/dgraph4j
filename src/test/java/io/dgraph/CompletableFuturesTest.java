@@ -7,8 +7,14 @@ package io.dgraph;
 
 import static org.testng.Assert.*;
 
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -196,6 +202,53 @@ public class CompletableFuturesTest {
 
       assertEquals(completedOn.get(2, TimeUnit.SECONDS), "callback-executor");
     } finally {
+      executor.shutdownNow();
+    }
+  }
+
+  // attemptAsync's backoff used delayedExecutor(delay, unit), which targets the common pool and
+  // ignored the executor the client was built with. Nothing here contacts a server.
+  @Test
+  public void retryBackoffAndCompletionRunOnSuppliedExecutor() throws Exception {
+    ExecutorService executor =
+        Executors.newSingleThreadExecutor(r -> new Thread(r, "retry-executor"));
+    ManagedChannel channel = ManagedChannelBuilder.forTarget("localhost:1").usePlaintext().build();
+    try {
+      DgraphAsyncClient client = new DgraphAsyncClient(executor, DgraphGrpc.newStub(channel));
+      RetryPolicy policy =
+          RetryPolicy.builder().maxRetries(2).baseDelay(Duration.ofMillis(10)).jitter(0).build();
+
+      AtomicInteger attempts = new AtomicInteger();
+      List<String> attemptThreads = Collections.synchronizedList(new ArrayList<>());
+      CompletableFuture<String> secondAttempt = new CompletableFuture<>();
+      CountDownLatch retryStarted = new CountDownLatch(1);
+      AsyncTransactionOp<String> op =
+          txn -> {
+            attemptThreads.add(Thread.currentThread().getName());
+            if (attempts.incrementAndGet() == 1) {
+              return failed(unavailable());
+            }
+            retryStarted.countDown();
+            return secondAttempt;
+          };
+
+      CompletableFuture<String> result =
+          CompletableFutures.attemptAsync(policy, op, 0, client::newTransaction, executor);
+      CompletableFuture<String> completedOn =
+          result.thenApply(ignored -> Thread.currentThread().getName());
+
+      assertTrue(retryStarted.await(5, TimeUnit.SECONDS), "the retry never ran");
+      // FIFO on the single-thread executor: this task runs after attemptAsync composed on
+      // secondAttempt, so completing it off-executor exercises the hop back.
+      executor.execute(
+          () -> new Thread(() -> secondAttempt.complete("ok"), "grpc-thread").start());
+
+      assertEquals(result.get(5, TimeUnit.SECONDS), "ok");
+      assertEquals(attempts.get(), 2, "the retryable failure should be retried once");
+      assertEquals(attemptThreads.get(1), "retry-executor", "backoff ran off the given executor");
+      assertEquals(completedOn.get(5, TimeUnit.SECONDS), "retry-executor");
+    } finally {
+      channel.shutdownNow();
       executor.shutdownNow();
     }
   }

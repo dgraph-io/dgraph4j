@@ -12,8 +12,12 @@ import io.dgraph.DgraphProto.Response;
 import io.dgraph.DgraphProto.TxnContext;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This is the implementation of asynchronous Dgraph transaction. The asynchrony is backed-up by
@@ -24,6 +28,7 @@ import java.util.concurrent.TimeUnit;
  * @author Michail Klimenkov
  */
 public class AsyncTransaction implements AutoCloseable {
+  private static final Logger LOG = LoggerFactory.getLogger(AsyncTransaction.class);
 
   // these can potentially be set from different threads executing the Stub callback
   private volatile TxnContext context;
@@ -390,8 +395,18 @@ public class AsyncTransaction implements AutoCloseable {
     this.context = builder.build();
   }
 
+  /**
+   * Discards the transaction, blocking until the abort completes. Blocks only when the transaction
+   * has uncommitted mutations, since {@link #discard()} short-circuits otherwise. A failed abort is
+   * logged rather than thrown: the server cleans up abandoned transactions on its own, and throwing
+   * here would mask the outcome of the work this transaction wrapped.
+   */
   @Override
   public void close() {
-    discard().join();
+    try {
+      discard().join();
+    } catch (CompletionException | CancellationException e) {
+      LOG.warn("discarding the transaction during close failed", e);
+    }
   }
 }

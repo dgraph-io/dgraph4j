@@ -118,13 +118,16 @@ final class CompletableFutures {
    * @param op the operation to execute within a fresh transaction on each attempt
    * @param attempt the current attempt number (0-based)
    * @param txnFactory creates a new read-write or read-only transaction per the policy
+   * @param executor the callback executor; the backoff delay and the returned future's completion
+   *     run on it, and no thread is held for the duration of a delay
    * @return a CompletableFuture that completes with the result or fails after exhausting retries
    */
   static <T> CompletableFuture<T> attemptAsync(
       RetryPolicy policy,
       AsyncTransactionOp<T> op,
       int attempt,
-      Supplier<AsyncTransaction> txnFactory) {
+      Supplier<AsyncTransaction> txnFactory,
+      Executor executor) {
 
     AsyncTransaction txn = txnFactory.get();
     if (policy.isBestEffort()) {
@@ -134,7 +137,7 @@ final class CompletableFutures {
     CompletableFuture<T> result = new CompletableFuture<>();
 
     op.execute(txn)
-        .whenComplete(
+        .whenCompleteAsync(
             (value, throwable) -> {
               try {
                 txn.discard();
@@ -153,12 +156,12 @@ final class CompletableFutures {
                 return;
               }
 
-              // Schedule retry after backoff delay
               long delayMs = policy.calculateDelay(attempt);
               Executor delayed =
-                  CompletableFuture.delayedExecutor(delayMs, TimeUnit.MILLISECONDS);
-              CompletableFuture.supplyAsync(() -> null, delayed)
-                  .thenCompose(ignored -> attemptAsync(policy, op, attempt + 1, txnFactory))
+                  CompletableFuture.delayedExecutor(delayMs, TimeUnit.MILLISECONDS, executor);
+              CompletableFuture.runAsync(() -> {}, delayed)
+                  .thenCompose(
+                      ignored -> attemptAsync(policy, op, attempt + 1, txnFactory, executor))
                   .whenComplete(
                       (retryValue, retryThrowable) -> {
                         if (retryThrowable != null) {
@@ -167,7 +170,8 @@ final class CompletableFutures {
                           result.complete(retryValue);
                         }
                       });
-            });
+            },
+            executor);
 
     return result;
   }

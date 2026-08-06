@@ -12,6 +12,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
   duration of each gRPC call, which could starve the JVM-wide common pool under load.
   `CompletableFutures.runWithRetries` now composes on the gRPC future instead of calling a blocking
   `.get()`, and `jwt` writes are guarded by the write lock. ([#294])
+- fix: futures returned by `DgraphAsyncClient` complete on the executor given to the constructor on
+  every path. The JWT-refresh retry previously completed on a gRPC channel thread, and
+  `withRetry`'s backoff ran on the common pool regardless of the configured executor. ([#294])
+- fix: `AsyncTransaction.close()` logs a failed abort instead of throwing it, so closing no longer
+  masks the result of the work the transaction wrapped. ([#294])
 
 ## [25.0.0] - 2026-04-01
 
