@@ -517,10 +517,14 @@ public class DgraphAsyncClient {
     return alter(DgraphProto.Operation.newBuilder().setSchema(schema).build());
   }
 
+  /**
+   * Picks a stub at random. The returned stub carries no JWT: callers issuing an authenticated RPC
+   * must wrap it with {@link #getStubWithJwt} at the moment they send, so a retry after a token
+   * refresh picks up the new token.
+   */
   private DgraphGrpc.DgraphStub anyClient() {
     int index = ThreadLocalRandom.current().nextInt(stubs.size());
-    DgraphGrpc.DgraphStub rawStub = stubs.get(index);
-    return getStubWithJwt(rawStub);
+    return stubs.get(index);
   }
 
   /**
