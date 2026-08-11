@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+**Changed**
+
+- The shaded jar is published as a separate package `io.dgraph:dgraph4j-shaded`, with a pom that
+  does not declare the bundled dependencies. It used to be published as a `shaded`-classified
+  artifact of `io.dgraph:dgraph4j`, which shares the pom of the main jar and therefore wrongly
+  declared all dependencies that the shaded jar already bundles.
+
 ## [25.0.0] - 2026-04-01
 
 **Added**

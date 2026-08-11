@@ -33,8 +33,11 @@ apply plugin: 'signing'
 group = 'io.dgraph'
 version = '25.0.0'
 
+def mainArtifactId = 'dgraph4j'
+def shadedArtifactId = 'dgraph4j-shaded'
+
 base {
-    archivesName = 'dgraph4j'
+    archivesName = mainArtifactId
 }
 
 // Upgrade to Java SE 11 to match updated protobuf-protoc version.
@@ -144,35 +147,30 @@ test {
     systemProperties['org.slf4j.simpleLogger.log.io.dgraph.DgraphIntegrationTest'] = 'DEBUG'
 }
 
-//create a single Jar with all dependencies
-task fatJar(type: Jar) {
+tasks.named('jar', Jar) {
     manifest {
         attributes 'Implementation-Title': 'Dgraph Client for Java',
                    'Implementation-Version': version
     }
-    base { archivesName = project.name + '-all' }
-    from { configurations.compile.collect { it.directory() ? it : zipTree(it) } }
-    with jar
 }
 
+// The shaded jar bundles all dependencies (relocated), so it cannot share the pom
+// of the main jar - that pom declares those very dependencies. It is therefore
+// published as its own package ('dgraph4j-shaded') with a dependency-free pom,
+// instead of as a classified artifact of the main package.
 tasks.named('shadowJar', ShadowJar) {
     enableRelocation = true
     relocationPrefix = 'io.dgraph.dgraph4j.shaded'
     relocate('google', 'io.dgraph.dgraph4j.shaded.google')
-    archiveClassifier.set('shaded')
+    archiveBaseName = shadedArtifactId
+    archiveClassifier = ''
     mergeServiceFiles()
 }
 
-task buildJar(type: Jar)
-
-task javadocJar(type: Jar) {
-    archiveClassifier = 'javadoc'
-    from javadoc
-}
-
-task sourceJar(type: Jar) {
-    archiveClassifier = 'sources'
-    from sourceSets.main.allJava
+// Keep the shaded jar out of the main package: the shadow plugin adds it to the
+// java component, which would publish it under the main coordinates.
+components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
+    skip()
 }
 
 task updateProto(type: Exec) {
@@ -191,11 +189,9 @@ task integrationTest(type: Test) {
     classpath = sourceSets.integrationTest.runtimeClasspath
 }
 
-artifacts {
-    archives jar
-    archives shadowJar
-    archives sourceJar
-    archives javadocJar
+// build both jars, as well as the sources and javadoc jars, on 'assemble'
+tasks.named('assemble') {
+    dependsOn tasks.named('shadowJar'), tasks.named('sourcesJar'), tasks.named('javadocJar')
 }
 
 jacocoTestReport {
@@ -209,34 +205,47 @@ java {
     withJavadocJar()
 }
 
+def configurePom = { pom, String pomName, String pomDescription ->
+    pom.name = pomName
+    pom.description = pomDescription
+    pom.url = 'https://github.com/dgraph-io/dgraph4j'
+
+    pom.licenses { licenses ->
+        licenses.license { license ->
+            license.name = 'Apache License 2.0'
+            license.url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+        }
+    }
+    pom.developers { developers ->
+        developers.developer { developer ->
+            developer.name = 'Istari Digital, Inc.'
+            developer.email = 'dgraph-admin@istaridigital.com'
+        }
+    }
+    pom.scm { scm ->
+        scm.connection = 'https://github.com/dgraph-io/dgraph4j.git'
+        scm.url = 'https://github.com/dgraph-io/dgraph4j'
+    }
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifactId = 'dgraph4j'
+            artifactId = mainArtifactId
             from components.java
 
-            pom {
-                name = 'dgraph4j'
-                description = 'Dgraph Java Client'
-                url = 'https://github.com/dgraph-io/dgraph4j'
+            configurePom(pom, mainArtifactId, 'Dgraph Java Client')
+        }
 
-                licenses {
-                    license {
-                        name = 'Apache License 2.0'
-                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-                developers {
-                    developer {
-                        name = 'Istari Digital, Inc.'
-                        email = 'dgraph-admin@istaridigital.com'
-                    }
-                }
-                scm {
-                    connection = 'https://github.com/dgraph-io/dgraph4j.git'
-                    url = 'https://github.com/dgraph-io/dgraph4j'
-                }
-            }
+        // The shaded jar carries its dependencies, hence this package has no
+        // dependencies declared in its pom.
+        mavenJavaShaded(MavenPublication) {
+            artifactId = shadedArtifactId
+            artifact tasks.named('shadowJar')
+            artifact tasks.named('sourcesJar')
+            artifact tasks.named('javadocJar')
+
+            configurePom(pom, shadedArtifactId, 'Dgraph Java Client with shaded dependencies')
         }
     }
 }
@@ -258,7 +267,7 @@ signing {
     if (signingKey) {
         useInMemoryPgpKeys(signingKey, signingPassword)
     }
-    sign publishing.publications.mavenJava
+    sign publishing.publications.mavenJava, publishing.publications.mavenJavaShaded
 }
 
 task version {
