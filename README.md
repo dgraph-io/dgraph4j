@@ -87,6 +87,24 @@ or Gradle:
 compile 'io.dgraph:dgraph4j:25.0.0'
 ```
 
+There is also a shaded variant, which bundles all dependencies relocated into the
+`io.dgraph.dgraph4j.shaded` package, so that they cannot conflict with the versions used by your
+application. Its public API is identical, only the coordinates differ:
+
+```xml
+<dependency>
+  <groupId>io.dgraph</groupId>
+  <artifactId>dgraph4j-shaded</artifactId>
+  <version>25.0.0</version>
+</dependency>
+```
+
+or Gradle:
+
+```groovy
+implementation 'io.dgraph:dgraph4j-shaded:25.0.0'
+```
+
 ## Supported Versions
 
 Depending on the version of Dgraph that you are connecting to, you will have to use a different
