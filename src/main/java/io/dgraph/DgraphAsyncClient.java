@@ -46,13 +46,18 @@ public class DgraphAsyncClient {
    *
    * <p>A single client is thread safe.
    *
-   * <p>Uses {@link ForkJoinPool#commonPool()} as the callback executor. Use {@link
-   * #DgraphAsyncClient(Executor, DgraphGrpc.DgraphStub...)} to isolate this client's callback work
-   * from the common pool.
+   * <p>Uses {@link ForkJoinPool#commonPool()} as the callback executor.
    *
    * @param stubs - an array of grpc stubs to be used by this client. The stubs to be used are
    *     chosen at random per transaction.
+   * @deprecated Use {@link #DgraphAsyncClient(Executor, DgraphGrpc.DgraphStub...)} and supply an
+   *     executor sized for I/O continuations. {@link ForkJoinPool#commonPool()} is a JVM-wide
+   *     singleton sized {@code availableProcessors() - 1}, so a two-vCPU container gets one thread.
+   *     It cannot be tuned per library, its queue is unbounded, and its threads are unnamed
+   *     daemons, which hides contention in a thread dump. This constructor keeps the common pool
+   *     and will be removed in a future major release.
    */
+  @Deprecated
   public DgraphAsyncClient(DgraphGrpc.DgraphStub... stubs) {
     this.stubs = asList(stubs);
     this.executor = ForkJoinPool.commonPool();
