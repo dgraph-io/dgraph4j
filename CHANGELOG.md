@@ -12,6 +12,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
   the result of the work the transaction wrapped. Code that catches a close-time failure from an
   async transaction no longer sees one. `Transaction.close()` still throws; both javadocs record the
   difference. ([#294])
+- `DgraphAsyncClient.withRetry` completes exceptionally with a bare `DgraphException` on every path,
+  so `whenComplete`, `handle`, and `exceptionally` callbacks receive the `DgraphException` itself.
+  Retry exhaustion previously handed those callbacks a `CompletionException` wrapping it, while a
+  first-attempt failure handed them the exception directly. `join()` and `get()` are unaffected:
+  both wrapped before and still wrap. `DgraphClient.withRetry` runs a separate synchronous retry
+  loop and is unchanged. ([#294])
 
 **Fixed**
 
