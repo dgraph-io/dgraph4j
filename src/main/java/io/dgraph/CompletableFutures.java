@@ -48,7 +48,19 @@ final class CompletableFutures {
             (value, error) ->
                 classify(operation, value, error, ctxCallable, retryLogin, executor),
             executor)
-        .thenCompose(Function.identity());
+        .thenCompose(Function.identity())
+        .handle(CompletableFutures::translateTerminal);
+  }
+
+  /**
+   * Upholds the contract that every failure is a {@code CompletionException} wrapping a {@link
+   * DgraphException}. Runs synchronously so it still fires when {@code executor} rejects a stage.
+   */
+  private static <T> T translateTerminal(T value, Throwable error) {
+    if (error == null) {
+      return value;
+    }
+    throw new CompletionException(Exceptions.translate(unwrap(error)));
   }
 
   /** Runs the callable, turning a synchronous throw or a null result into a failed future. */
@@ -136,8 +148,10 @@ final class CompletableFutures {
 
     CompletableFuture<T> result = new CompletableFuture<>();
 
+    // handleAsync rather than whenCompleteAsync: the callback consumes the attempt's outcome, so
+    // the stage below carries only a rejection or a bug in the callback, never a retryable failure.
     op.execute(txn)
-        .whenCompleteAsync(
+        .handleAsync(
             (value, throwable) -> {
               try {
                 txn.discard();
@@ -147,31 +161,42 @@ final class CompletableFutures {
 
               if (throwable == null) {
                 result.complete(value);
-                return;
+                return null;
               }
 
               DgraphException ex = Exceptions.translate(throwable);
               if (!ex.isRetryable() || attempt >= policy.getMaxRetries()) {
                 result.completeExceptionally(ex);
-                return;
+                return null;
               }
 
               long delayMs = policy.calculateDelay(attempt);
-              Executor delayed =
-                  CompletableFuture.delayedExecutor(delayMs, TimeUnit.MILLISECONDS, executor);
+              // The timer takes no executor on purpose: delayedExecutor submits from the internal
+              // Delayer thread, which swallows a rejection and leaves this future incomplete.
+              Executor delayed = CompletableFuture.delayedExecutor(delayMs, TimeUnit.MILLISECONDS);
               CompletableFuture.runAsync(() -> {}, delayed)
-                  .thenCompose(
-                      ignored -> attemptAsync(policy, op, attempt + 1, txnFactory, executor))
+                  .thenComposeAsync(
+                      ignored -> attemptAsync(policy, op, attempt + 1, txnFactory, executor),
+                      executor)
                   .whenComplete(
                       (retryValue, retryThrowable) -> {
                         if (retryThrowable != null) {
-                          result.completeExceptionally(retryThrowable);
+                          result.completeExceptionally(Exceptions.translate(retryThrowable));
                         } else {
                           result.complete(retryValue);
                         }
                       });
+              return null;
             },
-            executor);
+            executor)
+        // A rejection by executor completes this stage exceptionally but leaves result untouched,
+        // so relay it or the caller waits forever.
+        .whenComplete(
+            (ignored, t) -> {
+              if (t != null) {
+                result.completeExceptionally(Exceptions.translate(t));
+              }
+            });
 
     return result;
   }

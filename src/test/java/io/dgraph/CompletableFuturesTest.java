@@ -23,6 +23,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
@@ -46,6 +47,26 @@ public class CompletableFuturesTest {
 
   private static final Supplier<CompletableFuture<Void>> NO_RETRY_NEEDED =
       () -> CompletableFuture.completedFuture(null);
+
+  /** Accepts the first {@code limit} submissions, then rejects, like a saturated AbortPolicy. */
+  private static final class RejectAfter implements Executor {
+    private final ExecutorService delegate;
+    private final int limit;
+    private final AtomicInteger submissions = new AtomicInteger();
+
+    RejectAfter(ExecutorService delegate, int limit) {
+      this.delegate = delegate;
+      this.limit = limit;
+    }
+
+    @Override
+    public void execute(Runnable command) {
+      if (submissions.incrementAndGet() > limit) {
+        throw new RejectedExecutionException("saturated");
+      }
+      delegate.execute(command);
+    }
+  }
 
   // Regression test for #293: an in-flight call must not hold an executor thread hostage.
   // On the old blocking implementation the lone executor thread parks and the marker never runs.
@@ -250,6 +271,85 @@ public class CompletableFuturesTest {
     } finally {
       channel.shutdownNow();
       executor.shutdownNow();
+    }
+  }
+
+  // A bounded executor with the default AbortPolicy rejects under load. Every rejection must
+  // surface as a DgraphException, not as a raw RejectedExecutionException.
+  @Test
+  public void executorRejectionIsTranslated() throws Exception {
+    ExecutorService delegate = Executors.newSingleThreadExecutor();
+    try {
+      Executor executor = new RejectAfter(delegate, 0);
+      Callable<CompletableFuture<String>> callable =
+          () -> CompletableFuture.completedFuture("ok");
+
+      CompletableFuture<String> result =
+          CompletableFutures.runWithRetries("op", callable, NO_RETRY_NEEDED, executor);
+
+      try {
+        result.get(2, TimeUnit.SECONDS);
+        fail("expected failure");
+      } catch (ExecutionException e) {
+        assertTrue(e.getCause() instanceof DgraphException, "cause was " + e.getCause());
+      }
+    } finally {
+      delegate.shutdownNow();
+    }
+  }
+
+  // attemptAsync completes its result only from inside the callback, so a rejection of that
+  // callback must be relayed or the caller waits forever.
+  @Test
+  public void rejectedCallbackFailsInsteadOfHanging() throws Exception {
+    ExecutorService delegate = Executors.newSingleThreadExecutor();
+    ManagedChannel channel = ManagedChannelBuilder.forTarget("localhost:1").usePlaintext().build();
+    try {
+      Executor executor = new RejectAfter(delegate, 0);
+      DgraphAsyncClient client = new DgraphAsyncClient(executor, DgraphGrpc.newStub(channel));
+      RetryPolicy policy = RetryPolicy.builder().maxRetries(2).build();
+
+      AsyncTransactionOp<String> op = txn -> CompletableFuture.completedFuture("ok");
+      CompletableFuture<String> result =
+          CompletableFutures.attemptAsync(policy, op, 0, client::newTransaction, executor);
+
+      try {
+        result.get(5, TimeUnit.SECONDS);
+        fail("expected failure");
+      } catch (ExecutionException e) {
+        assertTrue(e.getCause() instanceof DgraphException, "cause was " + e.getCause());
+      }
+    } finally {
+      channel.shutdownNow();
+      delegate.shutdownNow();
+    }
+  }
+
+  // The backoff hop is the second submission. delayedExecutor must not carry the user executor:
+  // a rejection raised on the internal Delayer thread is swallowed and the retry never completes.
+  @Test
+  public void rejectedBackoffHopFailsInsteadOfHanging() throws Exception {
+    ExecutorService delegate = Executors.newSingleThreadExecutor();
+    ManagedChannel channel = ManagedChannelBuilder.forTarget("localhost:1").usePlaintext().build();
+    try {
+      Executor executor = new RejectAfter(delegate, 1);
+      DgraphAsyncClient client = new DgraphAsyncClient(executor, DgraphGrpc.newStub(channel));
+      RetryPolicy policy =
+          RetryPolicy.builder().maxRetries(2).baseDelay(Duration.ofMillis(10)).jitter(0).build();
+
+      AsyncTransactionOp<String> op = txn -> failed(unavailable());
+      CompletableFuture<String> result =
+          CompletableFutures.attemptAsync(policy, op, 0, client::newTransaction, executor);
+
+      try {
+        result.get(5, TimeUnit.SECONDS);
+        fail("expected failure");
+      } catch (ExecutionException e) {
+        assertTrue(e.getCause() instanceof DgraphException, "cause was " + e.getCause());
+      }
+    } finally {
+      channel.shutdownNow();
+      delegate.shutdownNow();
     }
   }
 
