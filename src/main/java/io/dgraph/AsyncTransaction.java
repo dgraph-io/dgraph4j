@@ -400,6 +400,9 @@ public class AsyncTransaction implements AutoCloseable {
    * has uncommitted mutations, since {@link #discard()} short-circuits otherwise. A failed abort is
    * logged rather than thrown: the server cleans up abandoned transactions on its own, and throwing
    * here would mask the outcome of the work this transaction wrapped.
+   *
+   * <p>This diverges from {@link Transaction#close()}, which throws. That one is user-invoked
+   * through try-with-resources, whereas this one also runs from internal cleanup paths.
    */
   @Override
   public void close() {
