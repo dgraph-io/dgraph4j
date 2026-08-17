@@ -48,6 +48,15 @@ public class CompletableFuturesTest {
   private static final Supplier<CompletableFuture<Void>> NO_RETRY_NEEDED =
       () -> CompletableFuture.completedFuture(null);
 
+  /** Waits inside a task, restoring the interrupt flag so shutdownNow still ends the task. */
+  private static void awaitQuietly(CountDownLatch latch) {
+    try {
+      latch.await();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
   /** Accepts the first {@code limit} submissions, then rejects, like a saturated AbortPolicy. */
   private static final class RejectAfter implements Executor {
     private final ExecutorService delegate;
@@ -227,13 +236,14 @@ public class CompletableFuturesTest {
     }
   }
 
-  // attemptAsync's backoff used delayedExecutor(delay, unit), which targets the common pool and
-  // ignored the executor the client was built with. Nothing here contacts a server.
+  // attemptAsync's backoff used delayedExecutor(delay, unit), which targets the common pool, and
+  // completed the result straight from the gRPC thread. Nothing here contacts a server.
   @Test
   public void retryBackoffAndCompletionRunOnSuppliedExecutor() throws Exception {
     ExecutorService executor =
         Executors.newSingleThreadExecutor(r -> new Thread(r, "retry-executor"));
     ManagedChannel channel = ManagedChannelBuilder.forTarget("localhost:1").usePlaintext().build();
+    CountDownLatch release = new CountDownLatch(1);
     try {
       DgraphAsyncClient client = new DgraphAsyncClient(executor, DgraphGrpc.newStub(channel));
       RetryPolicy policy =
@@ -255,20 +265,31 @@ public class CompletableFuturesTest {
 
       CompletableFuture<String> result =
           CompletableFutures.attemptAsync(policy, op, 0, client::newTransaction, executor);
-      CompletableFuture<String> completedOn =
-          result.thenApply(ignored -> Thread.currentThread().getName());
 
       assertTrue(retryStarted.await(5, TimeUnit.SECONDS), "the retry never ran");
-      // FIFO on the single-thread executor: this task runs after attemptAsync composed on
-      // secondAttempt, so completing it off-executor exercises the hop back.
-      executor.execute(
-          () -> new Thread(() -> secondAttempt.complete("ok"), "grpc-thread").start());
-
-      assertEquals(result.get(5, TimeUnit.SECONDS), "ok");
       assertEquals(attempts.get(), 2, "the retryable failure should be retried once");
+      // thenComposeAsync always dispatches through the executor, so this thread name is exact.
       assertEquals(attemptThreads.get(1), "retry-executor", "backoff ran off the given executor");
-      assertEquals(completedOn.get(5, TimeUnit.SECONDS), "retry-executor");
+
+      // Park the sole executor thread, then complete off-executor: if the completion hop is real
+      // it queues behind the blocker, and result stays pending until the blocker is released.
+      CountDownLatch occupied = new CountDownLatch(1);
+      executor.execute(
+          () -> {
+            occupied.countDown();
+            awaitQuietly(release);
+          });
+      assertTrue(occupied.await(5, TimeUnit.SECONDS), "the executor never ran the blocker");
+
+      Thread grpcThread = new Thread(() -> secondAttempt.complete("ok"), "grpc-thread");
+      grpcThread.start();
+      grpcThread.join(TimeUnit.SECONDS.toMillis(5));
+      assertFalse(result.isDone(), "completion ran off the given executor");
+
+      release.countDown();
+      assertEquals(result.get(5, TimeUnit.SECONDS), "ok");
     } finally {
+      release.countDown();
       channel.shutdownNow();
       executor.shutdownNow();
     }
