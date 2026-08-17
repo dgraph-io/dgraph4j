@@ -117,7 +117,7 @@ public class DgraphAsyncClient {
 
     StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
     client.login(loginRequest, bridge);
-    return bridge.getDelegate().thenAccept(response -> setJwt(response, true));
+    return bridge.getDelegate().thenAcceptAsync(response -> setJwt(response, true), executor);
   }
 
   protected CompletableFuture<Void> retryLogin() {
@@ -140,7 +140,7 @@ public class DgraphAsyncClient {
 
     StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
     client.login(loginRequest, bridge);
-    return bridge.getDelegate().thenAccept(response -> setJwt(response, false));
+    return bridge.getDelegate().thenAcceptAsync(response -> setJwt(response, false), executor);
   }
 
   /**
