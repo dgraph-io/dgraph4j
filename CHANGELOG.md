@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+**Changed**
+
+- `AsyncTransaction.close()` logs a failed abort instead of throwing it, so closing no longer masks
+  the result of the work the transaction wrapped. Code that catches a close-time failure from an
+  async transaction no longer sees one. `Transaction.close()` still throws; both javadocs record the
+  difference. ([#294])
+- `DgraphAsyncClient.withRetry` completes exceptionally with a bare `DgraphException` on every path,
+  so `whenComplete`, `handle`, and `exceptionally` callbacks receive the `DgraphException` itself.
+  Retry exhaustion previously handed those callbacks a `CompletionException` wrapping it, while a
+  first-attempt failure handed them the exception directly. `join()` and `get()` are unaffected:
+  both wrapped before and still wrap. `DgraphClient.withRetry` runs a separate synchronous retry
+  loop and is unchanged. ([#294])
+
+**Fixed**
+
+- fix: `DgraphAsyncClient` no longer blocks a `ForkJoinPool.commonPool()` thread for the full
+  duration of each gRPC call, which could starve the JVM-wide common pool under load.
+  `CompletableFutures.runWithRetries` now composes on the gRPC future instead of calling a blocking
+  `.get()`, and `jwt` writes are guarded by the write lock. ([#294])
+- fix: futures returned by `DgraphAsyncClient` complete on the executor given to the constructor,
+  including the JWT-refresh retry and `withRetry`'s backoff, which previously completed on a gRPC
+  channel thread and on the common pool respectively. The one exception is a rejection by that
+  executor, which completes the future on whichever thread observed the rejection. ([#294])
+- fix: a `RejectedExecutionException` from the callback executor no longer leaves the returned
+  future permanently incomplete. `withRetry` now relays the rejection instead of hanging, and every
+  rejection surfaces as a `DgraphException` like any other failure. ([#294])
+
+**Deprecated**
+
+- `DgraphAsyncClient(DgraphGrpc.DgraphStub...)` is deprecated in favor of
+  `DgraphAsyncClient(Executor, DgraphGrpc.DgraphStub...)`. It still defaults to
+  `ForkJoinPool.commonPool()`, which is unsuitable for I/O continuations: it is a JVM-wide singleton
+  sized `availableProcessors() - 1`, cannot be tuned per library, and runs unnamed daemon threads
+  that hide contention in a thread dump. Compiling against it warns; nothing breaks. ([#294])
+
 ## [25.0.0] - 2026-04-01
 
 **Added**
@@ -104,6 +139,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 - chore: added a test for best effort queries ([#182])
 
+[#294]: https://github.com/dgraph-io/dgraph4j/pull/294
 [#287]: https://github.com/dgraph-io/dgraph4j/pull/287
 [#220]: https://github.com/hypermodeinc/dgraph4j/pull/220
 [#215]: https://github.com/hypermodeinc/dgraph4j/pull/215
