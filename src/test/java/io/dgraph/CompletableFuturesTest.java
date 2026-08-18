@@ -206,6 +206,7 @@ public class CompletableFuturesTest {
   public void retryPathCompletesOnCallbackExecutor() throws Exception {
     ExecutorService executor =
         Executors.newSingleThreadExecutor(r -> new Thread(r, "callback-executor"));
+    CountDownLatch release = new CountDownLatch(1);
     try {
       CompletableFuture<String> first = new CompletableFuture<>();
       CompletableFuture<String> retry = new CompletableFuture<>();
@@ -220,18 +221,31 @@ public class CompletableFuturesTest {
             return retry;
           };
 
-      CompletableFuture<String> completedOn =
-          CompletableFutures.runWithRetries("op", callable, NO_RETRY_NEEDED, executor)
-              .thenApply(ignored -> Thread.currentThread().getName());
+      CompletableFuture<String> result =
+          CompletableFutures.runWithRetries("op", callable, NO_RETRY_NEEDED, executor);
 
       first.completeExceptionally(jwtExpired());
-      assertTrue(retryInvoked.await(2, TimeUnit.SECONDS), "retry was never attempted");
-      // FIFO on a single-thread executor: by the time this task runs, runWithRetries has
-      // composed on the retry future, so completing it off-executor exercises the hop back.
-      executor.execute(() -> new Thread(() -> retry.complete("ok"), "grpc-thread").start());
+      assertTrue(retryInvoked.await(5, TimeUnit.SECONDS), "retry was never attempted");
 
-      assertEquals(completedOn.get(2, TimeUnit.SECONDS), "callback-executor");
+      // Occupancy, not thread identity: naming the completing thread needs a non-async stage on
+      // result, and the get() below can drain that stage and run it on the test thread instead.
+      CountDownLatch occupied = new CountDownLatch(1);
+      executor.execute(
+          () -> {
+            occupied.countDown();
+            awaitQuietly(release);
+          });
+      assertTrue(occupied.await(5, TimeUnit.SECONDS), "the executor never ran the blocker");
+
+      Thread grpcThread = new Thread(() -> retry.complete("ok"), "grpc-thread");
+      grpcThread.start();
+      grpcThread.join(TimeUnit.SECONDS.toMillis(5));
+      assertFalse(result.isDone(), "the retry completed off the callback executor");
+
+      release.countDown();
+      assertEquals(result.get(5, TimeUnit.SECONDS), "ok");
     } finally {
+      release.countDown();
       executor.shutdownNow();
     }
   }
