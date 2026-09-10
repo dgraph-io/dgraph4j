@@ -32,6 +32,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 - fix: a `RejectedExecutionException` from the callback executor no longer leaves the returned
   future permanently incomplete. `withRetry` now relays the rejection instead of hanging, and every
   rejection surfaces as a `DgraphException` like any other failure. ([#294])
+- fix: a JWT refresh attempted with no refresh token now fails with `AuthException` carrying
+  `UNAUTHENTICATED`, completing the typed exception hierarchy. It previously threw a bare
+  `java.lang.Exception`, which `Exceptions.translate` flattened into a generic `DgraphException`
+  reporting `INTERNAL`. Code catching `DgraphException` is unaffected; code that distinguishes
+  `AuthException` now sees this case. ([#297])
 
 **Deprecated**
 
@@ -139,6 +144,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 - chore: added a test for best effort queries ([#182])
 
+[#297]: https://github.com/dgraph-io/dgraph4j/pull/297
 [#294]: https://github.com/dgraph-io/dgraph4j/pull/294
 [#287]: https://github.com/dgraph-io/dgraph4j/pull/287
 [#220]: https://github.com/hypermodeinc/dgraph4j/pull/220
