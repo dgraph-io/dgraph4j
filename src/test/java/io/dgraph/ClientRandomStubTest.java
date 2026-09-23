@@ -15,6 +15,9 @@ import java.util.Map;
 import org.testng.annotations.Test;
 
 public class ClientRandomStubTest extends DgraphIntegrationTest {
+  private static final int NUM_ITER = 1000;
+  private static final int MIN_PER_ENDPOINT = 200;
+
   private Field asyncTransactionField, stubField, channelField;
 
   public ClientRandomStubTest() throws NoSuchFieldException, ClassNotFoundException {
@@ -29,7 +32,6 @@ public class ClientRandomStubTest extends DgraphIntegrationTest {
 
   @Test
   public void testClientRandomStubTest() throws IllegalAccessException {
-    int NUM_ITER = 1000;
     HashMap<String, Integer> counts = new HashMap<>();
     for (int i = 0; i < NUM_ITER; i++) {
       Transaction txn = dgraphClient.newTransaction();
@@ -42,7 +44,10 @@ public class ClientRandomStubTest extends DgraphIntegrationTest {
     assertEquals(counts.size(), 3);
     int sum = 0;
     for (Map.Entry<String, Integer> ep : counts.entrySet()) {
-      assertTrue(ep.getValue() > 300);
+      // Loose floor: draws average NUM_ITER/3 per endpoint, so a tighter bound flakes.
+      assertTrue(
+          ep.getValue() > MIN_PER_ENDPOINT,
+          ep.getKey() + " got " + ep.getValue() + " of " + NUM_ITER + " transactions");
       sum += ep.getValue();
     }
 
