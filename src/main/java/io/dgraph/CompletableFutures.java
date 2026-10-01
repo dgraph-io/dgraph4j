@@ -7,6 +7,7 @@ package io.dgraph;
 
 import io.grpc.Context;
 import java.util.concurrent.*;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,40 +41,84 @@ final class CompletableFutures {
       Executor executor) {
     final Callable<CompletableFuture<T>> ctxCallable = Context.current().wrap(callable);
 
-    return CompletableFuture.supplyAsync(
-        () -> {
-          try {
-            return ctxCallable.call().get();
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOG.error("The " + operation + " got interrupted:", e);
-            throw new DgraphException("The " + operation + " got interrupted", e);
-          } catch (ExecutionException e) {
-            if (Exceptions.isJwtExpired(e.getCause())) {
-              try {
-                retryLogin.get().get();
-                return ctxCallable.call().get();
-              } catch (InterruptedException ie) {
-                Thread.currentThread().interrupt();
-                LOG.error("The retried " + operation + " got interrupted:", ie);
-                throw new DgraphException(
-                    "The retried " + operation + " got interrupted", ie);
-              } catch (ExecutionException ie) {
-                LOG.error(
-                    "The retried " + operation + " encounters an execution exception:", ie);
-                throw new CompletionException(Exceptions.translate(ie.getCause()));
-              } catch (Exception ie) {
-                LOG.error(
-                    "The retried " + operation + " encounters a completion exception:", ie);
-                throw new CompletionException(Exceptions.translate(ie));
-              }
-            }
-            throw new CompletionException(Exceptions.translate(e.getCause()));
-          } catch (Exception e) {
-            throw new CompletionException(Exceptions.translate(e));
-          }
-        },
-        executor);
+    // Composing on the gRPC future rather than blocking on it keeps every stage off the
+    // critical path: no thread is parked for the round trip.
+    return invoke(operation, ctxCallable)
+        .handleAsync(
+            (value, error) ->
+                classify(operation, value, error, ctxCallable, retryLogin, executor),
+            executor)
+        .thenCompose(Function.identity())
+        .handle(CompletableFutures::translateTerminal);
+  }
+
+  /**
+   * Upholds the contract that every failure is a {@code CompletionException} wrapping a {@link
+   * DgraphException}. Runs synchronously so it still fires when {@code executor} rejects a stage.
+   */
+  private static <T> T translateTerminal(T value, Throwable error) {
+    if (error == null) {
+      return value;
+    }
+    throw new CompletionException(Exceptions.translate(unwrap(error)));
+  }
+
+  /** Runs the callable, turning a synchronous throw or a null result into a failed future. */
+  private static <T> CompletableFuture<T> invoke(
+      String operation, Callable<CompletableFuture<T>> callable) {
+    try {
+      CompletableFuture<T> future = callable.call();
+      if (future != null) {
+        return future;
+      }
+      return CompletableFuture.failedFuture(
+          new DgraphException("The " + operation + " returned a null future"));
+    } catch (Exception e) {
+      return CompletableFuture.failedFuture(e);
+    }
+  }
+
+  /** Strips one CompletionException wrapper so error classification sees the real cause. */
+  private static Throwable unwrap(Throwable t) {
+    if (t instanceof CompletionException && t.getCause() != null) {
+      return t.getCause();
+    }
+    return t;
+  }
+
+  /**
+   * Passes a success through, retries once after a JWT refresh on an expired-token failure, and
+   * translates every other failure to {@code CompletionException(DgraphException)}. All paths
+   * complete on {@code executor}.
+   */
+  private static <T> CompletableFuture<T> classify(
+      String operation,
+      T value,
+      Throwable error,
+      Callable<CompletableFuture<T>> ctxCallable,
+      Supplier<CompletableFuture<Void>> retryLogin,
+      Executor executor) {
+    if (error == null) {
+      return CompletableFuture.completedFuture(value);
+    }
+
+    Throwable cause = unwrap(error);
+    if (Exceptions.isJwtExpired(cause)) {
+      return retryLogin
+          .get()
+          .thenComposeAsync(ignored -> invoke(operation, ctxCallable), executor)
+          .handleAsync(
+              (retryValue, retryError) -> {
+                if (retryError != null) {
+                  LOG.error("The retried {} failed", operation, unwrap(retryError));
+                  throw new CompletionException(Exceptions.translate(unwrap(retryError)));
+                }
+                return retryValue;
+              },
+              executor);
+    }
+
+    return CompletableFuture.failedFuture(new CompletionException(Exceptions.translate(cause)));
   }
 
   /**
@@ -85,13 +130,16 @@ final class CompletableFutures {
    * @param op the operation to execute within a fresh transaction on each attempt
    * @param attempt the current attempt number (0-based)
    * @param txnFactory creates a new read-write or read-only transaction per the policy
+   * @param executor the callback executor; the backoff delay and the returned future's completion
+   *     run on it, and no thread is held for the duration of a delay
    * @return a CompletableFuture that completes with the result or fails after exhausting retries
    */
   static <T> CompletableFuture<T> attemptAsync(
       RetryPolicy policy,
       AsyncTransactionOp<T> op,
       int attempt,
-      Supplier<AsyncTransaction> txnFactory) {
+      Supplier<AsyncTransaction> txnFactory,
+      Executor executor) {
 
     AsyncTransaction txn = txnFactory.get();
     if (policy.isBestEffort()) {
@@ -100,8 +148,10 @@ final class CompletableFutures {
 
     CompletableFuture<T> result = new CompletableFuture<>();
 
+    // handleAsync rather than whenCompleteAsync: the callback consumes the attempt's outcome, so
+    // the stage below carries only a rejection or a bug in the callback, never a retryable failure.
     op.execute(txn)
-        .whenComplete(
+        .handleAsync(
             (value, throwable) -> {
               try {
                 txn.discard();
@@ -111,29 +161,41 @@ final class CompletableFutures {
 
               if (throwable == null) {
                 result.complete(value);
-                return;
+                return null;
               }
 
               DgraphException ex = Exceptions.translate(throwable);
               if (!ex.isRetryable() || attempt >= policy.getMaxRetries()) {
                 result.completeExceptionally(ex);
-                return;
+                return null;
               }
 
-              // Schedule retry after backoff delay
               long delayMs = policy.calculateDelay(attempt);
-              Executor delayed =
-                  CompletableFuture.delayedExecutor(delayMs, TimeUnit.MILLISECONDS);
-              CompletableFuture.supplyAsync(() -> null, delayed)
-                  .thenCompose(ignored -> attemptAsync(policy, op, attempt + 1, txnFactory))
+              // The timer takes no executor on purpose: delayedExecutor submits from the internal
+              // Delayer thread, which swallows a rejection and leaves this future incomplete.
+              Executor delayed = CompletableFuture.delayedExecutor(delayMs, TimeUnit.MILLISECONDS);
+              CompletableFuture.runAsync(() -> {}, delayed)
+                  .thenComposeAsync(
+                      ignored -> attemptAsync(policy, op, attempt + 1, txnFactory, executor),
+                      executor)
                   .whenComplete(
                       (retryValue, retryThrowable) -> {
                         if (retryThrowable != null) {
-                          result.completeExceptionally(retryThrowable);
+                          result.completeExceptionally(Exceptions.translate(retryThrowable));
                         } else {
                           result.complete(retryValue);
                         }
                       });
+              return null;
+            },
+            executor)
+        // A rejection by executor completes this stage exceptionally but leaves result untouched,
+        // so relay it or the caller waits forever.
+        .whenComplete(
+            (ignored, t) -> {
+              if (t != null) {
+                result.completeExceptionally(Exceptions.translate(t));
+              }
             });
 
     return result;

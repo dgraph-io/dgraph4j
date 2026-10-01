@@ -235,6 +235,11 @@ public class Transaction implements AutoCloseable {
     asyncTransaction.setBestEffort(bestEffort);
   }
 
+  /**
+   * Discards the transaction, throwing if the abort fails. This diverges from {@link
+   * AsyncTransaction#close()}, which logs the failure instead. Closing here is user-invoked through
+   * try-with-resources, so the caller can act on the failure.
+   */
   @Override
   public void close() {
     Exceptions.withExceptionUnwrapped(this::discard);
