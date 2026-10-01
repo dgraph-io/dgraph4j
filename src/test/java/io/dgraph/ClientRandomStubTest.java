@@ -17,6 +17,7 @@ import org.testng.annotations.Test;
 public class ClientRandomStubTest extends DgraphIntegrationTest {
   private static final int NUM_ITER = 1000;
   private static final int MIN_PER_ENDPOINT = 200;
+  private static final int MAX_PER_ENDPOINT = 466;
 
   private Field asyncTransactionField, stubField, channelField;
 
@@ -44,9 +45,9 @@ public class ClientRandomStubTest extends DgraphIntegrationTest {
     assertEquals(counts.size(), 3);
     int sum = 0;
     for (Map.Entry<String, Integer> ep : counts.entrySet()) {
-      // Loose floor: draws average NUM_ITER/3 per endpoint, so a tighter bound flakes.
+      // About 9 standard deviations either side of NUM_ITER/3; a tighter band flakes.
       assertTrue(
-          ep.getValue() > MIN_PER_ENDPOINT,
+          ep.getValue() > MIN_PER_ENDPOINT && ep.getValue() < MAX_PER_ENDPOINT,
           ep.getKey() + " got " + ep.getValue() + " of " + NUM_ITER + " transactions");
       sum += ep.getValue();
     }
