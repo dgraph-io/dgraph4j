@@ -8,9 +8,12 @@ package io.dgraph;
 import static org.testng.Assert.*;
 
 import io.dgraph.DgraphProto.*;
+import java.time.Duration;
 import org.testng.annotations.Test;
 
 public class AlterConvenienceTest extends DgraphIntegrationTest {
+  private static final Duration SCHEMA_PROPAGATION_TIMEOUT = Duration.ofSeconds(30);
+  private static final long SCHEMA_POLL_INTERVAL_MS = 250;
 
   @Test
   public void testDropAll() {
@@ -143,25 +146,46 @@ public class AlterConvenienceTest extends DgraphIntegrationTest {
     dgraphClient.setSchema(
         "name: string @index(exact) .\n" + "type Person {\n" + "  name\n" + "}");
 
-    // Verify the type exists in the schema by querying all types
-    String schemaQuery = "schema { types }";
-    Response schemaBefore =
-        dgraphClient.newReadOnlyTransaction().query(schemaQuery);
-    String schemaBJson = schemaBefore.getJson().toStringUtf8();
-    assertTrue(
-        schemaBJson.contains("Person"),
-        "Type Person should exist in schema before drop: " + schemaBJson);
+    awaitType("Person", true);
 
     // Drop the type
     dgraphClient.dropType("Person");
 
-    // Verify the type definition is gone from the schema
-    Response schemaAfter =
-        dgraphClient.newReadOnlyTransaction().query(schemaQuery);
-    String schemaAJson = schemaAfter.getJson().toStringUtf8();
-    assertFalse(
-        schemaAJson.contains("Person"),
-        "Type Person should be gone from schema after drop: " + schemaAJson);
+    awaitType("Person", false);
+  }
+
+  /**
+   * Polls {@code schema { types }} until {@code type} is present or absent as required.
+   *
+   * <p>An alter reaches each alpha asynchronously and every query picks an alpha at random, so a
+   * single read after an alter observes the old schema whenever it lands on an alpha that has not
+   * caught up yet.
+   */
+  private void awaitType(String type, boolean shouldExist) {
+    String json = "";
+    long deadline = System.nanoTime() + SCHEMA_PROPAGATION_TIMEOUT.toNanos();
+    do {
+      json =
+          dgraphClient.newReadOnlyTransaction().query("schema { types }").getJson().toStringUtf8();
+      if (json.contains(type) == shouldExist) {
+        return;
+      }
+      try {
+        Thread.sleep(SCHEMA_POLL_INTERVAL_MS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        fail("Interrupted while waiting for the schema to propagate");
+      }
+    } while (System.nanoTime() < deadline);
+
+    fail(
+        "Type "
+            + type
+            + (shouldExist ? " should exist in" : " should be gone from")
+            + " the schema after "
+            + SCHEMA_PROPAGATION_TIMEOUT.getSeconds()
+            + "s: "
+            + json);
   }
 
   @Test(expectedExceptions = IllegalArgumentException.class)
