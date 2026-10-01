@@ -14,6 +14,7 @@ import io.dgraph.DgraphProto.Version;
 import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
+import io.grpc.Status;
 import io.grpc.stub.MetadataUtils;
 import java.util.Collections;
 import java.util.List;
@@ -132,7 +133,10 @@ public class DgraphAsyncClient {
     try {
       if (jwt == null || jwt.getRefreshJwt().isEmpty()) {
         return CompletableFuture.failedFuture(
-            new Exception("no refresh JWT available; call login first"));
+            new AuthException(
+                Status.UNAUTHENTICATED.withDescription(
+                    "no refresh JWT available; call login first"),
+                null));
       }
       refreshJwt = jwt.getRefreshJwt();
     } finally {
