@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
   `java.lang.Exception`, which `Exceptions.translate` flattened into a generic `DgraphException`
   reporting `INTERNAL`. Code catching `DgraphException` is unaffected; code that distinguishes
   `AuthException` now sees this case. ([#297])
+- fix: send exactly one `accessJwt` header per request. `anyClient()` attached the token and every
+  call site attached it again, so each request carried a duplicate, and a request retried after a
+  JWT refresh carried both the new token and the expired one. It kept working only because Dgraph
+  reads the first value; grpc-java's own `Metadata.get` would have read the expired one. Login
+  requests no longer present the token they replace. ([#295])
 
 **Deprecated**
 
@@ -144,6 +149,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 - chore: added a test for best effort queries ([#182])
 
+[#295]: https://github.com/dgraph-io/dgraph4j/pull/295
 [#297]: https://github.com/dgraph-io/dgraph4j/pull/297
 [#294]: https://github.com/dgraph-io/dgraph4j/pull/294
 [#287]: https://github.com/dgraph-io/dgraph4j/pull/287
