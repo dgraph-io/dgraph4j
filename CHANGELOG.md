@@ -19,6 +19,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
   both wrapped before and still wrap. `DgraphClient.withRetry` runs a separate synchronous retry
   loop and is unchanged. ([#294])
 
+**Removed**
+
+- chore: remove the `integrationTest` source set and task. Neither had ever run: the configured
+  source directory `src/integration-test/java` does not exist, the task never called `useTestNG()`
+  so it would have run none of this project's TestNG tests, its dependency configurations extended
+  `testCompile`/`testRuntime` (removed in Gradle 7, and this project builds with Gradle 8), and
+  nothing wired it into `check` or CI. Splitting the cluster-dependent tests out of `src/test`
+  remains worth doing, and needs scaffolding that works. ([#296])
+
 **Fixed**
 
 - fix: `DgraphAsyncClient` no longer blocks a `ForkJoinPool.commonPool()` thread for the full
@@ -149,6 +158,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 - chore: added a test for best effort queries ([#182])
 
+[#296]: https://github.com/dgraph-io/dgraph4j/pull/296
 [#295]: https://github.com/dgraph-io/dgraph4j/pull/295
 [#297]: https://github.com/dgraph-io/dgraph4j/pull/297
 [#294]: https://github.com/dgraph-io/dgraph4j/pull/294

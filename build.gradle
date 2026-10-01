@@ -80,23 +80,6 @@ repositories {
     mavenCentral()
 }
 
-// configurations for the integration test
-sourceSets {
-    integrationTest {
-        java {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
-            srcDir file('src/integration-test/java')
-        }
-        resources.srcDir file('src/integration-test/resources')
-    }
-}
-
-configurations {
-    integrationTestCompile.extendsFrom testCompile
-    integrationTestRuntime.extendsFrom testRuntime
-}
-
 // In this section you declare the dependencies for your production and test code
 dependencies {
     // The production code uses the SLF4J logging API at compile time
@@ -184,11 +167,6 @@ task setupCluster(type: Exec) {
     workingDir System.getenv('GOPATH') + '/src/github.com/dgraph-io/dgraph'
 
     commandLine './run.sh'
-}
-
-task integrationTest(type: Test) {
-    testClassesDirs = sourceSets.integrationTest.output.classesDirs
-    classpath = sourceSets.integrationTest.runtimeClasspath
 }
 
 artifacts {
