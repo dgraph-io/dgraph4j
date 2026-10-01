@@ -46,9 +46,18 @@ public class DgraphAsyncClient {
    *
    * <p>A single client is thread safe.
    *
+   * <p>Uses {@link ForkJoinPool#commonPool()} as the callback executor.
+   *
    * @param stubs - an array of grpc stubs to be used by this client. The stubs to be used are
    *     chosen at random per transaction.
+   * @deprecated Use {@link #DgraphAsyncClient(Executor, DgraphGrpc.DgraphStub...)} and supply an
+   *     executor sized for I/O continuations. {@link ForkJoinPool#commonPool()} is a JVM-wide
+   *     singleton sized {@code availableProcessors() - 1}, so a two-vCPU container gets one thread.
+   *     It cannot be tuned per library, its queue is unbounded, and its threads are unnamed
+   *     daemons, which hides contention in a thread dump. This constructor keeps the common pool
+   *     and will be removed in a future major release.
    */
+  @Deprecated
   public DgraphAsyncClient(DgraphGrpc.DgraphStub... stubs) {
     this.stubs = asList(stubs);
     this.executor = ForkJoinPool.commonPool();
@@ -60,7 +69,13 @@ public class DgraphAsyncClient {
    *
    * <p>A single client is thread safe.
    *
-   * @param executor - the executor to use for various asynchronous tasks executed by this client.
+   * <p>The executor is a <em>callback executor</em>: the client runs its continuation logic (JWT
+   * refresh handling, exception translation, retries) on it, and the futures it returns complete on
+   * it. gRPC I/O runs on the channel's own threads, and no executor thread is held for the duration
+   * of a call. Note that the client issues the first attempt of each call on the calling thread, so
+   * request serialization happens there rather than on the executor.
+   *
+   * @param executor the callback executor for this client's continuation logic
    * @param stubs - an array of grpc stubs to be used by this client. The stubs to be used are
    *     chosen at random per transaction.
    */
@@ -97,64 +112,62 @@ public class DgraphAsyncClient {
    */
   public CompletableFuture<Void> loginIntoNamespace(
       String userid, String password, long namespace) {
-    Lock wlock = jwtLock.writeLock();
-    wlock.lock();
-    try {
-      final DgraphGrpc.DgraphStub client = anyClient();
-      final DgraphProto.LoginRequest loginRequest =
-          DgraphProto.LoginRequest.newBuilder()
-              .setUserid(userid)
-              .setPassword(password)
-              .setNamespace(namespace)
-              .build();
+    final DgraphGrpc.DgraphStub client = anyClient();
+    final DgraphProto.LoginRequest loginRequest =
+        DgraphProto.LoginRequest.newBuilder()
+            .setUserid(userid)
+            .setPassword(password)
+            .setNamespace(namespace)
+            .build();
 
-      StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
-      client.login(loginRequest, bridge);
-      return bridge
-          .getDelegate()
-          .thenAccept(
-              (DgraphProto.Response response) -> {
-                try {
-                  // set the jwt field
-                  jwt = DgraphProto.Jwt.parseFrom(response.getJson());
-                } catch (InvalidProtocolBufferException e) {
-                  String errmsg = "error while parsing jwt from the response: ";
-                  LOG.error(errmsg, e);
-                  throw new AuthException(errmsg, e);
-                }
-              });
-    } finally {
-      wlock.unlock();
-    }
+    StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
+    client.login(loginRequest, bridge);
+    return bridge.getDelegate().thenAcceptAsync(response -> setJwt(response, true), executor);
   }
 
   protected CompletableFuture<Void> retryLogin() {
+    final String refreshJwt;
+    Lock rlock = jwtLock.readLock();
+    rlock.lock();
+    try {
+      if (jwt == null || jwt.getRefreshJwt().isEmpty()) {
+        return CompletableFuture.failedFuture(
+            new Exception("no refresh JWT available; call login first"));
+      }
+      refreshJwt = jwt.getRefreshJwt();
+    } finally {
+      rlock.unlock();
+    }
+
+    final DgraphGrpc.DgraphStub client = anyClient();
+    final DgraphProto.LoginRequest loginRequest =
+        DgraphProto.LoginRequest.newBuilder().setRefreshToken(refreshJwt).build();
+
+    StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
+    client.login(loginRequest, bridge);
+    return bridge.getDelegate().thenAcceptAsync(response -> setJwt(response, false), executor);
+  }
+
+  /**
+   * Parses the JWT from a login or refresh response and stores it. This is the only writer of the
+   * {@code jwt} field, and it holds the write lock so the write is published to readers in {@link
+   * #getStubWithJwt}.
+   *
+   * @param response the login or refresh response
+   * @param throwOnError if true (initial login), a parse failure throws AuthException; if false
+   *     (token refresh), it is logged and swallowed
+   */
+  private void setJwt(DgraphProto.Response response, boolean throwOnError) {
     Lock wlock = jwtLock.writeLock();
     wlock.lock();
     try {
-      if (jwt.getRefreshJwt().isEmpty()) {
-        CompletableFuture<Void> future = new CompletableFuture<>();
-        future.completeExceptionally(new Exception("refresh JWT should not be empty"));
-        return future;
+      jwt = DgraphProto.Jwt.parseFrom(response.getJson());
+    } catch (InvalidProtocolBufferException e) {
+      String errmsg = "error while parsing jwt from the response: ";
+      LOG.error(errmsg, e);
+      if (throwOnError) {
+        throw new AuthException(errmsg, e);
       }
-
-      final DgraphGrpc.DgraphStub client = anyClient();
-      final DgraphProto.LoginRequest loginRequest =
-          DgraphProto.LoginRequest.newBuilder().setRefreshToken(jwt.getRefreshJwt()).build();
-
-      StreamObserverBridge<DgraphProto.Response> bridge = new StreamObserverBridge<>();
-      client.login(loginRequest, bridge);
-      return bridge
-          .getDelegate()
-          .thenAccept(
-              (DgraphProto.Response response) -> {
-                try {
-                  // set the jwt field
-                  jwt = DgraphProto.Jwt.parseFrom(response.getJson());
-                } catch (InvalidProtocolBufferException e) {
-                  LOG.error("error while parsing jwt from the response: ", e);
-                }
-              });
     } finally {
       wlock.unlock();
     }
@@ -624,11 +637,8 @@ public class DgraphAsyncClient {
         policy,
         op,
         0,
-        () -> {
-          AsyncTransaction txn =
-              policy.isReadOnly() ? newReadOnlyTransaction() : newTransaction();
-          return txn;
-        });
+        () -> policy.isReadOnly() ? newReadOnlyTransaction() : newTransaction(),
+        this.executor);
   }
 
   /** Calls %{@link io.grpc.ManagedChannel#shutdown} on all connections for this client */

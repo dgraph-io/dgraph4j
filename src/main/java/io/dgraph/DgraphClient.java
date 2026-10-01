@@ -372,9 +372,15 @@ public class DgraphClient {
    *
    * <p>A single client is thread safe.
    *
+   * <p>Callbacks run on {@link java.util.concurrent.ForkJoinPool#commonPool()}. Prefer {@link
+   * #DgraphClient(Executor, DgraphGrpc.DgraphStub...)} to isolate this client's callback work.
+   *
    * @param stubs - an array of grpc stubs to be used by this client. The stubs to be used are
    *     chosen at random per transaction.
    */
+  // Delegates to the deprecated common-pool constructor on purpose: this overload's contract is
+  // that it supplies no executor.
+  @SuppressWarnings("deprecation")
   public DgraphClient(DgraphGrpc.DgraphStub... stubs) {
     this.asyncClient = new DgraphAsyncClient(stubs);
   }
