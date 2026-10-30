@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
-## [Unreleased]
+## [25.1.0] - 2026-10-30
 
 **Changed**
 
@@ -392,7 +392,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.1.0/),
 
 - Fully compatible with Dgraph v1.0
 
-[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v25.0.0...HEAD
+[Unreleased]: https://github.com/dgraph-io/dgraph4j/compare/v25.1.0...HEAD
+[25.1.0]: https://github.com/dgraph-io/dgraph4j/compare/v25.0.0...v25.1.0
 [25.0.0]: https://github.com/dgraph-io/dgraph4j/compare/v24.2.0...v25.0.0
 [24.2.0]: https://github.com/dgraph-io/dgraph4j/compare/v24.1.1...v24.2.0
 [24.1.1]: https://github.com/dgraph-io/dgraph4j/compare/v24.0.0...v24.1.1
